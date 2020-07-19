@@ -3,46 +3,42 @@
 ### V0.2: Beta version, 21 Jul 2020
 **Authors:** [Carlos Campos], [Richard Elvira], [Juan J. Gómez], [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/)
 
-ORB-SLAM3 is a real time SLAM library for **Monocular**, **Stereo** and **RGB-D** sensors with capabilities to handle **Inertial** sensors and **Multiple-Maps**. The camera abstraction allow to work with different kind of camera, the code include the implementation of **Pinhole** and **Fisheye** sensors. This software is able to combine the diffenrent configurations to build a 3D sparse map where the main sensor is located.
+ORB-SLAM3 is the first real time SLAM library able to perform **Visual, Visual-Inertial and Multi-Map SLAM** with **monocular, stereo and RGB-D** cameras, using **pin-hole and fisheye** lens models. In all sensor configurations, ORB-SLAM3 is as robust as the best systems available in the literature, and significantly more accurate. 
 
-We provide examples to run the SLAM system in the [EuRoC dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) as pinhole stereo or monocular with or without inertial measures, in the [TUM-VI dataset](https://vision.in.tum.de/data/datasets/visual-inertial-dataset) as fisheye stereo or monocular with or without inertial.
+We provide examples to run ORB-SLAM3 system in the [EuRoC dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) using stereo or monocular with or without IMU, and in the [TUM-VI dataset](https://vision.in.tum.de/data/datasets/visual-inertial-dataset) using fisheye stereo or monocular with or without IMU.
 
-
-This code is the next version of ORB-SLAM2 developed by [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2))
+This software is based on [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) developed by [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2)).
 
 
 ### Related Publications:
 
-[ORB-SLAM3] Carlos Campos*, Richard Elvira*, Juan J. Gómez, J. M. M. Montiel and Juan D. Tardós. **ORB-SLAM3**. *Submited to IEEE Transactions on Robotics*. **[PDF](https://arxiv.org/pdf)**.
-*Same contribution to the article.
+Carlos Campos, Richard Elvira, Juan J. Gómez, J. M. M. Montiel and Juan D. Tardós, **ORB-SLAM3: An Accurate Open-Source Library for Visual, Visual-Inertial and Multi-Map SLAM**, Under review. **[PDF](https://arxiv.org/pdf)**.
 
-[Inertial-Initialization] Carlos Campos, J. M. M. Montiel and Juan D. Tardós. **Inertial-Only Optimization for Visual-Inertial Initialization**. *ICRA 2020*. **[PDF](https://arxiv.org/pdf/2003.05766.pdf)**
+[IMU-Initialization] Carlos Campos, J. M. M. Montiel and Juan D. Tardós, **Inertial-Only Optimization for Visual-Inertial Initialization**. *ICRA 2020*. **[PDF](https://arxiv.org/pdf/2003.05766.pdf)**
 
-[ORBSLAM-Atlas] Richard Elvira, J. M. M. Montiel and Juan D. Tardós. **ORBSLAM-Atlas: a robust and accurate multi-map system**. *IROS 2019*. **[PDF](https://arxiv.org/pdf/1908.11585.pdf)**.
+[ORBSLAM-Atlas] Richard Elvira, J. M. M. Montiel and Juan D. Tardós, **ORBSLAM-Atlas: a robust and accurate multi-map system**. *IROS 2019*. **[PDF](https://arxiv.org/pdf/1908.11585.pdf)**.
 
-[Stereo and RGB-D] Raúl Mur-Artal and Juan D. Tardós. **ORB-SLAM2: an Open-Source SLAM System for Monocular, Stereo and RGB-D Cameras**. *IEEE Transactions on Robotics,* vol. 33, no. 5, pp. 1255-1262, 2017. **[PDF](https://128.84.21.199/pdf/1610.06475.pdf)**.
+[ORBSLAM-VI] Raúl Mur-Artal, and Juan D. Tardós, **Visual-inertial monocular SLAM with map reuse**, IEEE Robotics and Automation Letters, vol. 2 no. 2, pp. 796-803, 2017. **[PDF](https://arxiv.org/pdf/1610.05949.pdf)**. 
 
-[Monocular] Raúl Mur-Artal, J. M. M. Montiel and Juan D. Tardós. **ORB-SLAM: A Versatile and Accurate Monocular SLAM System**. *IEEE Transactions on Robotics,* vol. 31, no. 5, pp. 1147-1163, 2015. (**2015 IEEE Transactions on Robotics Best Paper Award**). **[PDF](http://webdiis.unizar.es/~raulmur/MurMontielTardosTRO15.pdf)**.
+[Stereo and RGB-D] Raúl Mur-Artal and Juan D. Tardós. **ORB-SLAM2: an Open-Source SLAM System for Monocular, Stereo and RGB-D Cameras**. *IEEE Transactions on Robotics,* vol. 33, no. 5, pp. 1255-1262, 2017. **[PDF](https://arxiv.org/pdf/1610.06475.pdf)**.
 
-[DBoW2 Place Recognizer] Dorian Gálvez-López and Juan D. Tardós. **Bags of Binary Words for Fast Place Recognition in Image Sequences**. *IEEE Transactions on Robotics,* vol. 28, no. 5, pp.  1188-1197, 2012. **[PDF](http://doriangalvez.com/php/dl.php?dlp=GalvezTRO12.pdf)**
+[Monocular] Raúl Mur-Artal, J. M. M. Montiel and Juan D. Tardós. **ORB-SLAM: A Versatile and Accurate Monocular SLAM System**. *IEEE Transactions on Robotics,* vol. 31, no. 5, pp. 1147-1163, 2015. (**2015 IEEE Transactions on Robotics Best Paper Award**). **[PDF](https://arxiv.org/pdf/1502.00956.pdf)**.
+
+[DBoW2 Place Recognition] Dorian Gálvez-López and Juan D. Tardós. **Bags of Binary Words for Fast Place Recognition in Image Sequences**. *IEEE Transactions on Robotics,* vol. 28, no. 5, pp.  1188-1197, 2012. **[PDF](http://doriangalvez.com/php/dl.php?dlp=GalvezTRO12.pdf)**
 
 # 1. License
 
-ORB-SLAM2 is released under a [GPLv3 license](https://github.com/UZ-SLAMLab/ORB_SLAM3/LICENSE). For a list of all code/library dependencies (and associated licenses), please see [Dependencies.md](https://github.com/UZ-SLAMLab/ORB_SLAM3/Dependencies.md).
+ORB-SLAM3 is released under [GPLv3 license](https://github.com/UZ-SLAMLab/ORB_SLAM3/LICENSE). For a list of all code/library dependencies (and associated licenses), please see [Dependencies.md](https://github.com/UZ-SLAMLab/ORB_SLAM3/Dependencies.md).
 
 For a closed-source version of ORB-SLAM3 for commercial purposes, please contact the authors: orbslam (at) unizar (dot) es.
 
-If you use ORB-SLAM2 (Monocular) in an academic work, please cite:
+If you use ORB-SLAM3 in an academic work, please cite:
 
-    @article{murTRO2015,
-      title={{ORB-SLAM3}:},
-      author={Campos, Carlos, Elvira, Richard, G\´omez, Juan J., Montiel, J. M. M. and Tard\'os, Juan D.},
-      journal={IEEE Transactions on Robotics},
-      volume={},
-      number={},
-      pages={},
-      doi = {},
-      year={}
+    @article{Campos2020,
+      title={{ORB-SLAM3}: An Accurate Open-Source Library for Visual, Visual-Inertial and Multi-Map {SLAM}},
+      author={Campos, Carlos AND Elvira, Richard AND G\´omez, Juan J. AND Montiel, J. M. M. AND Tard\'os, Juan D.},
+      journal={arXiv preprint arXiv:xxxx.yyyy},
+      year={2020}
      }
 
 # 2. Prerequisites
@@ -85,7 +81,7 @@ This will create **libORB_SLAM3.so**  at *lib* folder and the executables in *Ex
 
 1. Download a sequence (ASL format) from http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
 
-2. Execute the following first command to execute as pure visual , or the second command to visual-inertial. Change PATH_TO_SEQUENCE_FOLDER and SEQUENCE according to the sequence you want to run.
+2. Execute the following first command to execute as pure visual, or the second command to visual-inertial. Change PATH_TO_SEQUENCE_FOLDER and SEQUENCE according to the sequence you want to run.
 ```
 ./Examples/Monocular/mono_euroc Vocabulary/ORBvoc.txt Examples/Monocular/EuRoC.yaml PATH_TO_SEQUENCE_FOLDER/mav0/cam0/data Examples/Monocular/EuRoC_TimeStamps/SEQUENCE.txt 
 ```
@@ -133,11 +129,10 @@ This will create **libORB_SLAM3.so**  at *lib* folder and the executables in *Ex
 There is an executable to process a set of dataset sequentially, each dataset starts from scratch a new map. 
 
 ## EuRoC Monocular
+
 1. Download a sequence (ASL format) from http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
 
 2. Execute the following command to execute for N dataset. Change PATH_TO_SEQUENCE_FOLDER_i and SEQUENCE_i according to the sequence you want to run.
-
-
 
 
 ## EuRoC Monocular-Inertial
