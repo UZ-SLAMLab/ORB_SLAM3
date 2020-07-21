@@ -14,7 +14,7 @@ This code is the next version of ORB-SLAM2 developed by [Raul Mur-Artal](http://
 ### Related Publications:
 
 [ORB-SLAM3] Carlos Campos*, Richard Elvira*, Juan J. Gómez, J. M. M. Montiel and Juan D. Tardós. **ORB-SLAM3**. *Submited to IEEE Transactions on Robotics*. **[PDF](https://arxiv.org/pdf)**.
-*Same contribution to the article.
+*Both authors contributed equally to the article.
 
 [Inertial-Initialization] Carlos Campos, J. M. M. Montiel and Juan D. Tardós. **Inertial-Only Optimization for Visual-Inertial Initialization**. *ICRA 2020*. **[PDF](https://arxiv.org/pdf/2003.05766.pdf)**
 
@@ -34,9 +34,9 @@ For a closed-source version of ORB-SLAM3 for commercial purposes, please contact
 
 If you use ORB-SLAM2 (Monocular) in an academic work, please cite:
 
-    @article{murTRO2015,
-      title={{ORB-SLAM3}:},
-      author={Campos, Carlos, Elvira, Richard, G\´omez, Juan J., Montiel, J. M. M. and Tard\'os, Juan D.},
+    @article{ORBSLAM3_2020,
+      title={{ORB-SLAM3}: An Accurate Open-Source Library for Visual, Visual-Inertial and Multi-Map SLAM},
+      author={Campos, Carlos, Elvira, Richard, G\´omez, Juan J., Montiel, José M.M. and Tard\'os, Juan D.},
       journal={IEEE Transactions on Robotics},
       volume={},
       number={},
@@ -128,9 +128,9 @@ This will create **libORB_SLAM3.so**  at *lib* folder and the executables in *Ex
 ./Examples/Stereo-Inertial/stereo_inertial_tum Vocabulary/ORBvoc.txt Examples/Stereo-Inertial/TUM_512.yaml PATH_TO_SEQUENCE_FOLDER/mav0/cam0/data PATH_TO_SEQUENCE_FOLDER/mav0/cam1/data Examples/Stereo-Inertial/TUM_TimeStamps/SEQUENCE.txt Examples/Stereo-Inertial/TUM_IMU/SEQUENCE.txt
 ``` 
 
-# 6. Multiple-Map Examples
+# 6. Multiple-Session Examples
 
-There is an executable to process a set of dataset sequentially, each dataset starts from scratch a new map. 
+There is an executable to process a set of dataset sequentially. Each dataset starts from scratch a new map. 
 
 ## EuRoC Monocular
 1. Download a sequence (ASL format) from http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
