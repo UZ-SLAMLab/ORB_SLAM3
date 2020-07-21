@@ -75,94 +75,27 @@ chmod +x build.sh
 
 This will create **libORB_SLAM3.so**  at *lib* folder and the executables in *Examples* folder.
 
-# 4. Monocular Examples
-
-## EuRoC Dataset(Pinhole)
+# 4. EuRoC Examples
+EuRoC had been recorder with two pinhole cameras and an inertial sensor, we provide an example script to launch them with the desired configuration.
 
 1. Download a sequence (ASL format) from http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
 
-2. Execute the following first command to execute as pure visual, or the second command to visual-inertial. Change PATH_TO_SEQUENCE_FOLDER and SEQUENCE according to the sequence you want to run.
+2. Open the script "euroc_examples.sh" in the root of the project. Change the value of **pathDatasetEuroc** variable by the path where the dataset has been uncompress. 
+
+3. Execute the following script to process all the sequences with all sensor configurations
 ```
-./Examples/Monocular/mono_euroc Vocabulary/ORBvoc.txt Examples/Monocular/EuRoC.yaml PATH_TO_SEQUENCE_FOLDER/mav0/cam0/data Examples/Monocular/EuRoC_TimeStamps/SEQUENCE.txt 
+./euroc_examples
 ```
 
-```
-./Examples/Monocular-Inertial/mono_inertial_euroc Vocabulary/ORBvoc.txt Examples/Monocular-Inertial/EuRoC.yaml PATH_TO_SEQUENCE_FOLDER/cam0/data Examples/Monocular-Inertial/EuRoC_TimeStamps/SEQUENCE.txt PATH_TO_SEQUENCE_FOLDER/mav0/imu0/data.csv
-```
+Each example can be executed in the console, you need to copy the command and change "$pathDatasetEuroc" by the path of the dataset.
 
-## TUM-VI Dataset(Fisheye)
+## Evaluation
+
+
+
+# 5. TUM-VI Examples
+TUM-VI had been recorder with two fisheye cameras and an inertial sensor. Ground truth is only measured in a room where each sequence starts and ends, as a result the error measures the drift at the end of the sequence.
+
 
 1. Download a sequence from https://vision.in.tum.de/data/datasets/visual-inertial-dataset and uncompress it.
-
-2. Execute the following command to execute as monocular-inertial. Change PATH_TO_SEQUENCE_FOLDER and SEQUENCE according to the sequence you want to run.
-
-```
-./Examples/Monocular-Inertial/mono_inertial_tum Vocabulary/ORBvoc.txt Examples/Monocular-Inertial/TUM_512.yaml PATH_TO_SEQUENCE_FOLDER/mav0/cam0/data Examples/Monocular-Inertial/TUM_TimeStamps/SEQUENCE.txt Examples/Monocular-Inertial/TUM_IMU/SEQUENCE.txt
-```
-
-# 5. Stereo Examples
-
-## EuRoC Dataset(Pinhole)
-
-1. Download a sequence (ASL format) from http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
-
-2. Execute the following first command to execute as pure visual , or the second command to visual-inertial. Change PATH_TO_SEQUENCE_FOLDER and SEQUENCE according to the sequence you want to run.
-```
-./Examples/Stereo/stereo_euroc Vocabulary/ORBvoc.txt Examples/Stereo/EuRoC.yaml PATH_TO_SEQUENCE_FOLDER/mav0/cam0/data PATH_TO_SEQUENCE_FOLDER/mav0/cam1/data Examples/Stereo/EuRoC_TimeStamps/SEQUENCE.txt
-```
-```
-./Examples/Stereo-Inertial/stereo_inertial_euroc Vocabulary/ORBvoc.txt Examples/Stereo-Inertial/EuRoC.yaml PATH_TO_SEQUENCE_FOLDER/cam0/data PATH_TO_SEQUENCE_FOLDER/cam1/data Examples/Stereo-Inertial/EuRoC_TimeStamps/SEQUENCE.txt PATH_TO_SEQUENCE_FOLDER/mav0/imu0/data.csv
-```
-
-## TUM-VI Dataset(Fisheye)
-
-1. Download a sequence from https://vision.in.tum.de/data/datasets/visual-inertial-dataset and uncompress it.
-
-2. Execute the following command to execute as monocular-inertial. Change PATH_TO_SEQUENCE_FOLDER and SEQUENCE according to the sequence you want to run.
-
-```
-./Examples/Stereo-Inertial/stereo_inertial_tum Vocabulary/ORBvoc.txt Examples/Stereo-Inertial/TUM_512.yaml PATH_TO_SEQUENCE_FOLDER/mav0/cam0/data PATH_TO_SEQUENCE_FOLDER/mav0/cam1/data Examples/Stereo-Inertial/TUM_TimeStamps/SEQUENCE.txt Examples/Stereo-Inertial/TUM_IMU/SEQUENCE.txt
-``` 
-
-# 6. Multiple-Session Examples
-
-There is an executable to process a set of dataset sequentially. Each dataset starts from scratch a new map. 
-
-## EuRoC Monocular
-
-1. Download a sequence (ASL format) from http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
-
-2. Execute the following command to execute for N dataset. Change PATH_TO_SEQUENCE_FOLDER_i and SEQUENCE_i according to the sequence you want to run.
-
-
-## EuRoC Monocular-Inertial
-1. Download a sequence (ASL format) from http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
-
-2. Execute the following command to execute for N dataset. Change PATH_TO_SEQUENCE_FOLDER_i and SEQUENCE_i according to the sequence you want to run.
-
-```
-./Examples/Monocular-Inertial/mono_inertial_euroc_2 Vocabulary/ORBvoc.txt Examples/Monocular-Inertial/EuRoC.yaml PATH_TO_SEQUENCE_FOLDER_1/mav0/cam0/data Examples/Monocular-Inertial/EuRoC_TimeStamps/SEQUENCE_1.txt PATH_TO_SEQUENCE_FOLDER_1/mav0/imu0/data.csv PATH_TO_SEQUENCE_FOLDER_2/mav0/cam0/data Examples/Monocular-Inertial/EuRoC_TimeStamps/SEQUENCE_2.txt PATH_TO_SEQUENCE_FOLDER_2/mav0/imu0/data.csv ... PATH_TO_SEQUENCE_FOLDER_N/mav0/cam0/data Examples/Monocular-Inertial/EuRoC_TimeStamps/SEQUENCE_N.txt PATH_TO_SEQUENCE_FOLDER_N/mav0/imu0/data.csv
-```
-
-Examples to process the whole Machine Hall. Change PATH_TO_SEQUENCE_FOLDER to the path of the sequences:
-```
-./Examples/Monocular-Inertial/mono_inertial_euroc_2 Vocabulary/ORBvoc.txt Examples/Monocular-Inertial/EuRoC.yaml PATH_TO_SEQUENCE_FOLDER/MH01/mav0/cam0/data Examples/Monocular-Inertial/EuRoC_TimeStamps/MH01.txt PATH_TO_SEQUENCE_FOLDER/MH01/mav0/imu0/data.csv PATH_TO_SEQUENCE_FOLDER/MH02/mav0/cam0/data Examples/Monocular-Inertial/EuRoC_TimeStamps/MH02.txt PATH_TO_SEQUENCE_FOLDER/MH02/mav0/imu0/data.csv
-PATH_TO_SEQUENCE_FOLDER/MH03/mav0/cam0/data Examples/Monocular-Inertial/EuRoC_TimeStamps/MH03.txt PATH_TO_SEQUENCE_FOLDER/MH03/mav0/imu0/data.csv PATH_TO_SEQUENCE_FOLDER/MH04/mav0/cam0/data Examples/Monocular-Inertial/EuRoC_TimeStamps/MH04.txt PATH_TO_SEQUENCE_FOLDER/MH04/mav0/imu0/data.csv PATH_TO_SEQUENCE_FOLDER/MH05/mav0/cam0/data Examples/Monocular-Inertial/EuRoC_TimeStamps/MH05.txt PATH_TO_SEQUENCE_FOLDER/MH05/mav0/imu0/data.csv
-```
-
-## EuRoC Stereo
-1. Download a sequence (ASL format) from http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
-
-2. Execute the following command to execute for N dataset. Change PATH_TO_SEQUENCE_FOLDER_i and SEQUENCE_i according to the sequence you want to run.
-
-## EuRoC Stereo-Inertial
-1. Download a sequence (ASL format) from http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
-
-2. Execute the following command to execute for N dataset. Change PATH_TO_SEQUENCE_FOLDER_i and SEQUENCE_i according to the sequence you want to run.
-
-## TUM-VI Monocular-Inertial
-
-## TUM-VI Stereo-Inertial
-
-
 
