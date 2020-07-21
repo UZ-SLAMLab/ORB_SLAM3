@@ -1,7 +1,7 @@
 # ORB-SLAM3
 
 ### V0.2: Beta version, 21 Jul 2020
-**Authors:** [Carlos Campos], [Richard Elvira], [Juan J. Gómez], [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/).
+**Authors:** Carlos Campos, Richard Elvira, Juan J. Gómez, [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/).
 
 ORB-SLAM3 is the first real time SLAM library able to perform **Visual, Visual-Inertial and Multi-Map SLAM** with **monocular, stereo and RGB-D** cameras, using **pin-hole and fisheye** lens models. In all sensor configurations, ORB-SLAM3 is as robust as the best systems available in the literature, and significantly more accurate. 
 
@@ -90,12 +90,28 @@ EuRoC had been recorder with two pinhole cameras and an inertial sensor, we prov
 Each example can be executed in the console, you need to copy the command and change "$pathDatasetEuroc" by the path of the dataset.
 
 ## Evaluation
+EuRoC provides a ground truth for each sequence in the inertial body reference. A pure visual execution report the trajectory centered in the left camera. Hence, we provide in the "evaluation" folder the transformation of the  ground truth centered in the left camera reference. The inertial trajectories use the ground truth from the dataset.
+
 
 
 
 # 5. TUM-VI Examples
-TUM-VI had been recorder with two fisheye cameras and an inertial sensor. Ground truth is only measured in a room where each sequence starts and ends, as a result the error measures the drift at the end of the sequence.
+TUM-VI had been recorder with two fisheye cameras and an inertial sensor.
 
 
 1. Download a sequence from https://vision.in.tum.de/data/datasets/visual-inertial-dataset and uncompress it.
+
+2. Open the script "tum_vi_examples.sh" in the root of the project. Change the value of **pathDatasetTUM_VI** variable by the path where the dataset has been uncompress. 
+
+3. Execute the following script to process all the sequences with all sensor configurations
+```
+./tum_vi_examples
+```
+
+Each example can be executed in the console, you need to copy the command and change "$pathDatasetTUM_VI" by the path of the dataset.
+
+## Evaluation
+Ground truth is only measured in a room where each sequence starts and ends, as a result the error measures the drift at the end of the sequence. 
+
+
 
