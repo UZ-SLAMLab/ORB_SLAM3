@@ -59,6 +59,13 @@ Required by g2o (see below). Download and install instructions can be found at: 
 ## DBoW2 and g2o (Included in Thirdparty folder)
 We use modified versions of the [DBoW2](https://github.com/dorian3d/DBoW2) library to perform place recognition and [g2o](https://github.com/RainerKuemmerle/g2o) library to perform non-linear optimizations. Both modified libraries (which are BSD) are included in the *Thirdparty* folder.
 
+## Python
+Required to calculate the alignment of the trajectory with the ground truth. **Required Numpy module**.
+
+* (win) http://www.python.org/downloads/windows
+* (deb) `sudo apt install libpython2.7-dev`
+* (mac) preinstalled with osx
+
 # 3. Building ORB-SLAM3 library and examples
 
 Clone the repository:
@@ -92,7 +99,10 @@ Each example can be executed in the console, you need to copy the command and ch
 ## Evaluation
 EuRoC provides a ground truth for each sequence in the inertial body reference. A pure visual execution report the trajectory centered in the left camera. Hence, we provide in the "evaluation" folder the transformation of the  ground truth centered in the left camera reference. The inertial trajectories use the ground truth from the dataset.
 
-
+Execute the following script to process a set of sequences and calculate the RMS ATE:
+```
+./euroc_eval_examples
+```
 
 
 # 5. TUM-VI Examples
@@ -113,5 +123,8 @@ Each example can be executed in the console, you need to copy the command and ch
 ## Evaluation
 Ground truth is only measured in a room where each sequence starts and ends, as a result the error measures the drift at the end of the sequence. 
 
-
+Execute the following script to process an example sequence and obtain the RMS ATE:
+```
+./tim_vi_eval_examples
+```
 
