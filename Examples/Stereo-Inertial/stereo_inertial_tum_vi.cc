@@ -169,9 +169,9 @@ int main(int argc, char **argv)
                 }
             }
 
-            cout << "first imu: " << first_imu[seq] << endl;
+            /*cout << "first imu: " << first_imu[seq] << endl;
             cout << "first imu time: " << fixed << vTimestampsImu[seq][0] << endl;
-            cout << "size vImu: " << vImuMeas.size() << endl;
+            cout << "size vImu: " << vImuMeas.size() << endl;*/
 
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();

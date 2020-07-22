@@ -49,10 +49,10 @@ LocalMapping::LocalMapping(System* pSys, Atlas *pAtlas, const float bMonocular, 
     strSequence = "";//_strSeqName;
 
     //f_lm.open("localMapping_times" + strSequence + ".txt");
-    f_lm.open("localMapping_times.txt");
+    /*f_lm.open("localMapping_times.txt");
 
     f_lm << "# Timestamp KF, Num CovKFs, Num KFs, Num RecentMPs, Num MPs, processKF, MPCulling, CreateMP, SearchNeigh, BA, KFCulling, [numFixKF_LBA]" << endl;
-    f_lm << fixed;
+    f_lm << fixed;*/
 }
 
 void LocalMapping::SetLoopCloser(LoopClosing* pLoopCloser)
@@ -114,12 +114,12 @@ void LocalMapping::Run()
             // mbAbortBA = false;
 
             //DEBUG--
-            f_lm << setprecision(0);
+            /*f_lm << setprecision(0);
             f_lm << mpCurrentKeyFrame->mTimeStamp*1e9 << ",";
             f_lm << mpCurrentKeyFrame->GetVectorCovisibleKeyFrames().size() << ",";
             f_lm << mpCurrentKeyFrame->GetMap()->GetAllKeyFrames().size() << ",";
             f_lm << mlpRecentAddedMapPoints.size() << ",";
-            f_lm << mpCurrentKeyFrame->GetMap()->GetAllMapPoints().size() << ",";
+            f_lm << mpCurrentKeyFrame->GetMap()->GetAllMapPoints().size() << ",";*/
             //--
             int num_FixedKF_BA = 0;
 
@@ -236,14 +236,14 @@ void LocalMapping::Run()
             double t_Insert = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t8 - t7).count();
 
             //DEBUG--
-            f_lm << setprecision(6);
+            /*f_lm << setprecision(6);
             f_lm << t_procKF << ",";
             f_lm << t_MPcull << ",";
             f_lm << t_CheckMP << ",";
             f_lm << t_searchNeigh << ",";
             f_lm << t_Opt << ",";
             f_lm << t_KF_cull << ",";
-            f_lm << setprecision(0) << num_FixedKF_BA << "\n";
+            f_lm << setprecision(0) << num_FixedKF_BA << "\n";*/
             //--
 
         }
@@ -271,7 +271,7 @@ void LocalMapping::Run()
         usleep(3000);
     }
 
-    f_lm.close();
+    //f_lm.close();
 
     SetFinish();
 }
