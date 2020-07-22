@@ -35,8 +35,10 @@ For a closed-source version of ORB-SLAM3 for commercial purposes, please contact
 If you use ORB-SLAM3 in an academic work, please cite:
 
     @article{ORBSLAM3_2020,
-      title={{ORB-SLAM3}: An Accurate Open-Source Library for Visual, Visual-Inertial and Multi-Map {SLAM}},
-      author={Campos, Carlos AND Elvira, Richard AND G\´omez, Juan J. AND Montiel, Jos\'e M. M. AND Tard\'os, Juan D.},
+      title={{ORB-SLAM3}: An Accurate Open-Source Library for Visual, Visual-Inertial 
+               and Multi-Map {SLAM}},
+      author={Campos, Carlos AND Elvira, Richard AND G\´omez, Juan J. AND Montiel, 
+              Jos\'e M. M. AND Tard\'os, Juan D.},
       journal={arXiv preprint arXiv:xxxx.yyyy},
       year={2020}
      }
@@ -83,47 +85,43 @@ chmod +x build.sh
 This will create **libORB_SLAM3.so**  at *lib* folder and the executables in *Examples* folder.
 
 # 4. EuRoC Examples
-EuRoC had been recorder with two pinhole cameras and an inertial sensor, we provide an example script to launch them with the desired configuration.
+EuRoC was recorded with two pinhole cameras and an inertial sensor. We provide an example script to launch EuRoC sequences in all the sensor configurations.
 
 1. Download a sequence (ASL format) from http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
 
-2. Open the script "euroc_examples.sh" in the root of the project. Change the value of **pathDatasetEuroc** variable by the path where the dataset has been uncompress. 
+2. Open the script "euroc_examples.sh" in the root of the project. Change **pathDatasetEuroc** variable to point to the directory where the dataset has been uncompressed. 
 
-3. Execute the following script to process all the sequences with all sensor configurations
+3. Execute the script to process all the sequences with all sensor configurations
 ```
 ./euroc_examples
 ```
 
-Each example can be executed in the console, you need to copy the command and change "$pathDatasetEuroc" by the path of the dataset.
-
 ## Evaluation
-EuRoC provides a ground truth for each sequence in the inertial body reference. A pure visual execution report the trajectory centered in the left camera. Hence, we provide in the "evaluation" folder the transformation of the  ground truth centered in the left camera reference. The inertial trajectories use the ground truth from the dataset.
+EuRoC provides ground truth for each sequence in the IMU body reference. As pure visual executions report trajectories centered in the left camera, we provide in the "evaluation" folder the transformation of the ground truth to the left camera reference. Visual-inertial trajectories use the ground truth from the dataset.
 
-Execute the following script to process a set of sequences and calculate the RMS ATE:
+Execute the following script to process a set of sequences and compute the RMS ATE:
 ```
 ./euroc_eval_examples
 ```
 
 
 # 5. TUM-VI Examples
-TUM-VI had been recorder with two fisheye cameras and an inertial sensor.
+TUM-VI was recorded with two fisheye cameras and an inertial sensor.
 
 
 1. Download a sequence from https://vision.in.tum.de/data/datasets/visual-inertial-dataset and uncompress it.
 
-2. Open the script "tum_vi_examples.sh" in the root of the project. Change the value of **pathDatasetTUM_VI** variable by the path where the dataset has been uncompress. 
+2. Open the script "tum_vi_examples.sh" in the root of the project. Change **pathDatasetTUM_VI** variable to point to the directory where the dataset has been uncompressed. 
 
-3. Execute the following script to process all the sequences with all sensor configurations
+3. Execute the script to process all the sequences with all sensor configurations
 ```
 ./tum_vi_examples
 ```
 
-Each example can be executed in the console, you need to copy the command and change "$pathDatasetTUM_VI" by the path of the dataset.
-
 ## Evaluation
-Ground truth is only measured in a room where each sequence starts and ends, as a result the error measures the drift at the end of the sequence. 
+In TUM-VI ground truth is only available in the room where all sequences start and end. As a result the error measures the drift at the end of the sequence. 
 
-Execute the following script to process an example sequence and obtain the RMS ATE:
+Execute the following script to process an example sequence and compute the RMS ATE:
 ```
 ./tim_vi_eval_examples
 ```
