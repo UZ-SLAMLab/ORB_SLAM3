@@ -566,9 +566,9 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
     {
         nBoWMatches = 20;
         nBoWInliers = 15;
-        nSim3Inliers = 30;
-        nProjMatches = 50;
-        nProjOptMatches = 70;
+        nSim3Inliers = 20;
+        nProjMatches = 35;
+        nProjOptMatches = 50;
     }*/
 
     set<KeyFrame*> spConnectedKeyFrames = mpCurrentKF->GetConnectedKeyFrames();

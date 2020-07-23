@@ -37,7 +37,6 @@
 #include "MapDrawer.h"
 #include "System.h"
 #include "ImuTypes.h"
-#include "LucasKanadeTracker.h"
 
 #include "GeometricCamera.h"
 
