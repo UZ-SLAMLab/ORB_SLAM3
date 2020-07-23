@@ -79,7 +79,7 @@ void LoopClosing::Run()
                     }
                     else
                     {
-                        Verbose::PrintMess("*Merged detected", Verbose::VERBOSITY_NORMAL);
+                        Verbose::PrintMess("*Merged detected", Verbose::VERBOSITY_QUIET);
                         Verbose::PrintMess("Number of KFs in the current map: " + to_string(mpCurrentKF->GetMap()->KeyFramesInMap()), Verbose::VERBOSITY_DEBUG);
                         cv::Mat mTmw = mpMergeMatchedKF->GetPose();
                         g2o::Sim3 gSmw2(Converter::toMatrix3d(mTmw.rowRange(0, 3).colRange(0, 3)),Converter::toVector3d(mTmw.rowRange(0, 3).col(3)),1.0);
@@ -165,7 +165,7 @@ void LoopClosing::Run()
                     vnPR_TypeRecogn.push_back(0);
 
 
-                    Verbose::PrintMess("*Loop detected", Verbose::VERBOSITY_NORMAL);
+                    Verbose::PrintMess("*Loop detected", Verbose::VERBOSITY_QUIET);
 
                     mg2oLoopScw = mg2oLoopSlw; //*mvg2oSim3LoopTcw[nCurrentIndex];
                     if(mpCurrentKF->GetMap()->IsInertial())
@@ -1745,7 +1745,7 @@ void LoopClosing::MergeLocal()
         //Apply the transformation
         {
             if(mpTracker->mSensor == System::MONOCULAR)
-                        {
+            {
                 unique_lock<mutex> currentLock(pCurrentMap->mMutexMapUpdate); // We update the current map with the Merge information
 
                 for(KeyFrame* pKFi : vpCurrentMapKFs)

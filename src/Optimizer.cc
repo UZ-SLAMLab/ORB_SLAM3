@@ -3163,7 +3163,7 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
 
         vpVertices[nIDi]=VSim3;
     }
-    cout << "Opt_Essential: vpFixedKFs loaded" << endl;
+    Verbose::PrintMess("Opt_Essential: vpFixedKFs loaded", Verbose::VERBOSITY_DEBUG);
 
     set<unsigned long> sIdKF;
     for(KeyFrame* pKFi : vpFixedCorrectedKFs)
@@ -3191,7 +3191,6 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
 
         VSim3->setId(nIDi);
         VSim3->setMarginalized(false);
-        VSim3->_fix_scale = true; //TODO
 
         optimizer.addVertex(VSim3);
 
@@ -3219,13 +3218,8 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
         Eigen::Matrix<double,3,3> Rcw = Converter::toMatrix3d(pKFi->GetRotation());
         Eigen::Matrix<double,3,1> tcw = Converter::toVector3d(pKFi->GetTranslation());
         g2o::Sim3 Siw(Rcw,tcw,1.0);
-        //vScw[nIDi] = Siw;
+        vScw[nIDi] = Siw;
         VSim3->setEstimate(Siw);
-        cv::Mat Tcw_bef = pKFi->mTcwBefMerge;
-        Eigen::Matrix<double,3,3> Rcw_bef = Converter::toMatrix3d(Tcw_bef.rowRange(0,3).colRange(0,3));
-        Eigen::Matrix<double,3,1> tcw_bef = Converter::toVector3d(Tcw_bef.rowRange(0,3).col(3));
-        vScw[nIDi] = g2o::Sim3(Rcw_bef,tcw_bef,1.0);
-
 
         VSim3->setFixed(false);
 
@@ -3411,12 +3405,9 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
                 cout << "--Distance: " << dist << " meters" << endl;
                 cout << "--To much distance correction in EssentGraph: It has connected " << pKFi->GetVectorCovisibleKeyFrames().size() << " KFs" << endl;
             }
-
             string strNameFile = pKFi->mNameFile;
             cv::Mat imLeft = cv::imread(strNameFile, CV_LOAD_IMAGE_UNCHANGED);
-
             cv::cvtColor(imLeft, imLeft, CV_GRAY2BGR);
-
             vector<MapPoint*> vpMapPointsKFi = pKFi->GetMapPointMatches();
             for(int j=0; j<vpMapPointsKFi.size(); ++j)
             {
@@ -3428,7 +3419,6 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
                 cv::circle(imLeft, pKFi->mvKeys[j].pt, 2, cv::Scalar(0, 255, 0));
                 cv::putText(imLeft, strNumOBs, pKFi->mvKeys[j].pt, CV_FONT_HERSHEY_DUPLEX, 1, cv::Scalar(255, 0, 0));
             }
-
             string namefile = "./test_OptEssent/Essent_" + to_string(pCurKF->mnId) + "_KF" + to_string(pKFi->mnId) +"_D" + to_string(dist) +".png";
             cv::imwrite(namefile, imLeft);
         }*/
@@ -3453,7 +3443,6 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
         }
         else
         {
-
         }*/
         KeyFrame* pRefKF = pMPi->GetReferenceKeyFrame();
         g2o::Sim3 Srw;
@@ -3472,7 +3461,6 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
         /*if(pRefKF->mnMergeCorrectedForKF == pCurKF->mnId)
         {
             int nIDr = pRefKF->mnId;
-
             Srw = vScw[nIDr];
             correctedSwr = vCorrectedSwc[nIDr];
         }
@@ -3488,17 +3476,17 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
             Eigen::Matrix<double,3,1> twr = Converter::toVector3d(Twr.rowRange(0,3).col(3));
             correctedSwr = g2o::Sim3(Rwr,twr,1.0);
         //}
-        cout << "Opt_Essential: Loaded the KF reference position" << endl;
+        //cout << "Opt_Essential: Loaded the KF reference position" << endl;
 
         cv::Mat P3Dw = pMPi->GetWorldPos();
         Eigen::Matrix<double,3,1> eigP3Dw = Converter::toVector3d(P3Dw);
         Eigen::Matrix<double,3,1> eigCorrectedP3Dw = correctedSwr.map(Srw.map(eigP3Dw));
 
-        cout << "Opt_Essential: Calculated the new MP position" << endl;
+        //cout << "Opt_Essential: Calculated the new MP position" << endl;
         cv::Mat cvCorrectedP3Dw = Converter::toCvMat(eigCorrectedP3Dw);
-        cout << "Opt_Essential: Converted the position to the OpenCV format" << endl;
+        //cout << "Opt_Essential: Converted the position to the OpenCV format" << endl;
         pMPi->SetWorldPos(cvCorrectedP3Dw);
-        cout << "Opt_Essential: Loaded the corrected position in the MP object" << endl;
+        //cout << "Opt_Essential: Loaded the corrected position in the MP object" << endl;
 
         pMPi->UpdateNormalAndDepth();
     }
