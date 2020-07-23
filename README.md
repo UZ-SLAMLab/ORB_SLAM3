@@ -5,7 +5,7 @@
 
 ORB-SLAM3 is the first real time SLAM library able to perform **Visual, Visual-Inertial and Multi-Map SLAM** with **monocular, stereo and RGB-D** cameras, using **pin-hole and fisheye** lens models. In all sensor configurations, ORB-SLAM3 is as robust as the best systems available in the literature, and significantly more accurate. 
 
-We provide examples to run ORB-SLAM3 system in the [EuRoC dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) using stereo or monocular with or without IMU, and in the [TUM-VI dataset](https://vision.in.tum.de/data/datasets/visual-inertial-dataset) using fisheye stereo or monocular with or without IMU.
+We provide examples to run ORB-SLAM3 in the [EuRoC dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) using stereo or monocular, with or without IMU, and in the [TUM-VI dataset](https://vision.in.tum.de/data/datasets/visual-inertial-dataset) using fisheye stereo or monocular, with or without IMU.
 
 This software is based on [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) developed by [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2)).
 
@@ -85,13 +85,13 @@ chmod +x build.sh
 This will create **libORB_SLAM3.so**  at *lib* folder and the executables in *Examples* folder.
 
 # 4. EuRoC Examples
-EuRoC was recorded with two pinhole cameras and an inertial sensor. We provide an example script to launch EuRoC sequences in all the sensor configurations.
+[EuRoC dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) was recorded with two pinhole cameras and an inertial sensor. We provide an example script to launch EuRoC sequences in all the sensor configurations.
 
 1. Download a sequence (ASL format) from http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
 
 2. Open the script "euroc_examples.sh" in the root of the project. Change **pathDatasetEuroc** variable to point to the directory where the dataset has been uncompressed. 
 
-3. Execute the script to process all the sequences with all sensor configurations
+3. Execute the following script to process all the sequences with all sensor configurations:
 ```
 ./euroc_examples
 ```
@@ -99,21 +99,19 @@ EuRoC was recorded with two pinhole cameras and an inertial sensor. We provide a
 ## Evaluation
 EuRoC provides ground truth for each sequence in the IMU body reference. As pure visual executions report trajectories centered in the left camera, we provide in the "evaluation" folder the transformation of the ground truth to the left camera reference. Visual-inertial trajectories use the ground truth from the dataset.
 
-Execute the following script to process a set of sequences and compute the RMS ATE:
+Execute the following script to process sequences and compute the RMS ATE:
 ```
 ./euroc_eval_examples
 ```
 
-
 # 5. TUM-VI Examples
-TUM-VI was recorded with two fisheye cameras and an inertial sensor.
-
+[TUM-VI dataset](https://vision.in.tum.de/data/datasets/visual-inertial-dataset) was recorded with two fisheye cameras and an inertial sensor.
 
 1. Download a sequence from https://vision.in.tum.de/data/datasets/visual-inertial-dataset and uncompress it.
 
 2. Open the script "tum_vi_examples.sh" in the root of the project. Change **pathDatasetTUM_VI** variable to point to the directory where the dataset has been uncompressed. 
 
-3. Execute the script to process all the sequences with all sensor configurations
+3. Execute the following script to process all the sequences with all sensor configurations:
 ```
 ./tum_vi_examples
 ```
@@ -121,7 +119,7 @@ TUM-VI was recorded with two fisheye cameras and an inertial sensor.
 ## Evaluation
 In TUM-VI ground truth is only available in the room where all sequences start and end. As a result the error measures the drift at the end of the sequence. 
 
-Execute the following script to process an example sequence and compute the RMS ATE:
+Execute the following script to process sequences and compute the RMS ATE:
 ```
 ./tim_vi_eval_examples
 ```
