@@ -9,6 +9,8 @@ We provide examples to run ORB-SLAM3 in the [EuRoC dataset](http://projects.asl.
 
 This software is based on [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) developed by [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2)).
 
+<a href="https://youtu.be/HyLNq-98LRo" target="_blank"><img src="https://img.youtube.com/vi/HyLNq-98LRo/0.jpg" 
+alt="ORB-SLAM2" width="240" height="180" border="10" /></a>
 
 ### Related Publications:
 
@@ -28,7 +30,7 @@ This software is based on [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) deve
 
 # 1. License
 
-ORB-SLAM3 is released under [GPLv3 license](https://github.com/UZ-SLAMLab/ORB_SLAM3/LICENSE). For a list of all code/library dependencies (and associated licenses), please see [Dependencies.md](https://github.com/UZ-SLAMLab/ORB_SLAM3/Dependencies.md).
+ORB-SLAM3 is released under [GPLv3 license](https://github.com/UZ-SLAMLab/ORB_SLAM3/LICENSE). For a list of all code/library dependencies (and associated licenses), please see [Dependencies.md](https://github.com/UZ-SLAMLab/ORB_SLAM3/blob/master/Dependencies.md).
 
 For a closed-source version of ORB-SLAM3 for commercial purposes, please contact the authors: orbslam (at) unizar (dot) es.
 
@@ -121,6 +123,6 @@ In TUM-VI ground truth is only available in the room where all sequences start a
 
 Execute the following script to process sequences and compute the RMS ATE:
 ```
-./tim_vi_eval_examples
+./tum_vi_eval_examples
 ```
 
