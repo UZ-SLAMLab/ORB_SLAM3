@@ -2410,7 +2410,7 @@ void LoopClosing::ResetIfRequested()
     else if(mbResetActiveMapRequested)
     {
 
-        for (list<KeyFrame*>::const_iterator it=mlpLoopKeyFrameQueue.begin(); it != mlpLoopKeyFrameQueue.end();)
+        for (list<KeyFrame*>::iterator it=mlpLoopKeyFrameQueue.begin(); it != mlpLoopKeyFrameQueue.end();)
         {
             KeyFrame* pKFi = *it;
             if(pKFi->GetMap() == mpMapToReset)
