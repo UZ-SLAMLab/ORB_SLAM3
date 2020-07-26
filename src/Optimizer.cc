@@ -3997,11 +3997,17 @@ int Optimizer::OptimizeSim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &
     int nOutKF2 = 0;
     int nMatchWithoutMP = 0;
 
+#ifdef OPENCV4
+    cv::Mat img1 = cv::imread(pKF1->mNameFile, cv::IMREAD_UNCHANGED);
+    cv::cvtColor(img1, img1, cv::COLOR_GRAY2BGR);
+    cv::Mat img2 = cv::imread(pKF2->mNameFile, cv::IMREAD_UNCHANGED);
+    cv::cvtColor(img2, img2, cv::COLOR_GRAY2BGR);
+#else
     cv::Mat img1 = cv::imread(pKF1->mNameFile, CV_LOAD_IMAGE_UNCHANGED);
     cv::cvtColor(img1, img1, CV_GRAY2BGR);
     cv::Mat img2 = cv::imread(pKF2->mNameFile, CV_LOAD_IMAGE_UNCHANGED);
     cv::cvtColor(img2, img2, CV_GRAY2BGR);
-
+#endif
     vector<int> vIdsOnlyInKF2;
 
     for(int i=0; i<N; i++)
@@ -6792,9 +6798,13 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pMainKF,vector<KeyFrame*> vpAdju
             if(bShowImages)
             {
                 string strNameFile = pKFi->mNameFile;
+                #ifdef OPENCV4
+                cv::Mat imLeft = cv::imread(strNameFile, cv::IMREAD_UNCHANGED);
+                cv::cvtColor(imLeft, imLeft, cv::COLOR_GRAY2BGR);
+                #else
                 cv::Mat imLeft = cv::imread(strNameFile, CV_LOAD_IMAGE_UNCHANGED);
-
                 cv::cvtColor(imLeft, imLeft, CV_GRAY2BGR);
+                #endif
 
                 int numPointsMono = 0, numPointsStereo = 0;
                 int numPointsMonoBad = 0, numPointsStereoBad = 0;

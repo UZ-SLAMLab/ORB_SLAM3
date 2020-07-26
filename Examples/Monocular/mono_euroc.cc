@@ -91,7 +91,11 @@ int main(int argc, char **argv)
         {
 
             // Read image from file
+            #ifdef OPENCV4
+            im = cv::imread(vstrImageFilenames[seq][ni],cv::IMREAD_UNCHANGED);
+            #else
             im = cv::imread(vstrImageFilenames[seq][ni],CV_LOAD_IMAGE_UNCHANGED);
+            #endif
             double tframe = vTimestampsCam[seq][ni];
 
             if(im.empty())

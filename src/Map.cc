@@ -494,11 +494,13 @@ void Map::printReprojectionError(list<KeyFrame*> &lpLocalWindowKFs, KeyFrame* mp
     string path_imgs = "./" + name_folder + "/";
     for(KeyFrame* pKFi : lpLocalWindowKFs)
     {
-        //cout << "KF " << pKFi->mnId << endl;
+        #ifdef OPENCV4
+        cv::Mat img_i = cv::imread(pKFi->mNameFile, cv::IMREAD_UNCHANGED);
+        cv::cvtColor(img_i, img_i, cv::COLOR_BGR2GRAY);
+        #else
         cv::Mat img_i = cv::imread(pKFi->mNameFile, CV_LOAD_IMAGE_UNCHANGED);
-        //cout << "Image -> " << img_i.cols << ", " << img_i.rows << endl;
         cv::cvtColor(img_i, img_i, CV_GRAY2BGR);
-        //cout << "Change of color in the image " << endl;
+        #endif
 
         vector<MapPoint*> vpMPs = pKFi->GetMapPointMatches();
         int num_points = 0;
