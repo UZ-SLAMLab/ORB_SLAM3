@@ -23,7 +23,9 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
+#if not defined(__APPLE__)
 #include <openssl/md5.h>
+#endif
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
