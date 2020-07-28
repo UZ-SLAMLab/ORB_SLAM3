@@ -179,6 +179,9 @@ public:
 
     //void SaveAtlas(int type);
 
+    void StartViewer();
+    void StopViewer();
+
 private:
 
     //bool LoadAtlas(string filename, int type);

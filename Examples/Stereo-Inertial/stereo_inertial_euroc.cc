@@ -164,6 +164,10 @@ int main(int argc, char **argv)
     cv::Mat imLeft, imRight, imLeftRect, imRightRect;
     for (seq = 0; seq<num_seq; seq++)
     {
+    #if defined(__APPLE__)
+        // Moving main loop to a separate thread so that we could run UI thread on the main thread.
+        std::thread runthread([&]() {  // Start in new thread
+    #endif
         // Seq loop
         vector<ORB_SLAM3::IMU::Point> vImuMeas;
         double t_rect = 0;
@@ -255,7 +259,15 @@ int main(int argc, char **argv)
 
             SLAM.ChangeDataset();
         }
+    #if defined(__APPLE__)
+        // stop viewer so that we could exit UI / main thread
+        SLAM.StopViewer();
+        });
 
+        // OSX requires calling visualization on main thread
+        SLAM.StartViewer();
+        runthread.join();
+    #endif
 
     }
     // Stop all threads
