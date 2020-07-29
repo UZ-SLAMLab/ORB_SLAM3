@@ -4,6 +4,8 @@
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
 
+Camera.type: "PinHole"
+
 # Camera calibration and distortion parameters (OpenCV) 
 Camera.fx: 707.0912
 Camera.fy: 707.0912
@@ -31,6 +33,56 @@ Camera.RGB: 1
 
 # Close/Far threshold. Baseline times.
 ThDepth: 40
+
+
+# Opencv format
+
+LEFT.height: 1241
+LEFT.width: 376
+LEFT.D: !!opencv-matrix
+   rows: 1
+   cols: 5
+   dt: d
+   data: [0.0, 0.0, 0.0, 0.0, 0.0]
+LEFT.K: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [707.0912, 0.0, 601.8873, 0.0, 707.0912, 183.1104, 0.0, 0.0, 1.0]
+LEFT.R:  !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+LEFT.P:  !!opencv-matrix
+   rows: 3
+   cols: 4
+   dt: d
+   data: [7.070912000000e+02, 0.000000000000e+00, 6.018873000000e+02, 0.000000000000e+00, 0.000000000000e+00, 7.070912000000e+02, 1.831104000000e+02, 0.000000000000e+00, 0.000000000000e+00, 0.000000000000e+00, 1.000000000000e+00, 0.000000000000e+00]
+
+RIGHT.height: 1241
+RIGHT.width: 376
+RIGHT.D: !!opencv-matrix
+   rows: 1
+   cols: 5
+   dt: d
+   data: [0.0, 0.0, 0.0, 0.0, 0.0]
+RIGHT.K: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [707.0912, 0.0, 601.8873, 0.0, 707.0912, 183.1104, 0.0, 0.0, 1.0]
+RIGHT.R:  !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+RIGHT.P:  !!opencv-matrix
+   rows: 3
+   cols: 4
+   dt: d
+   data: [7.070912000000e+02, 0.000000000000e+00, 6.018873000000e+02, -3.798145000000e+02, 0.000000000000e+00, 7.070912000000e+02, 1.831104000000e+02, 0.000000000000e+00, 0.000000000000e+00, 0.000000000000e+00, 1.000000000000e+00, 0.000000000000e+00]
+
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
