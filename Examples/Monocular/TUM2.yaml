@@ -4,6 +4,8 @@
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
 
+Camera.type: "PinHole"
+
 # Camera calibration and distortion parameters (OpenCV) 
 Camera.fx: 520.908620
 Camera.fy: 521.007327
