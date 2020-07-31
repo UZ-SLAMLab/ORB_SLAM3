@@ -268,7 +268,8 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mbInitWith3KFs = false;
 
 
-    //Test Images
+    //Rectification parameters
+    /*mbNeedRectify = false;
     if((mSensor == System::STEREO || mSensor == System::IMU_STEREO) && sCameraName == "PinHole")
     {
         cv::Mat K_l, K_r, P_l, P_r, R_l, R_r, D_l, D_r;
@@ -289,17 +290,28 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
         int rows_r = fSettings["RIGHT.height"];
         int cols_r = fSettings["RIGHT.width"];
 
-        // M1r y M2r son los outputs (igual para l)
-        // M1r y M2r son las matrices relativas al mapeo correspondiente a la rectificación de mapa en el eje X e Y respectivamente
-        cv::initUndistortRectifyMap(K_l,D_l,R_l,P_l.rowRange(0,3).colRange(0,3),cv::Size(cols_l,rows_l),CV_32F,M1l,M2l);
-        cv::initUndistortRectifyMap(K_r,D_r,R_r,P_r.rowRange(0,3).colRange(0,3),cv::Size(cols_r,rows_r),CV_32F,M1r,M2r);
+        if(K_l.empty() || K_r.empty() || P_l.empty() || P_r.empty() || R_l.empty() || R_r.empty() || D_l.empty() || D_r.empty()
+                || rows_l==0 || cols_l==0 || rows_r==0 || cols_r==0)
+        {
+            mbNeedRectify = false;
+        }
+        else
+        {
+            mbNeedRectify = true;
+            // M1r y M2r son los outputs (igual para l)
+            // M1r y M2r son las matrices relativas al mapeo correspondiente a la rectificación de mapa en el eje X e Y respectivamente
+            //cv::initUndistortRectifyMap(K_l,D_l,R_l,P_l.rowRange(0,3).colRange(0,3),cv::Size(cols_l,rows_l),CV_32F,M1l,M2l);
+            //cv::initUndistortRectifyMap(K_r,D_r,R_r,P_r.rowRange(0,3).colRange(0,3),cv::Size(cols_r,rows_r),CV_32F,M1r,M2r);
+        }
+
+
     }
     else
     {
         int cols = 752;
         int rows = 480;
         cv::Mat R_l = cv::Mat::eye(3, 3, CV_32F);
-    }
+    }*/
 
     mnNumDataset = 0;
 
