@@ -4,6 +4,7 @@
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
 Camera.type: "KannalaBrandt8"
+
 # Camera calibration and distortion parameters (OpenCV) 
 Camera.fx: 190.978477 # 190.97847715128717
 Camera.fy: 190.973307 # 190.9733070521226

@@ -155,8 +155,9 @@ public:
 
 
     //TEST--
-    cv::Mat M1l, M2l;
-    cv::Mat M1r, M2r;
+    bool mbNeedRectify;
+    //cv::Mat M1l, M2l;
+    //cv::Mat M1r, M2r;
 
     bool mbWriteStats;
 
