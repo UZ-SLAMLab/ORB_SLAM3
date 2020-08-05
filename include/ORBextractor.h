@@ -21,7 +21,12 @@
 
 #include <vector>
 #include <list>
+
+#ifdef OPENCV4
+#include <opencv2/opencv.hpp>
+#else
 #include <opencv/cv.h>
+#endif
 
 
 namespace ORB_SLAM3

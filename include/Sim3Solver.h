@@ -21,6 +21,9 @@
 #define SIM3SOLVER_H
 
 #include <opencv2/opencv.hpp>
+#ifdef OPENCV4
+#include <opencv2/core/core_c.h>
+#endif
 #include <vector>
 
 #include "KeyFrame.h"

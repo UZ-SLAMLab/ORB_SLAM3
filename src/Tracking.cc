@@ -21,6 +21,9 @@
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
+#ifdef OPENCV4
+#include<opencv2/imgproc/types_c.h>
+#endif
 
 #include"ORBmatcher.h"
 #include"FrameDrawer.h"
