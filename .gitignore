@@ -40,7 +40,7 @@ build/
 
 lib/
 
-cmake_modules/
+
 cmake-build-debug/
 
 *.pyc
