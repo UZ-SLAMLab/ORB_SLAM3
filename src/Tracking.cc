@@ -86,6 +86,11 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
         float K3 = fSettings["Camera.k3"];
         float K4 = fSettings["Camera.k4"];
 
+        std::cout << "K1 = " << K1 << std::endl;
+        std::cout << "K2 = " << K2 << std::endl;
+        std::cout << "K3 = " << K3 << std::endl;
+        std::cout << "K4 = " << K4 << std::endl;
+
         vector<float> vCamCalib{fx,fy,cx,cy,K1,K2,K3,K4};
 
         mpCamera = new KannalaBrandt8(vCamCalib);
@@ -514,7 +519,6 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp,
     {
         if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET)
         {
-            cout << "init extractor" << endl;
             mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mpCamera,mDistCoef,mbf,mThDepth,&mLastFrame,*mpImuCalib);
         }
         else
@@ -942,8 +946,6 @@ void Tracking::Track()
         pCurrentMap->SetLastMapChange(nCurMapChangeIndex);
         mbMapUpdated = true;
     }
-
-    //std::cout << "T2" << std::endl;
 
 
     if(mState==NOT_INITIALIZED)
@@ -1477,6 +1479,7 @@ void Tracking::MonocularInitialization()
         // Set Reference Frame
         if(mCurrentFrame.mvKeys.size()>100)
         {
+
             mInitialFrame = Frame(mCurrentFrame);
             mLastFrame = Frame(mCurrentFrame);
             mvbPrevMatched.resize(mCurrentFrame.mvKeysUn.size());
@@ -2939,7 +2942,7 @@ void Tracking::ResetActiveMap(bool bLocMap)
 
         index++;
     }
-    cout << num_lost << " Frames had been set to lost" << endl;
+    cout << num_lost << " Frames set to lost" << endl;
 
     mlbLost = lbLost;
 
