@@ -1,6 +1,6 @@
 # ORB-SLAM3
 
-### V0.2: Beta version, 21 Jul 2020
+### V0.3: Beta version, 7 Aug 2020
 **Authors:** Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/).
 
 ORB-SLAM3 is the first real-time SLAM library able to perform **Visual, Visual-Inertial and Multi-Map SLAM** with **monocular, stereo and RGB-D** cameras, using **pin-hole and fisheye** lens models. In all sensor configurations, ORB-SLAM3 is as robust as the best systems available in the literature, and significantly more accurate. 
@@ -10,7 +10,7 @@ We provide examples to run ORB-SLAM3 in the [EuRoC dataset](http://projects.asl.
 This software is based on [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) developed by [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2)).
 
 <a href="https://youtu.be/HyLNq-98LRo" target="_blank"><img src="https://img.youtube.com/vi/HyLNq-98LRo/0.jpg" 
-alt="ORB-SLAM2" width="240" height="180" border="10" /></a>
+alt="ORB-SLAM3" width="240" height="180" border="10" /></a>
 
 ### Related Publications:
 
@@ -122,13 +122,23 @@ Execute the following script to process sequences and compute the RMS ATE:
 ./tum_vi_examples
 ```
 
+## Evaluation
+In TUM-VI ground truth is only available in the room where all sequences start and end. As a result the error measures the drift at the end of the sequence. 
+
+Execute the following script to process sequences and compute the RMS ATE:
+```
+./tum_vi_eval_examples
+```
+
 # 6. ROS Examples
 
 ### Building the nodes for mono, mono-inertial, stereo, stereo-inertial and RGB-D
 Tested with ROS Melodic and ubuntu 18.04.
 
 1. Add the path including *Examples/ROS/ORB_SLAM3* to the ROS_PACKAGE_PATH environment variable. Open .bashrc file:
-
+  ```
+  gedit ~/.bashrc
+  ```
 and add at the end the following line. Replace PATH by the folder where you cloned ORB_SLAM3:
 
   ```
@@ -171,13 +181,13 @@ For a stereo input from topics `/camera/left/image_raw` and `/camera/right/image
   ```
   
 ### Running RGB_D Node
-For an RGB-D input from topics `/camera/rgb/image_raw` and `/camera/depth_registered/image_raw`, run node ORB_SLAM2/RGBD. You will need to provide the vocabulary file and a settings file. See the RGB-D example above.
+For an RGB-D input from topics `/camera/rgb/image_raw` and `/camera/depth_registered/image_raw`, run node ORB_SLAM3/RGBD. You will need to provide the vocabulary file and a settings file. See the RGB-D example above.
 
   ```
-  rosrun ORB_SLAM2 RGBD PATH_TO_VOCABULARY PATH_TO_SETTINGS_FILE
+  rosrun ORB_SLAM3 RGBD PATH_TO_VOCABULARY PATH_TO_SETTINGS_FILE
   ```
 
-**Running ROS example**: Download a rosbag (e.g. V1_02_medium.bag) from the EuRoC dataset (http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets). Open 3 tabs on the terminal and run the following command at each tab:
+**Running ROS example:** Download a rosbag (e.g. V1_02_medium.bag) from the EuRoC dataset (http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets). Open 3 tabs on the terminal and run the following command at each tab:
   ```
   roscore
   ```
@@ -192,16 +202,10 @@ For an RGB-D input from topics `/camera/rgb/image_raw` and `/camera/depth_regist
   
 Once ORB-SLAM3 has loaded the vocabulary, press space in the rosbag tab.
 
-**Remark** For TUM-VI rosbags some play issue may appear due to chunk size. One possible solution is to rebag them with the default chunk size, for example:
+**Remark:** For rosbags from TUM-VI dataset, some play issue may appear due to chunk size. One possible solution is to rebag them with the default chunk size, for example:
   ```
   rosrun rosbag fastrebag.py dataset-room1_512_16.bag dataset-room1_512_16_small_chunks.bag
   ```
 
-## Evaluation
-In TUM-VI ground truth is only available in the room where all sequences start and end. As a result the error measures the drift at the end of the sequence. 
 
-Execute the following script to process sequences and compute the RMS ATE:
-```
-./tum_vi_eval_examples
-```
 
