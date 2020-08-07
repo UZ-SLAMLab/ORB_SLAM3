@@ -118,7 +118,6 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
 
 
     N = mvKeys.size();
-    std::cout << "N = " << N << std::endl;
     if(mvKeys.empty())
         return;
 
@@ -336,7 +335,6 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
         invfy = 1.0f/fy;
 
         mbInitialComputations=false;
-        std::cout << mnMaxX << ", " << mnMinX << ", " << mnMaxY << ", " << mnMinY << "\n";
     }
 
 

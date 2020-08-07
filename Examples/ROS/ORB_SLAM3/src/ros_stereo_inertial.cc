@@ -219,9 +219,8 @@ void ImageGrabber::SyncWithImu()
 
       if((tImLeft-tImRight)>maxTimeDiff || (tImRight-tImLeft)>maxTimeDiff)
       {
-        std::cout << "big time difference" << std::endl;
+        // std::cout << "big time difference" << std::endl;
         continue;
-        // std::abort();
       }
       if(tImLeft>mpImuGb->imuBuf.back()->header.stamp.toSec())
           continue;

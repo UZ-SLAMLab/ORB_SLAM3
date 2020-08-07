@@ -672,10 +672,6 @@ void Tracking::PreintegrateIMU()
     mCurrentFrame.mpImuPreintegrated = mpImuPreintegratedFromLastKF;
     mCurrentFrame.mpLastKeyFrame = mpLastKeyFrame;
 
-    if(!mpLastKeyFrame)
-    {
-        cout << "last KF is empty!" << endl;
-    }
     mCurrentFrame.setIntegrated();
 
     Verbose::PrintMess("Preintegration is finished!! ", Verbose::VERBOSITY_DEBUG);
@@ -1376,7 +1372,6 @@ void Tracking::StereoInitialization()
 
             if (cv::norm(mCurrentFrame.mpImuPreintegratedFrame->avgA-mLastFrame.mpImuPreintegratedFrame->avgA)<0.5)
             {
-                cout << cv::norm(mCurrentFrame.mpImuPreintegratedFrame->avgA) << endl;
                 cout << "not enough acceleration" << endl;
                 return;
             }
