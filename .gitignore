@@ -19,9 +19,11 @@ Examples/Stereo-Inertial/stereo_inertial_euroc
 Examples/Stereo-Inertial/stereo_inertial_tum_vi
 
 Examples/ROS/ORB_SLAM3/Mono
+Examples/ROS/ORB_SLAM3/Mono_Inertial
 Examples/ROS/ORB_SLAM3/MonoAR
 Examples/ROS/ORB_SLAM3/RGBD
 Examples/ROS/ORB_SLAM3/Stereo
+Examples/ROS/ORB_SLAM3/Stereo_Inertial
 
 Examples/ROS/ORB_SLAM3/CMakeLists.txt.user
 Examples/ROS/ORB_SLAM3/build/

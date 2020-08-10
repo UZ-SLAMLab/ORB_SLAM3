@@ -118,7 +118,6 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
 
 
     N = mvKeys.size();
-
     if(mvKeys.empty())
         return;
 
@@ -281,11 +280,6 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     // Frame ID
     mnId=nNextId++;
 
-    // imGray(cv::Range(0,175),cv::Range(0,512)) = cv::Mat::zeros(cv::Size(512, 175),CV_8UC1);
-    // imGray(cv::Range(350,512),cv::Range(260,360)) = cv::Mat::zeros(cv::Size(100, 162),CV_8UC1);
-
-    // imGray = imGray(cv::Range(250,512),cv::Range(0,512)).clone();
-
     // Scale Level Info
     mnScaleLevels = mpORBextractorLeft->GetLevels();
     mfScaleFactor = mpORBextractorLeft->GetScaleFactor();
@@ -308,7 +302,6 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
 
 
     N = mvKeys.size();
-
     if(mvKeys.empty())
         return;
 
@@ -343,6 +336,7 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
 
         mbInitialComputations=false;
     }
+
 
     mb = mbf/fx;
 
