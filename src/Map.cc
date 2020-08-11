@@ -489,7 +489,7 @@ void Map::SetLastMapChange(int currentChangeId)
     mnMapChangeNotified = currentChangeId;
 }
 
-void Map::printReprojectionError(list<KeyFrame*> &lpLocalWindowKFs, KeyFrame* mpCurrentKF, string &name, string &name_folder)
+void Map::printReprojectionError(std::list<KeyFrame*> &lpLocalWindowKFs, KeyFrame* mpCurrentKF, string &name, string &name_folder)
 {
     string path_imgs = "./" + name_folder + "/";
     for(KeyFrame* pKFi : lpLocalWindowKFs)
