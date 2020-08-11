@@ -16,16 +16,16 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include<iostream>
-#include<algorithm>
-#include<fstream>
-#include<chrono>
+#include <iostream>
+#include <algorithm>
+#include <fstream>
+#include <chrono>
 #include <ctime>
 #include <sstream>
 
-#include<opencv2/core/core.hpp>
+#include <opencv2/core/core.hpp>
 
-#include<System.h>
+#include <System.h>
 #include "ImuTypes.h"
 
 using namespace std;
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     if (bFileName)
         file_name = string(argv[argc-1]);
 
-    if(argc < 7) 
+    if(argc < 7)
     {
         cerr << endl << "Usage: ./stereo_inertial_tum_vi path_to_vocabulary path_to_settings path_to_image_folder_1 path_to_image_folder_2 path_to_times_file path_to_imu_data (trajectory_file_name)" << endl;
         return 1;
@@ -201,8 +201,10 @@ int main(int argc, char **argv)
             else if(ni>0)
                 T = tframe-vTimestampsCam[seq][ni-1];
 
-            if(ttrack<T)
-                usleep((T-ttrack)*1e6); // 1e6
+            if (ttrack < T) {
+                long usec = static_cast<long>((T - ttrack) * 1e6);
+                std::this_thread::sleep_for(std::chrono::microseconds(usec));
+            }
         }
         if(seq < num_seq - 1)
         {

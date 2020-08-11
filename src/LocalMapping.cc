@@ -251,8 +251,8 @@ void LocalMapping::Run()
             // Safe area to stop
             while(isStopped() && !CheckFinish())
             {
-                // cout << "LM: usleep if is stopped" << endl;
-                usleep(3000);
+                // cout << "LM: sleep if is stopped" << endl;
+                std::this_thread::sleep_for(std::chrono::microseconds(3000));
             }
             if(CheckFinish())
                 break;
@@ -266,8 +266,8 @@ void LocalMapping::Run()
         if(CheckFinish())
             break;
 
-        // cout << "LM: normal usleep" << endl;
-        usleep(3000);
+        // cout << "LM: normal sleep" << endl;
+        std::this_thread::sleep_for(std::chrono::microseconds(3000));
     }
 
     //f_lm.close();
@@ -709,7 +709,7 @@ void LocalMapping::CreateNewMapPoints()
             // Triangulation is succesfull
             MapPoint* pMP = new MapPoint(x3D,mpCurrentKeyFrame,mpAtlas->GetCurrentMap());
 
-            pMP->AddObservation(mpCurrentKeyFrame,idx1);            
+            pMP->AddObservation(mpCurrentKeyFrame,idx1);
             pMP->AddObservation(pKF2,idx2);
 
             mpCurrentKeyFrame->AddMapPoint(pMP,idx1);
@@ -1110,7 +1110,7 @@ void LocalMapping::RequestReset()
             if(!mbResetRequested)
                 break;
         }
-        usleep(3000);
+        std::this_thread::sleep_for(std::chrono::microseconds(3000));
     }
     cout << "LM: Map reset, Done!!!" << endl;
 }
@@ -1132,7 +1132,7 @@ void LocalMapping::RequestResetActiveMap(Map* pMap)
             if(!mbResetRequestedActiveMap)
                 break;
         }
-        usleep(3000);
+        std::this_thread::sleep_for(std::chrono::microseconds(3000));
     }
     cout << "LM: Active map reset, Done!!!" << endl;
 }
@@ -1199,7 +1199,7 @@ bool LocalMapping::CheckFinish()
 void LocalMapping::SetFinish()
 {
     unique_lock<mutex> lock(mMutexFinish);
-    mbFinished = true;    
+    mbFinished = true;
     unique_lock<mutex> lock2(mMutexStop);
     mbStopped = true;
 }

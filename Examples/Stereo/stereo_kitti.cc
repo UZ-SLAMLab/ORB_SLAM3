@@ -16,15 +16,15 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include<iostream>
-#include<algorithm>
-#include<fstream>
-#include<iomanip>
-#include<chrono>
+#include <iostream>
+#include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <chrono>
 
-#include<opencv2/core/core.hpp>
+#include <opencv2/core/core.hpp>
 
-#include<System.h>
+#include <System.h>
 
 using namespace std;
 
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 
     cout << endl << "-------" << endl;
     cout << "Start processing sequence ..." << endl;
-    cout << "Images in the sequence: " << nImages << endl << endl;   
+    cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
     cv::Mat imLeft, imRight;
@@ -100,8 +100,10 @@ int main(int argc, char **argv)
         else if(ni>0)
             T = tframe-vTimestamps[ni-1];
 
-        if(ttrack<T)
-            usleep((T-ttrack)*1e6);
+        if (ttrack < T) {
+            long usec = static_cast<long>((T - ttrack) * 1e6);
+            std::this_thread::sleep_for(std::chrono::microseconds(usec));
+        }
     }
 
     // Stop all threads

@@ -19,21 +19,23 @@
 
 #include "Tracking.h"
 
-#include<opencv2/core/core.hpp>
-#include<opencv2/features2d/features2d.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
 
-#include"ORBmatcher.h"
-#include"FrameDrawer.h"
-#include"Converter.h"
-#include"Initializer.h"
-#include"G2oTypes.h"
-#include"Optimizer.h"
-#include"PnPsolver.h"
+#include "ORBmatcher.h"
+#include "FrameDrawer.h"
+#include "Converter.h"
+#include "Initializer.h"
+#include "G2oTypes.h"
+#include "Optimizer.h"
+#include "PnPsolver.h"
 
-#include<iostream>
+#include <iostream>
 
-#include<mutex>
-#include<chrono>
+#include <mutex>
+#include <chrono>
+#include <thread>
+
 #include <include/CameraModels/Pinhole.h>
 #include <include/CameraModels/KannalaBrandt8.h>
 #include <include/MLPnPsolver.h>
@@ -372,26 +374,26 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
     {
         if(mbRGB)
         {
-            cvtColor(mImGray,mImGray,CV_RGB2GRAY);
-            cvtColor(imGrayRight,imGrayRight,CV_RGB2GRAY);
+            cvtColor(mImGray,mImGray, cv::COLOR_RGB2GRAY);
+            cvtColor(imGrayRight,imGrayRight, cv::COLOR_RGB2GRAY);
         }
         else
         {
-            cvtColor(mImGray,mImGray,CV_BGR2GRAY);
-            cvtColor(imGrayRight,imGrayRight,CV_BGR2GRAY);
+            cvtColor(mImGray,mImGray, cv::COLOR_BGR2GRAY);
+            cvtColor(imGrayRight,imGrayRight, cv::COLOR_BGR2GRAY);
         }
     }
     else if(mImGray.channels()==4)
     {
         if(mbRGB)
         {
-            cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
-            cvtColor(imGrayRight,imGrayRight,CV_RGBA2GRAY);
+            cvtColor(mImGray,mImGray, cv::COLOR_RGBA2GRAY);
+            cvtColor(imGrayRight,imGrayRight, cv::COLOR_RGBA2GRAY);
         }
         else
         {
-            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
-            cvtColor(imGrayRight,imGrayRight,CV_BGRA2GRAY);
+            cvtColor(mImGray,mImGray, cv::COLOR_BGRA2GRAY);
+            cvtColor(imGrayRight,imGrayRight, cv::COLOR_BGRA2GRAY);
         }
     }
 
@@ -442,16 +444,16 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
     if(mImGray.channels()==3)
     {
         if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGB2GRAY);
+            cvtColor(mImGray,mImGray, cv::COLOR_RGB2GRAY);
         else
-            cvtColor(mImGray,mImGray,CV_BGR2GRAY);
+            cvtColor(mImGray,mImGray, cv::COLOR_BGR2GRAY);
     }
     else if(mImGray.channels()==4)
     {
         if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
+            cvtColor(mImGray,mImGray, cv::COLOR_RGBA2GRAY);
         else
-            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
+            cvtColor(mImGray,mImGray, cv::COLOR_BGRA2GRAY);
     }
 
     if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
@@ -496,16 +498,16 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp,
     if(mImGray.channels()==3)
     {
         if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGB2GRAY);
+            cvtColor(mImGray,mImGray, cv::COLOR_RGB2GRAY);
         else
-            cvtColor(mImGray,mImGray,CV_BGR2GRAY);
+            cvtColor(mImGray,mImGray, cv::COLOR_BGR2GRAY);
     }
     else if(mImGray.channels()==4)
     {
         if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
+            cvtColor(mImGray,mImGray, cv::COLOR_RGBA2GRAY);
         else
-            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
+            cvtColor(mImGray,mImGray, cv::COLOR_BGRA2GRAY);
     }
 
     if (mSensor == System::MONOCULAR)
@@ -617,8 +619,9 @@ void Tracking::PreintegrateIMU()
                 bSleep = true;
             }
         }
-        if(bSleep)
-            usleep(500);
+        if (bSleep) {
+            std::this_thread::sleep_for(std::chrono::microseconds(500));
+        }
     }
 
 
@@ -849,8 +852,9 @@ void Tracking::Track()
 
     if (bStepByStep)
     {
-        while(!mbStep)
-            usleep(500);
+        while (!mbStep) {
+            std::this_thread::sleep_for(std::chrono::microseconds(500));
+        }
         mbStep = false;
     }
 
@@ -2805,8 +2809,9 @@ void Tracking::Reset(bool bLocMap)
     if(mpViewer)
     {
         mpViewer->RequestStop();
-        while(!mpViewer->isStopped())
-            usleep(3000);
+        while (!mpViewer->isStopped()) {
+            std::this_thread::sleep_for(std::chrono::microseconds(3000));
+        }
     }
 
     // Reset Local Mapping
@@ -2869,8 +2874,9 @@ void Tracking::ResetActiveMap(bool bLocMap)
     if(mpViewer)
     {
         mpViewer->RequestStop();
-        while(!mpViewer->isStopped())
-            usleep(3000);
+        while (!mpViewer->isStopped()) {
+            std::this_thread::sleep_for(std::chrono::microseconds(3000));
+        }
     }
 
     Map* pMap = mpAtlas->GetCurrentMap();
@@ -3039,7 +3045,7 @@ void Tracking::UpdateFrameIMU(const float s, const IMU::Bias &b, KeyFrame* pCurr
 
     while(!mCurrentFrame.imuIsPreintegrated())
     {
-        usleep(500);
+        std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
 
 

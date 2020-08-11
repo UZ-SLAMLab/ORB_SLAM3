@@ -230,7 +230,7 @@ void LoopClosing::Run()
             break;
         }
 
-        usleep(5000);
+        std::this_thread::sleep_for(std::chrono::microseconds(5000));
     }
 
     //ofstream f_stats;
@@ -1040,7 +1040,7 @@ void LoopClosing::CorrectLoop()
     // Wait until Local Mapping has effectively stopped
     while(!mpLocalMapper->isStopped())
     {
-        usleep(1000);
+        std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
 
     // Ensure current keyframe is updated
@@ -1225,7 +1225,7 @@ void LoopClosing::CorrectLoop()
 
 
     //cout << "Optimize essential graph finished" << endl;
-    //usleep(5*1000*1000);
+    //std::this_thread::sleep_for(std::chrono::microseconds(5*1000*1000));
 
     mpAtlas->InformNewBigChange();
 
@@ -1244,7 +1244,7 @@ void LoopClosing::CorrectLoop()
     }
 
     // Loop closed. Release Local Mapping.
-    mpLocalMapper->Release();    
+    mpLocalMapper->Release();
 
     mLastLoopKFid = mpCurrentKF->mnId; //TODO old varible, it is not use in the new algorithm
 }
@@ -1288,7 +1288,7 @@ void LoopClosing::MergeLocal()
     // Wait until Local Mapping has effectively stopped
     while(!mpLocalMapper->isStopped())
     {
-        usleep(1000);
+      std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
     Verbose::PrintMess("MERGE-VISUAL: Local Map stopped", Verbose::VERBOSITY_DEBUG);
 
@@ -1820,7 +1820,7 @@ void LoopClosing::MergeLocal()
         // Wait until Local Mapping has effectively stopped
         while(!mpLocalMapper->isStopped())
         {
-            usleep(1000);
+            std::this_thread::sleep_for(std::chrono::microseconds(1000));
         }
         Verbose::PrintMess("MERGE-VISUAL: Local Map stopped", Verbose::VERBOSITY_DEBUG);
 
@@ -1903,9 +1903,9 @@ void LoopClosing::printReprojectionError(set<KeyFrame*> &spLocalWindowKFs, KeyFr
     for(KeyFrame* pKFi : spLocalWindowKFs)
     {
         //cout << "KF " << pKFi->mnId << endl;
-        cv::Mat img_i = cv::imread(pKFi->mNameFile, CV_LOAD_IMAGE_UNCHANGED);
+        cv::Mat img_i = cv::imread(pKFi->mNameFile, cv::IMREAD_UNCHANGED);
         //cout << "Image -> " << img_i.cols << ", " << img_i.rows << endl;
-        cv::cvtColor(img_i, img_i, CV_GRAY2BGR);
+        cv::cvtColor(img_i, img_i, cv::COLOR_GRAY2BGR);
         //cout << "Change of color in the image " << endl;
 
         vector<MapPoint*> vpMPs = pKFi->GetMapPointMatches();
@@ -1985,7 +1985,7 @@ void LoopClosing::MergeLocal2()
     // Wait until Local Mapping has effectively stopped
     while(!mpLocalMapper->isStopped())
     {
-        usleep(1000);
+        std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
     cout << "Local Map stopped" << endl;
 
@@ -2373,7 +2373,7 @@ void LoopClosing::RequestReset()
         if(!mbResetRequested)
             break;
         }
-        usleep(5000);
+        std::this_thread::sleep_for(std::chrono::microseconds(5000));
     }
 }
 
@@ -2392,7 +2392,7 @@ void LoopClosing::RequestResetActiveMap(Map *pMap)
             if(!mbResetActiveMapRequested)
                 break;
         }
-        usleep(3000);
+        std::this_thread::sleep_for(std::chrono::microseconds(3000));
     }
 }
 
@@ -2464,7 +2464,7 @@ void LoopClosing::RunGlobalBundleAdjustment(Map* pActiveMap, unsigned long nLoop
 
             while(!mpLocalMapper->isStopped() && !mpLocalMapper->isFinished())
             {
-                usleep(1000);
+                std::this_thread::sleep_for(std::chrono::microseconds(1000));
             }
 
             // Get Map Mutex
@@ -2585,7 +2585,7 @@ void LoopClosing::RunGlobalBundleAdjustment(Map* pActiveMap, unsigned long nLoop
 
                     assert(!pKF->mVwbGBA.empty());
                     pKF->SetVelocity(pKF->mVwbGBA);
-                    pKF->SetNewBias(pKF->mBiasGBA);                    
+                    pKF->SetNewBias(pKF->mBiasGBA);
                 }
 
                 lpKFtoCheck.pop_front();
