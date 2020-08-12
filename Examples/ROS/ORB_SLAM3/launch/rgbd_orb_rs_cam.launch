@@ -1,0 +1,8 @@
+  <launch>
+  <!-- ORB_SLAM3 NODE -->
+    <node name="orb_rgbd_rs" pkg="ORB_SLAM3" type="RGBD" args="$(find ORB_SLAM3)../../../Vocabulary/ORBvoc.bin $(find ORB_SLAM3)/camera_calibration/rs_realsenseD435.yaml">
+        <remap from="tf" to="orb_drone_pose"/>
+    </node>
+
+    <include file="$(find realsense2_camera)/launch/rs_rgbd.launch" />
+  </launch>

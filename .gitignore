@@ -46,3 +46,9 @@ cmake_modules/
 cmake-build-debug/
 
 *.pyc
+
+.catkin_tools/
+.vscode/
+.bin
+devel/
+tools/
