@@ -367,35 +367,27 @@ void MapPoint::ComputeDistinctiveDescriptors()
         return;
 
     // Compute distances between them
-    const size_t N = vDescriptors.size();
-
-    // Allocate two-dimensional array
-    float** Distances = new float*[N];
-    for (size_t i = 0; i < N; ++i)
-    {
-        Distances[i] = new float[N];
-    }
-
+    const std::size_t N = vDescriptors.size();
+    std::vector<std::vector<int>> Distances(N, std::vector<int>(N));
     for(size_t i = 0; i < N; i++)
     {
-        Distances[i][i]=0;
+        Distances[i][i] = 0;
         for(size_t j = i + 1; j < N; j++)
         {
             int distij = ORBmatcher::DescriptorDistance(vDescriptors[i], vDescriptors[j]);
-            Distances[i][j]=distij;
-            Distances[j][i]=distij;
+            Distances[i][j] = distij;
+            Distances[j][i] = distij;
         }
     }
 
     // Take the descriptor with least median distance to the rest
     int BestMedian = INT_MAX;
     int BestIdx = 0;
-    for(size_t i = 0; i < N; i++)
+    for(std::size_t i = 0; i < N; i++)
     {
-        vector<int> vDists(Distances[i], Distances[i] + N);
-        sort(vDists.begin(), vDists.end());
+        std::vector<int>& vDists = Distances[i];
+        std::sort(vDists.begin(), vDists.end());
         int median = vDists[0.5 * (N-1)];
-
         if(median < BestMedian)
         {
             BestMedian = median;
@@ -404,14 +396,9 @@ void MapPoint::ComputeDistinctiveDescriptors()
     }
 
     {
-        unique_lock<mutex> lock(mMutexFeatures);
+        std::unique_lock<std::mutex> lock(mMutexFeatures);
         mDescriptor = vDescriptors[BestIdx].clone();
     }
-
-    // cleanup Distances
-    for (size_t i = 0; i < N; i++)
-        delete Distances[i];
-    delete Distances;
 }
 
 cv::Mat MapPoint::GetDescriptor()
