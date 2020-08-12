@@ -51,4 +51,5 @@ cmake-build-debug/
 .catkin_tools/
 .vscode/
 devel/
+tools/bin_vocabulary
 logs/
