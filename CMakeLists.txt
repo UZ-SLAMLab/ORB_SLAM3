@@ -75,7 +75,13 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 set(ORB_SLAM3_LIB_TYPE SHARED)
 IF(WIN32)
-  SET(ORB_SLAM3_LIB_TYPE STATIC)
+  # uncomment only one of the lines below:
+  # because there is no DLL API in the code,
+  # we either have to build STATIC libraries, 
+  set(ORB_SLAM3_LIB_TYPE STATIC)
+  # or we have to export all symbols from all SHARED libraries
+  #set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+  # Note that the ideal solution would be to add an export API to the relevant classes.
 ENDIF(WIN32)
 
 add_library(${PROJECT_NAME} ${ORB_SLAM3_LIB_TYPE}
@@ -149,9 +155,6 @@ target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${OPENSSL_CRYPTO_LIBRARY}
 )
-# No need to hardcode the names, these are defined as targets
-#${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-#${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 
 
 # Build examples
