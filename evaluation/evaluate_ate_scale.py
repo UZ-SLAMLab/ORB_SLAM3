@@ -135,7 +135,7 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(description='''
     This script computes the absolute trajectory error from the ground truth trajectory and the estimated trajectory. 
     ''')
-    parser.add_argument('first_file', help='ground truth trajectory (format: timestamp tx ty tz qx qy qz qw)')
+    parser.add_argument('first_file', help='ground truth trajectory (format: timestamp tx ty tz qw qx qy qz)')
     parser.add_argument('second_file', help='estimated trajectory (format: timestamp tx ty tz qx qy qz qw)')
     parser.add_argument('--offset', help='time offset added to the timestamps of the second file (default: 0.0)',default=0.0)
     parser.add_argument('--scale', help='scaling factor for the second trajectory (default: 1.0)',default=1.0)
