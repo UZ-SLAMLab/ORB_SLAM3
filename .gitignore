@@ -38,6 +38,7 @@ Thirdparty/g2o/build/
 Thirdparty/g2o/config.h
 Thirdparty/g2o/lib/
 Vocabulary/ORBvoc.txt
+Vocabulary/ORBvoc.bin
 build/
 
 lib/
@@ -46,3 +47,9 @@ cmake_modules/
 cmake-build-debug/
 
 *.pyc
+
+.catkin_tools/
+.vscode/
+devel/
+tools/bin_vocabulary
+logs/
