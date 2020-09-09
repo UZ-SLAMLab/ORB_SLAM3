@@ -23,7 +23,9 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
+#if not defined(__APPLE__)
 #include <openssl/md5.h>
+#endif
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -198,7 +200,10 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     if(bUseViewer)
     {
         mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
+    // OSX only support running the viewer on main thread.
+    #if not defined(__APPLE__)
         mptViewer = new thread(&Viewer::Run, mpViewer);
+    #endif
         mpTracker->SetViewer(mpViewer);
         mpLoopCloser->mpViewer = mpViewer;
         mpViewer->both = mpFrameDrawer->both;
@@ -406,7 +411,11 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const
     return Tcw;
 }
 
-
+void System::StartViewer()
+{
+    if (mpViewer)
+        mpViewer->Run();
+}
 
 void System::ActivateLocalizationMode()
 {
@@ -445,16 +454,22 @@ void System::ResetActiveMap()
     mbResetActiveMap = true;
 }
 
-void System::Shutdown()
+void System::StopViewer()
 {
-    mpLocalMapper->RequestFinish();
-    mpLoopCloser->RequestFinish();
     if(mpViewer)
     {
         mpViewer->RequestFinish();
         while(!mpViewer->isFinished())
             usleep(5000);
     }
+
+}
+
+void System::Shutdown()
+{
+    mpLocalMapper->RequestFinish();
+    mpLoopCloser->RequestFinish();
+    StopViewer();
 
     // Wait until all thread have effectively stopped
     while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
