@@ -39,8 +39,11 @@ Tlr: !!opencv-matrix
             -0.000656143613644,  -0.046896036240590,   0.998899560146304,   0.001015350132563]
 
 # Lapping area between images
-Lapping.left: 0
-Lapping.right: 511
+Camera.lappingBegin: 0
+Camera.lappingEnd: 511
+
+Camera2.lappingBegin: 0
+Camera2.lappingEnd: 511
 
 # Camera resolution
 Camera.width: 512
@@ -53,7 +56,7 @@ Camera.fps: 20.0
 Camera.RGB: 1
 
 # Close/Far threshold. Baseline times.
-ThDepth: 40
+ThDepth: 40.0
 Camera.bf: 19.3079
 
 

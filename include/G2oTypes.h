@@ -676,9 +676,9 @@ public:
     virtual bool write(std::ostream& os) const{return false;}
 
     void computeError(){
-        const VertexGyroBias* VG1= static_cast<const VertexGyroBias*>(_vertices[0]);
-        const VertexGyroBias* VG2= static_cast<const VertexGyroBias*>(_vertices[1]);
-        _error = VG2->estimate()-VG1->estimate();
+        const VertexAccBias* VA1= static_cast<const VertexAccBias*>(_vertices[0]);
+        const VertexAccBias* VA2= static_cast<const VertexAccBias*>(_vertices[1]);
+        _error = VA2->estimate()-VA1->estimate();
     }
 
     virtual void linearizeOplus(){
