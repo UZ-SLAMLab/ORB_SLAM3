@@ -26,7 +26,13 @@
 
 #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
 
+
+#if defined(__APPLE__)
+#include<stdint.h>
+#else
 #include<stdint-gcc.h>
+#endif
+
 
 using namespace std;
 
