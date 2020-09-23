@@ -154,6 +154,8 @@ int main(int argc, char **argv)
 void ImageGrabber::GrabImageLeft(const sensor_msgs::ImageConstPtr &img_msg)
 {
   mBufMutexLeft.lock();
+  if (!imgLeftBuf.empty())
+    imgLeftBuf.pop();
   imgLeftBuf.push(img_msg);
   mBufMutexLeft.unlock();
 }
@@ -161,6 +163,8 @@ void ImageGrabber::GrabImageLeft(const sensor_msgs::ImageConstPtr &img_msg)
 void ImageGrabber::GrabImageRight(const sensor_msgs::ImageConstPtr &img_msg)
 {
   mBufMutexRight.lock();
+  if (!imgRightBuf.empty())
+    imgRightBuf.pop();
   imgRightBuf.push(img_msg);
   mBufMutexRight.unlock();
 }

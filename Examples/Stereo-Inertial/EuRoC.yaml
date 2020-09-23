@@ -29,7 +29,7 @@ Camera.bf: 47.90639384423901
 Camera.RGB: 1
 
 # Close/Far threshold. Baseline times.
-ThDepth: 35 # 35
+ThDepth: 35.0 # 35
 
 # Transformation from camera 0 to body-frame (imu)
 Tbc: !!opencv-matrix
