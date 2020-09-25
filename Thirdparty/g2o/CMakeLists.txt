@@ -3,6 +3,8 @@ SET(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
 PROJECT(g2o)
 
+SET(G2O_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
+
 SET(G2O_C_FLAGS)
 SET(G2O_CXX_FLAGS)
 
@@ -44,23 +46,23 @@ LIST(APPEND CMAKE_MODULE_PATH ${G2O_SOURCE_DIR}/cmake_modules)
 # Detect OS and define macros appropriately
 if(WIN32)
   add_definitions(-DWINDOWS)
-  message(STATUS "Compiling on Windows")
+  message(STATUS "Compiling g2o on Windows")
 elseif(CYGWIN)
-  message(STATUS "Compiling on Cygwin")
+  message(STATUS "Compiling g2o on Cygwin")
   add_definitions(-DCYGWIN)
 elseif(APPLE)
   add_definitions(-DUNIX)
-  message(STATUS "Compiling on OSX")
+  message(STATUS "Compiling g2o on OSX")
 elseif(UNIX)
   add_definitions(-DUNIX)
-  message(STATUS "Compiling on Unix")
+  message(STATUS "Compiling g2o on Unix")
 endif(WIN32)
 
 # detect Android Cross Compiler
 # based on android-cmake which sets the variable ANDROID for us
 if(ANDROID)
   add_definitions(-DANDROID)
-  message(STATUS "Cross compiling for Android")
+  message(STATUS "Cross compiling g2o for Android")
 endif()
 
 # Eigen library parallelise itself, though, presumably due to performance issues
