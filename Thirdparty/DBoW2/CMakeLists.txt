@@ -58,7 +58,6 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(DBoW2 ${OpenCV_LIBS})
 
 # add Boost
-find_package(Boost REQUIRED
-  COMPONENTS filesystem system serialization)
+find_package(Boost REQUIRED COMPONENTS serialization)
 MESSAGE(STATUS "Boost_LIBRARIES: ${Boost_LIBRARIES}")
 target_link_libraries(DBoW2 ${Boost_LIBRARIES})

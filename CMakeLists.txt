@@ -53,7 +53,7 @@ find_package(Eigen3 3.1.0 REQUIRED)
 
 find_package(Pangolin REQUIRED)
 
-find_package(Boost REQUIRED COMPONENTS filesystem system serialization)
+find_package(Boost REQUIRED COMPONENTS serialization)
 MESSAGE(STATUS "Boost_LIBRARIES: ${Boost_LIBRARIES}")
 
 set(OPENSSL_USE_STATIC_LIBS TRUE)
