@@ -26,9 +26,6 @@
 #include <stdlib.h>
 #include <string>
 #include <thread>
-#ifndef WIN32
-  #include <unistd.h>
-#endif
 
 #include <opencv2/core/core.hpp>
 

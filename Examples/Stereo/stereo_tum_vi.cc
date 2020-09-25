@@ -22,9 +22,6 @@
 #include <fstream>
 #include <iomanip>
 #include <chrono>
-#ifndef WIN32
-  #include <unistd.h>
-#endif
 
 #include <opencv2/core/core.hpp>
 
