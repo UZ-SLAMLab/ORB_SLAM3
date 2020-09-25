@@ -127,7 +127,13 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     if(bUseViewer)
     {
         mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
+
+#ifndef __APPLE__    
         mptViewer = new thread(&Viewer::Run, mpViewer);
+#else
+        cout << "MacOS *** Terminating app due to uncaught exception 'NSInternalInconsistencyException', reason: 'nextEventMatchingMask should only be called from the Main Thread!', System class RunViewer method to Main.\n"<< endl;   
+#endif
+
         mpTracker->SetViewer(mpViewer);
         mpLoopCloser->mpViewer = mpViewer;
         mpViewer->both = mpFrameDrawer->both;
@@ -764,6 +770,8 @@ void System::ChangeDataset()
 
 #ifdef REGISTER_TIMES
 void System::InsertRectTime(double& time)
+
+bool System::LoadAtlas(string filename, int type)
 {
     mpTracker->vdRectStereo_ms.push_back(time);
 }
@@ -773,6 +781,30 @@ void System::InsertTrackTime(double& time)
     mpTracker->vdTrackTotal_ms.push_back(time);
 }
 #endif
+void System::RunViewer()
+{
+    if(mpViewer)
+        mpViewer->Run();
+}
+
+void System::CreatePanelToViewer()
+{
+    if(mpViewer)
+        mpViewer->CreatePanel();
+}
+
+bool System::RefreshViewerWithCheckFinish()
+{
+    if(mpViewer)
+       return mpViewer->RefreshWithCheckFinish();
+    return false;   
+}
+
+void System::SetViewerFinish()
+{
+    if(mpViewer)
+        mpViewer->SetFinish();
+}
 
 
 } //namespace ORB_SLAM

@@ -194,3 +194,13 @@ add_executable(stereo_inertial_tum_vi
 Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
 target_link_libraries(stereo_inertial_tum_vi ${PROJECT_NAME})
 
+
+# AR DEMO:
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/AR)
+
+add_executable(mono_ar
+Examples/AR/mono_ar.cc
+Examples/AR/ViewerAR.cc
+)
+target_link_libraries(mono_ar ${PROJECT_NAME})

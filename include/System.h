@@ -175,6 +175,11 @@ public:
 
 #ifdef REGISTER_TIMES
     void InsertRectTime(double& time);
+    void RunViewer();
+    void CreatePanelToViewer();
+    bool RefreshViewerWithCheckFinish();
+    void SetViewerFinish();
+    //void SaveAtlas(int type);
 
     void InsertTrackTime(double& time);
 #endif
