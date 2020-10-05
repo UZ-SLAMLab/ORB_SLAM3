@@ -36,7 +36,7 @@ using namespace std;
 
 ORB_SLAM3::ViewerAR viewerAR;
 bool bRGB = true;
-bool bARMode = true;
+bool bARMode = false;
 
 cv::Mat K;
 cv::Mat DistCoef;
@@ -51,6 +51,16 @@ public:
 
     ORB_SLAM3::System* mpSLAM;
 };
+
+bool isNumber(char a) {
+	if (a - '0' == 0 || a - '0' == 1 || a - '0' == 2 || a - '0' == 3 ||
+		a - '0' == 4 || a - '0' == 5 || a - '0' == 6 || a - '0' == 7 ||
+		a - '0' == 8 || a - '0' == 9)
+		return true;
+ 
+	return false;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -142,20 +152,30 @@ int main(int argc, char **argv)
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     ImageGrabber igb(&SLAM);
+   
+    cv::VideoCapture *cap; //camera
+    if(isNumber(argv[1][0]))
+    {
+        cap = new cv::VideoCapture(std::atoi(argv[1]));
+    }
+    else
+    {
+        cap = new cv::VideoCapture(argv[1]);
+    }
     
-    cv::VideoCapture cap(argv[1]); //camera
+    const double FPS = cap->get(CV_CAP_PROP_FPS);
     cv::Mat im;
     double tframe = 0;
     while (1)
     {
-        if(!cap.read(im))
+        if(!cap->read(im))
         {
             cerr << "read error end!" << endl;
             main_error = 1;
             break;
         }
     
-        tframe = 1 / cap.get(CV_CAP_PROP_FPS);
+        tframe = 1 / FPS;
         igb.GrabImage(im, tframe);
         
         if(bARMode)
@@ -173,6 +193,8 @@ int main(int argc, char **argv)
             }
         }
     }
+    cap->release();
+    delete cap;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Case2 end
@@ -192,14 +214,22 @@ int processing(char **argv, ORB_SLAM3::System *slamPtr)
 {  
     ImageGrabber igb(slamPtr);
     
-    cv::VideoCapture cap(argv[1]); //camera
+    cv::VideoCapture *cap; //camera
+    if(isNumber(argv[1][0]))
+    {
+        cap = new cv::VideoCapture(std::atoi(argv[1]));
+    }
+    else
+    {
+        cap = new cv::VideoCapture(argv[1]);
+    }
     cv::Mat im;
     double tframe = 0;
     int main_error = 0;
-    const double FPS = cap.get(CV_CAP_PROP_FPS);
+    const double FPS = cap->get(CV_CAP_PROP_FPS);
     while (1)
     {
-        if(!cap.read(im))
+        if(!cap->read(im))
         {
             cerr << "read error end!" << endl;
             main_error = 1;
@@ -209,6 +239,8 @@ int processing(char **argv, ORB_SLAM3::System *slamPtr)
         tframe = 1 / FPS;
         igb.GrabImage(im, tframe);
     }
+    cap->release();
+    delete cap;
 
     cout << "processing...\n" <<endl;
     return main_error;
