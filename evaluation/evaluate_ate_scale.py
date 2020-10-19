@@ -161,7 +161,7 @@ if __name__=="__main__":
     second_xyz_full = numpy.matrix([[float(value)*float(args.scale) for value in sorted_second_list[i][1][0:3]] for i in range(len(sorted_second_list))]).transpose() # sorted_second_list.keys()]).transpose()
     rot,transGT,trans_errorGT,trans,trans_error, scale = align(second_xyz,first_xyz)
     
-    second_xyz_aligned = scale * rot * second_xyz + trans
+    second_xyz_aligned = scale * rot * second_xyz + transGT
     second_xyz_notscaled = rot * second_xyz + trans
     second_xyz_notscaled_full = rot * second_xyz_full + trans
     first_stamps = first_list.keys()
@@ -171,7 +171,7 @@ if __name__=="__main__":
     second_stamps = second_list.keys()
     second_stamps.sort()
     second_xyz_full = numpy.matrix([[float(value)*float(args.scale) for value in second_list[b][0:3]] for b in second_stamps]).transpose()
-    second_xyz_full_aligned = scale * rot * second_xyz_full + trans
+    second_xyz_full_aligned = scale * rot * second_xyz_full + transGT
     
     if args.verbose:
         print "compared_pose_pairs %d pairs"%(len(trans_error))
