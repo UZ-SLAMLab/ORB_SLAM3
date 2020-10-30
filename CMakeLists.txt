@@ -126,6 +126,12 @@ target_link_libraries(${PROJECT_NAME}
                       boost_serialization
                       crypto)
 
+# Extract vocabular file
+execute_process(COMMAND
+  ${CMAKE_COMMAND} -E
+  tar -xvzf ${PROJECT_SOURCE_DIR}/Vocabulary/ORBvoc.txt.tar.gz
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Vocabulary/
+)
 
 # Build examples
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
