@@ -289,6 +289,8 @@ void Viewer::Run()
         if(menuShowPoints)
             mpMapDrawer->DrawMapPoints();
 
+        pangolin::glDrawAxis(5.0);
+
         pangolin::FinishFrame();
 
         cv::Mat toShow;
