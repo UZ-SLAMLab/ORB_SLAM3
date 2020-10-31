@@ -179,6 +179,8 @@ public:
 
     //void SaveAtlas(int type);
 
+    cv::Mat GetCurrentFrame();
+
 private:
 
     //bool LoadAtlas(string filename, int type);
