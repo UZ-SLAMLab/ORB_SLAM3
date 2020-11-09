@@ -119,7 +119,7 @@ rosrun usb_cam usb_cam_node
 ```
 or 
 ```
-osparam set cv_camera/device_id 0
+rosparam set cv_camera/device_id 0
 rosrun cv_camera cv_camera_node
 ```
 update mono.cc code accordingly
