@@ -8,24 +8,25 @@
 #include <memory>
 #include "Definitions.h"
 
-namespace PnP {
-    class PnpInput {
+namespace PnP
+{
+	class PnpInput
+	{
 
-    public:
-        std::vector<Eigen::Vector3d> points;
-        std::vector<Eigen::Vector3d> lines;
-        std::vector<double> weights;
-        std::vector<int> indices;
-        int indices_amount;
-        int points_amount;
+	 public:
+		std::vector<Eigen::Vector3d> points;
+		std::vector<Eigen::Vector3d> lines;
+		std::vector<double> weights;
+		std::vector<int> indices;
+		int indices_amount;
 
-        PnpInput(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> lines,
-                 std::vector<double> weights, std::vector<int> indices, int indices_amount, int points_amount);
+		PnpInput(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> lines,
+			std::vector<double> weights, std::vector<int> indices, int indices_amount);
 
-        static std::shared_ptr<PnpInput> parse_input(int argc, char **pString);
+		static std::shared_ptr<PnpInput> parse_input(int argc, char** pString);
 
-        static std::shared_ptr<PnpInput> init(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> lines,
-             std::vector<double> weights, std::vector<int> indices);
-    };
+		static std::shared_ptr<PnpInput> init(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> lines,
+			std::vector<double> weights, std::vector<int> indices);
+	};
 }
 #endif //PNP_USING_EIGEN_LIBRARY_PNPINPUT_H
