@@ -1,0 +1,19 @@
+3D Reconstruction - Log File:
+#############################
+
+Barcode: None
+Number of images: 75
+Number of 3D points: 4780
+
+Running Time:
+#############
+feature extraction [sec]: 45.4801852703
+feature matching   [sec]: 0.7175598145
+2d points to lines [sec]: 0.4808866978
+match verification [sec]: 2.9018192291
+line triangulation [sec]: 3.5028572083
+bundle adjustment  [sec]: 0.0962662697
+points merging     [sec]: 71.2893388271
+data formatting    [sec]: 0.0927097797
+map visualization  [sec]: 26.6939139366
+Total Run Time     [sec]: 151.2555370331
