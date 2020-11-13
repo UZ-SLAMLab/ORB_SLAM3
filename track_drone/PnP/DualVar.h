@@ -67,7 +67,7 @@ namespace PnP
 		Eigen::Vector4d extract_quaternions();
 
 		std::optional<std::tuple<Eigen::Matrix3d, Eigen::Vector3d, double>>
-		convert_to_rotation_translation_cost(std::shared_ptr<PnpObjective>, std::shared_ptr<BarrierMethodSettings>);
+		convert_to_rotation_translation_cost(const std::shared_ptr<PnpObjective>&, const std::shared_ptr<BarrierMethodSettings>&);
 
 	};
 }

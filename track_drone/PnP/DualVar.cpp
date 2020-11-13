@@ -12,8 +12,8 @@
 namespace PnP
 {
 	std::optional<std::tuple<Eigen::Matrix3d, Eigen::Vector3d, double>>
-	DualVar::convert_to_rotation_translation_cost(std::shared_ptr<PnpObjective> objective,
-		std::shared_ptr<BarrierMethodSettings> settings)
+	DualVar::convert_to_rotation_translation_cost(const std::shared_ptr<PnpObjective>& objective,
+		const std::shared_ptr<BarrierMethodSettings>& settings)
 	{
 		auto& M = objective->M;
 		auto& T = objective->T;
@@ -145,7 +145,7 @@ namespace PnP
 			.noalias() =
 			matrix_15_15_inv_vec * matrix_15_15_inv_vec.transpose();
 
-		auto cop = hessian_helper_mat.eval();
+//		auto cop = hessian_helper_mat.eval();
 
 		for (int i = 0; i < M_MATRIX_DIM; i++)
 			for (int j = 0; j < M_MATRIX_DIM; j++)

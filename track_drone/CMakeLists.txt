@@ -7,6 +7,9 @@ set(sample_dir ${CMAKE_CURRENT_SOURCE_DIR}/)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ltbb -D__STDC_CONSTANT_MACROS")
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
+
 find_package(OpenCV 3.2.0 REQUIRED)
 find_package(Eigen3 3.1.0 REQUIRED)
 
