@@ -102,6 +102,7 @@ def associate(first_list, second_list,offset,max_difference):
     matches.sort()
     return matches
 
+
 if __name__ == '__main__':
     
     # parse command line
@@ -126,5 +127,3 @@ if __name__ == '__main__':
     else:
         for a,b in matches:
             print("%f %s %f %s"%(a," ".join(first_list[a]),b-float(args.offset)," ".join(second_list[b])))
-            
-        
