@@ -46,7 +46,7 @@ import argparse
 import matplotlib
 import matplotlib.pyplot as plt
 
-from . import associate
+import associate
 
 matplotlib.use('Agg')
 
@@ -166,7 +166,10 @@ if __name__ == "__main__":
     matches = associate.associate(first_list, second_list, float(args.offset), float(args.max_difference))
     if len(matches) < 2:
         sys.exit(
-            "Couldn't find matching timestamp pairs between groundtruth and estimated trajectory! Did you choose the correct sequence?")
+            "Couldn't find matching timestamp pairs between groundtruth and estimated trajectory! Did you choose the correct sequence?"
+        )
+
+
     first_xyz = numpy.matrix([[float(value) for value in first_list[a][0:3]] for a, b in matches]).transpose()
     second_xyz = numpy.matrix(
         [[float(value) * float(args.scale) for value in second_list[b][0:3]] for a, b in matches]).transpose()
@@ -181,11 +184,12 @@ if __name__ == "__main__":
     second_xyz_aligned = scale * rot * second_xyz + trans
     second_xyz_notscaled = rot * second_xyz + trans
     second_xyz_notscaled_full = rot * second_xyz_full + trans
-    first_stamps = first_list.keys()
+
+    first_stamps = list(first_list.keys())
     first_stamps.sort()
     first_xyz_full = numpy.matrix([[float(value) for value in first_list[b][0:3]] for b in first_stamps]).transpose()
 
-    second_stamps = second_list.keys()
+    second_stamps = list(second_list.keys())
     second_stamps.sort()
     second_xyz_full = numpy.matrix(
         [[float(value) * float(args.scale) for value in second_list[b][0:3]] for b in second_stamps]).transpose()
