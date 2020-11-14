@@ -127,3 +127,26 @@ run example:
 ```
 rosrun ORB_SLAM3 Mono /home/george/Documents/ORB_SLAM3_custom/Vocabulary/ORBvoc.txt /home/george/Documents/ORB_SLAM3_custom/Examples/ROS/ORB_SLAM3/Asus.yaml
 ```
+
+
+# run evaluation
+evaluation script is written in python therefore recent python install and some packages are required
+assuming python3 (any version will go) run following commands:
+ - install virtual environment:
+ ```shell script
+sudo apt-get install python3-pip
+pip3 install virtualenv
+python3 -m venv orb_slam3
+source orb_slam3/bin/activate
+pip3 install -r requirements.txt
+```
+- download test dataset, for example `http://vision.in.tum.de/tumvi/exported/euroc/512_16/dataset-magistrale1_512_16.tar`
+- edit 'tum_vi_eval_examples.sh` with correct path to said dataset, don't forget to untar it first.
+- compile `stereo_inertial_tum_vi`
+- run the script `tum_vi_eval_examples.sh`
+
+`tum_vi_eval_examples.sh` script will run 2 commands, first will run compiled executable on input dataset
+and second will compare results with "truth". results will be accessible in a pdf file.
+```shell script
+python evaluation/evaluate_ate_scale.py /home/${USER}/Documents/datasets/dataset-room1_512_16/mav0/mocap0/data.csv  f_dataset-room1_512_mono.txt --plot  f_dataset-room1_512_mono.pdf
+```
