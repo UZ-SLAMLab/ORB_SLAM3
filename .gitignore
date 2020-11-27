@@ -44,6 +44,8 @@ lib/
 
 cmake_modules/
 cmake-build-debug/
-
+.clangd/
+out/
 *.pyc
 *.osa
+/compile_commands.json

@@ -35,6 +35,9 @@
 
 namespace ORB_SLAM3
 {
+void usleep(int us_sec){
+    std::this_thread::sleep_for(std::chrono::microseconds(us_sec));
+}
 
 Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
 
