@@ -1,40 +1,46 @@
-cmake_minimum_required(VERSION 2.8)
-project(DBoW2)
+cmake_minimum_required(VERSION 3.18)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall  -O3 -march=native")
+project(DBoW2 VERSION 2.0.0)
 
-set(HDRS_DBOW2
-  DBoW2/BowVector.h
-  DBoW2/FORB.h 
-  DBoW2/FClass.h       
-  DBoW2/FeatureVector.h
-  DBoW2/ScoringObject.h   
-  DBoW2/TemplatedVocabulary.h)
 set(SRCS_DBOW2
   DBoW2/BowVector.cpp
   DBoW2/FORB.cpp      
   DBoW2/FeatureVector.cpp
   DBoW2/ScoringObject.cpp)
 
-set(HDRS_DUTILS
-  DUtils/Random.h
-  DUtils/Timestamp.h)
 set(SRCS_DUTILS
   DUtils/Random.cpp
   DUtils/Timestamp.cpp)
 
-find_package(OpenCV 3.0 QUIET)
-if(NOT OpenCV_FOUND)
-   find_package(OpenCV 2.4.3 QUIET)
-   if(NOT OpenCV_FOUND)
-      message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
-   endif()
-endif()
+find_package(OpenCV CONFIG REQUIRED)
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+add_library(${PROJECT_NAME} STATIC)
 
-include_directories(${OpenCV_INCLUDE_DIRS})
-add_library(DBoW2 SHARED ${SRCS_DBOW2} ${SRCS_DUTILS})
-target_link_libraries(DBoW2 ${OpenCV_LIBS})
+add_library(${CMAKE_PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
+target_sources(${PROJECT_NAME} 
+               PRIVATE 
+               ${SRCS_DBOW2} 
+               ${SRCS_DUTILS})
+
+target_include_directories(${PROJECT_NAME} 
+                           PUBLIC
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/DBoW2/DBoW2>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/DBoW2/DUtils>
+                           $<INSTALL_INTERFACE:include/>
+                           $<INSTALL_INTERFACE:include/ThirdParty/DBoW2/DBoW2>
+                           $<INSTALL_INTERFACE:include/ThirdParty/DBoW2/DUtils>
+                           ${OpenCV_INCLUDE_DIRS})
+
+target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenCV_LIBS})
+
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+
+install(DIRECTORY DBoW2
+        DESTINATION include/ThirdParty/DBoW2/
+        FILES_MATCHING PATTERN "*.h")
+
+install(DIRECTORY DUtils
+        DESTINATION include/ThirdParty/DBoW2/
+        FILES_MATCHING PATTERN "*.h")
