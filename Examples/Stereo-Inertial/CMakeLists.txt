@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.18)
+
+project(ORB_SLAM3_Stereo_Inertial)
+
+add_executable(stereo_inertial_euroc stereo_inertial_euroc.cc)
+target_link_libraries(stereo_inertial_euroc PRIVATE ORB_SLAM3::ORB_SLAM3)
+
+
+add_executable(stereo_inertial_tum_vi stereo_inertial_tum_vi.cc)
+target_link_libraries(stereo_inertial_tum_vi PRIVATE ORB_SLAM3::ORB_SLAM3)
