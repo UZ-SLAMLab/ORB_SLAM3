@@ -21,6 +21,12 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#if (CV_MAJOR_VERSION > 3)
+#include <opencv2/imgproc/types_c.h>
+#include <opencv2/opencv.hpp>
+using namespace cv;
+#endif
+
 
 #include<mutex>
 

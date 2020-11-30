@@ -22,6 +22,11 @@
 #include <vector>
 #include <cmath>
 #include <opencv2/core/core.hpp>
+#if (CV_MAJOR_VERSION > 3)
+#include <opencv2/core.hpp>
+#define CV_REDUCE_SUM cv::REDUCE_SUM
+#endif
+
 
 #include "KeyFrame.h"
 #include "ORBmatcher.h"

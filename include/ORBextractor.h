@@ -21,7 +21,11 @@
 
 #include <vector>
 #include <list>
+#if (CV_MAJOR_VERSION > 3)
+#include <opencv2/opencv.hpp>
+#else
 #include <opencv/cv.h>
+#endif
 
 
 namespace ORB_SLAM3
