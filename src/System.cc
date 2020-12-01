@@ -21,7 +21,6 @@
 #include "System.h"
 #include "Converter.h"
 #include <thread>
-#include <pangolin/pangolin.h>
 #include <iomanip>
 #include <openssl/md5.h>
 #include <boost/serialization/base_object.hpp>
@@ -167,13 +166,13 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         mpAtlas->SetInertialSensor();
 
     //Create Drawers. These are used by the Viewer
-    mpFrameDrawer = new FrameDrawer(mpAtlas);
-    mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile);
+	//mpFrameDrawer = new FrameDrawer(mpAtlas);
+    //mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile);
 
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
     cout << "Seq. Name: " << strSequence << endl;
-    mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
+    mpTracker = new Tracking(this, mpVocabulary,NULL,NULL,
                              mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, strSequence);
 
     //Initialize the Local Mapping thread and launch
@@ -194,6 +193,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR); // mSensor!=MONOCULAR);
     mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
+#if 0 // Remove pangolin
     //Initialize the Viewer thread and launch
     if(bUseViewer)
     {
@@ -203,6 +203,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         mpLoopCloser->mpViewer = mpViewer;
         mpViewer->both = mpFrameDrawer->both;
     }
+#endif
 
     //Set pointers between threads
     mpTracker->SetLocalMapper(mpLocalMapper);
@@ -449,12 +450,14 @@ void System::Shutdown()
 {
     mpLocalMapper->RequestFinish();
     mpLoopCloser->RequestFinish();
+#if 0
     if(mpViewer)
     {
         mpViewer->RequestFinish();
         while(!mpViewer->isFinished())
             usleep(5000);
     }
+#endif
 
     // Wait until all thread have effectively stopped
     while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
@@ -471,8 +474,10 @@ void System::Shutdown()
         usleep(5000);
     }
 
+#if 0
     if(mpViewer)
         pangolin::BindToContext("ORB-SLAM2: Map Viewer");
+#endif
 }
 
 

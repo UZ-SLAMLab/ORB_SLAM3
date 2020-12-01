@@ -34,7 +34,7 @@
 #include"KeyFrameDatabase.h"
 #include"ORBextractor.h"
 #include "Initializer.h"
-#include "MapDrawer.h"
+//#include "MapDrawer.h"
 #include "System.h"
 #include "ImuTypes.h"
 
@@ -47,6 +47,7 @@ namespace ORB_SLAM3
 {
 
 class Viewer;
+class MapDrawer;
 class FrameDrawer;
 class Atlas;
 class LocalMapping;
