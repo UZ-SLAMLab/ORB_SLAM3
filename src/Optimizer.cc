@@ -2154,8 +2154,8 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
 
         return;
         bRedrawError = true;
-        string folder_name = "test_LBA";
-        string name = "_PreLM_LBA";
+        std::string folder_name = "test_LBA";
+        std::string name = "_PreLM_LBA";
         name = "_PreLM_LBA_Fixed";
 
     }
@@ -2288,8 +2288,8 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
 
     if(bRedrawError)
     {
-        string folder_name = "test_LBA";
-        string name = "_PostLM_LBA";
+        std::string folder_name = "test_LBA";
+        std::string name = "_PostLM_LBA";
         //pMap->printReprojectionError(lLocalKeyFrames, pKF, name, folder_name);
         name = "_PostLM_LBA_Fixed";
         //pMap->printReprojectionError(lFixedCameras, pKF, name, folder_name);
@@ -2971,7 +2971,7 @@ void Optimizer::OptimizeEssentialGraph6DoF(KeyFrame* pCurKF, vector<KeyFrame*> &
             }
 
             string strNameFile = pKFi->mNameFile;
-            cv::Mat imLeft = cv::imread(strNameFile, CV_LOAD_IMAGE_UNCHANGED);
+            cv::Mat imLeft = cv::imread(strNameFile, cv::IMREAD_UNCHANGED);
 
             cv::cvtColor(imLeft, imLeft, CV_GRAY2BGR);
 
@@ -3362,7 +3362,7 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
                 cout << "--To much distance correction in EssentGraph: It has connected " << pKFi->GetVectorCovisibleKeyFrames().size() << " KFs" << endl;
             }
             string strNameFile = pKFi->mNameFile;
-            cv::Mat imLeft = cv::imread(strNameFile, CV_LOAD_IMAGE_UNCHANGED);
+            cv::Mat imLeft = cv::imread(strNameFile, cv::IMREAD_UNCHANGED);
             cv::cvtColor(imLeft, imLeft, CV_GRAY2BGR);
             vector<MapPoint*> vpMapPointsKFi = pKFi->GetMapPointMatches();
             for(int j=0; j<vpMapPointsKFi.size(); ++j)
@@ -6640,9 +6640,9 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pMainKF,vector<KeyFrame*> vpAdju
             if(bShowImages)
             {
                 string strNameFile = pKFi->mNameFile;
-                cv::Mat imLeft = cv::imread(strNameFile, CV_LOAD_IMAGE_UNCHANGED);
+                cv::Mat imLeft = cv::imread(strNameFile, cv::IMREAD_UNCHANGED);
 
-                cv::cvtColor(imLeft, imLeft, CV_GRAY2BGR);
+                cv::cvtColor(imLeft, imLeft, cv::COLOR_GRAY2BGR);
 
                 int numPointsMono = 0, numPointsStereo = 0;
                 int numPointsMonoBad = 0, numPointsStereoBad = 0;
@@ -6725,7 +6725,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pMainKF,vector<KeyFrame*> vpAdju
                     numPointsStereoBad++;
                 }
 
-                string namefile = "./test_LBA/LBA_KF" + to_string(pKFi->mnId) + "_" + to_string(numPointsMono + numPointsStereo) +"_D" + to_string(dist) +".png";
+                std::string namefile = "./test_LBA/LBA_KF" + to_string(pKFi->mnId) + "_" + to_string(numPointsMono + numPointsStereo) +"_D" + to_string(dist) +".png";
                 cv::imwrite(namefile, imLeft);
 
                 Verbose::PrintMess("--LBA in KF " + to_string(pKFi->mnId), Verbose::VERBOSITY_DEBUG);

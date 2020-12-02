@@ -918,26 +918,26 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
     {
         if(mbRGB)
         {
-            cvtColor(mImGray,mImGray,CV_RGB2GRAY);
-            cvtColor(imGrayRight,imGrayRight,CV_RGB2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_RGB2GRAY);
+            cvtColor(imGrayRight,imGrayRight,cv::COLOR_RGB2GRAY);
         }
         else
         {
-            cvtColor(mImGray,mImGray,CV_BGR2GRAY);
-            cvtColor(imGrayRight,imGrayRight,CV_BGR2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_BGR2GRAY);
+            cvtColor(imGrayRight,imGrayRight,cv::COLOR_BGR2GRAY);
         }
     }
     else if(mImGray.channels()==4)
     {
         if(mbRGB)
         {
-            cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
-            cvtColor(imGrayRight,imGrayRight,CV_RGBA2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_RGBA2GRAY);
+            cvtColor(imGrayRight,imGrayRight,cv::COLOR_RGBA2GRAY);
         }
         else
         {
-            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
-            cvtColor(imGrayRight,imGrayRight,CV_BGRA2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_BGRA2GRAY);
+            cvtColor(imGrayRight,imGrayRight,cv::COLOR_BGRA2GRAY);
         }
     }
 
@@ -988,16 +988,16 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
     if(mImGray.channels()==3)
     {
         if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGB2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_RGB2GRAY);
         else
-            cvtColor(mImGray,mImGray,CV_BGR2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_BGR2GRAY);
     }
     else if(mImGray.channels()==4)
     {
         if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_RGBA2GRAY);
         else
-            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_BGRA2GRAY);
     }
 
     if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
@@ -1042,16 +1042,16 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp,
     if(mImGray.channels()==3)
     {
         if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGB2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_RGB2GRAY);
         else
-            cvtColor(mImGray,mImGray,CV_BGR2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_BGR2GRAY);
     }
     else if(mImGray.channels()==4)
     {
         if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_RGBA2GRAY);
         else
-            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_BGRA2GRAY);
     }
 
     if (mSensor == System::MONOCULAR)
