@@ -27,7 +27,7 @@
 #ifndef G2O_ROBUST_KERNEL_H
 #define G2O_ROBUST_KERNEL_H
 
-#ifdef _MSC_VER
+#ifdef COMPILEDWITHC11
 #include <memory>
 #else
 #include <tr1/memory>
@@ -74,7 +74,11 @@ namespace g2o {
     protected:
       double _delta;
   };
-  typedef std::tr1::shared_ptr<RobustKernel> RobustKernelPtr;
+#ifdef COMPILEDWITHC11
+      typedef std::shared_ptr<RobustKernel> RobustKernelPtr;
+#else
+      typedef std::tr1::shared_ptr<RobustKernel> RobustKernelPtr;
+#endif
 
 } // end namespace g2o
 

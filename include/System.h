@@ -22,7 +22,6 @@
 
 //#define SAVE_TIMES
 
-#include <unistd.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include<string>
@@ -77,6 +76,8 @@ class Atlas;
 class Tracking;
 class LocalMapping;
 class LoopClosing;
+
+void usleep(int us_sec);
 
 class System
 {

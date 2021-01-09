@@ -22,7 +22,6 @@
 #include<fstream>
 #include<iomanip>
 #include<chrono>
-#include <unistd.h>
 
 #include<opencv2/core/core.hpp>
 
@@ -149,7 +148,7 @@ int main(int argc, char **argv)
                 T = tframe-vTimestampsCam[seq][ni-1];
 
             if(ttrack<T)
-                usleep((T-ttrack)*1e6); // 1e6
+                ORB_SLAM3::usleep((T-ttrack)*1e6); // 1e6
         }
         if(seq < num_seq - 1)
         {

@@ -35,7 +35,7 @@
 #include <limits>
 #include <cstddef>
 
-#ifdef _MSC_VER
+#ifdef COMPILEDWITHC11
 #include <unordered_map>
 #else
 #include <tr1/unordered_map>
@@ -89,8 +89,12 @@ namespace g2o {
 
       typedef std::set<Edge*>                           EdgeSet;
       typedef std::set<Vertex*>                         VertexSet;
-
+      
+#ifdef COMPILEDWITHC11
+      typedef std::unordered_map<int, Vertex*>     VertexIDMap;
+#else
       typedef std::tr1::unordered_map<int, Vertex*>     VertexIDMap;
+#endif
       typedef std::vector<Vertex*>                      VertexContainer;
 
       //! abstract Vertex, your types must derive from that one

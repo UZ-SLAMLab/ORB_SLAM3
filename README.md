@@ -92,6 +92,40 @@ chmod +x build.sh
 
 This will create **libORB_SLAM3.so**  at *lib* folder and the executables in *Examples* folder.
 
+# 3.1 Building ORB-SLAM3 library and examples using vcpkg
+
+1- Clone the repository:
+```
+git clone https://github.com/UZ-SLAMLab/ORB_SLAM3.git ORB_SLAM3
+```
+2- Clone vcpkg repository and follow the instruction in repo [vcpkg](https://github.com/microsoft/vcpkg)
+3- Install dependencies
+```
+windows
+./vcpkg.exe install eigen3 pangolin boost opencv openssl --triplet x64-windows
+```
+```
+linux:
+./vcpkg install eigen3 pangolin boost opencv openssl --triplet x64-linux
+```
+4- Build ORB SLAM 3
+```
+cd ORB_SLAM3
+mkdir build; cd build
+cmake .. -DCMAKE_TOOLCHAIN_FILE=<your-vcpkg-path>/scripts/buildsystems/vcpkg.cmake
+cmake --build . --config <debug-release-releasewithdebinfo>
+cmake --install . --config <debug-release-releasewithdebinfo>
+```
+4.1- Build ORB SLAM 3 Examples
+```
+cd ORB_SLAM3
+mkdir build; cd build
+cmake .. -DCMAKE_TOOLCHAIN_FILE=<your-vcpkg-path>/scripts/buildsystems/vcpkg.cmake -DBUILD_EXAMPLES=ON
+cmake --build . --config <debug-release-releasewithdebinfo>
+cmake --install . --config <debug-release-releasewithdebinfo>
+```
+This will create **libORB_SLAM3.a/.lib**  at *cmake-install-folder/lib* folder and the executables in *cmake-build-folder/Examples* folder.
+
 # 4. EuRoC Examples
 [EuRoC dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) was recorded with two pinhole cameras and an inertial sensor. We provide an example script to launch EuRoC sequences in all the sensor configurations.
 

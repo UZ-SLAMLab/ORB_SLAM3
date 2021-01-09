@@ -32,9 +32,12 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
-
+#include <filesystem>
 namespace ORB_SLAM3
 {
+void usleep(int us_sec){
+    std::this_thread::sleep_for(std::chrono::microseconds(us_sec));
+}
 
 Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
 
@@ -79,7 +82,9 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
 
     mpVocabulary = new ORBVocabulary();
-    bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+    auto vocab_path = std::filesystem::path(strVocFile);
+    bool bVocLoad = vocab_path.extension() == ".txt" ? mpVocabulary->loadFromTextFile(strVocFile) : mpVocabulary->loadFromBinaryFile(strVocFile);
+
     if(!bVocLoad)
     {
         cerr << "Wrong path to vocabulary. " << endl;
