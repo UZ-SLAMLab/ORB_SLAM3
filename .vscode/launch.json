@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "CMake-Tool Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            // Resolved by CMake Tools:
+            "program": "${command:cmake.launchTargetPath}",
+            "args": [
+                "D:\\ORB_SLAM3\\Vocabulary\\ORBvoc.bin", // path_to_vocabulary
+                "D:\\ORB_SLAM3\\Examples\\Stereo-Inertial\\EuRoC.yaml", // path_to_settings
+                "F:\\datasets\\MH_01_easy", // path_to_sequence_folder
+                "D:\\ORB_SLAM3\\Examples\\Stereo-Inertial\\EuRoC_TimeStamps\\MH01.txt"  // path_to_times_file
+            ],
+            "cwd": "${command:cmake.launchTargetDirectory}",
+            "externalConsole": true,
+            "presentation": {
+                "hidden": false,
+                "group": "",
+                "order": 1
+            }
+        }
+    ]
+}

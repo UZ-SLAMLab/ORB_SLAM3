@@ -13,7 +13,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 include(HandlePDB)
 ###############################      Option      #############################################
 option(BUILD_EXAMPLES       "Build Examples"    OFF)
-option(BUILD_TOOLS          "Build Tools"       ON)
+option(BUILD_TOOLS          "Build Tools"       OFF)
 ###############################      Option      #############################################
 
 ###############################     Packages     #############################################
