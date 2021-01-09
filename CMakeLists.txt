@@ -13,6 +13,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 include(HandlePDB)
 ###############################      Option      #############################################
 option(BUILD_EXAMPLES       "Build Examples"    OFF)
+option(BUILD_TOOLS          "Build Tools"       ON)
 ###############################      Option      #############################################
 
 ###############################     Packages     #############################################
@@ -29,7 +30,7 @@ add_subdirectory(Thirdparty/DBoW2)
 ###############################     ORB-SLAM     #############################################
 add_library(${PROJECT_NAME} STATIC)
 
-add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+add_library(ORB_SLAM::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_sources(${PROJECT_NAME}
                PRIVATE
@@ -76,8 +77,8 @@ target_link_libraries(${PROJECT_NAME}
                       OpenSSL::Crypto
                       pangolin
                       # ThirdParty
-                      ${PROJECT_NAME}::DBoW2
-                      ${PROJECT_NAME}::g2o)
+                      ORB_SLAM::DBoW2
+                      ORB_SLAM::g2o)
 
 target_compile_options(${PROJECT_NAME}
                        PRIVATE
@@ -94,8 +95,8 @@ if(BUILD_EXAMPLES)
 add_subdirectory(Examples)
 endif()
 
-if(BUILD_EVALUATION)
-add_subdirectory(evaluation)
+if(BUILD_TOOLS)
+add_subdirectory(tools)
 endif()
 
 ###############################      Install      #############################################
@@ -109,7 +110,7 @@ set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(version_config "${generated_dir}/${PROJECT_NAME}ConfigVersion.cmake")
 set(project_config "${generated_dir}/${PROJECT_NAME}Config.cmake")
 set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Targets")
-set(namespace "${PROJECT_NAME}")
+set(namespace "ORB_SLAM::")
 
 include(CMakePackageConfigHelpers)
 

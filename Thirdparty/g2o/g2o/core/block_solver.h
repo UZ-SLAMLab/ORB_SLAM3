@@ -32,7 +32,6 @@
 #include "sparse_block_matrix.h"
 #include "sparse_block_matrix_diagonal.h"
 #include "openmp_mutex.h"
-#include "../../config.h"
 
 namespace g2o {
   using namespace Eigen;

@@ -31,7 +31,6 @@
 #include <cassert>
 #include <Eigen/Core>
 
-#include "../../config.h"
 #include "matrix_operations.h"
 
 #ifdef COMPILEDWITHC11

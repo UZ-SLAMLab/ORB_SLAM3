@@ -16,7 +16,7 @@ find_package(OpenCV CONFIG REQUIRED)
 
 add_library(${PROJECT_NAME} STATIC)
 
-add_library(${CMAKE_PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+add_library(ORB_SLAM::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_sources(${PROJECT_NAME} 
                PRIVATE 
