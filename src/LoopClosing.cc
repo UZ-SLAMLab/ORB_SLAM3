@@ -1903,7 +1903,7 @@ void LoopClosing::printReprojectionError(set<KeyFrame*> &spLocalWindowKFs, KeyFr
     for(KeyFrame* pKFi : spLocalWindowKFs)
     {
         //cout << "KF " << pKFi->mnId << endl;
-        cv::Mat img_i = cv::imread(pKFi->mNameFile, CV_LOAD_IMAGE_UNCHANGED);
+        cv::Mat img_i = cv::imread(pKFi->mNameFile, cv::IMREAD_UNCHANGED);
         //cout << "Image -> " << img_i.cols << ", " << img_i.rows << endl;
         cv::cvtColor(img_i, img_i, CV_GRAY2BGR);
         //cout << "Change of color in the image " << endl;
@@ -2552,7 +2552,7 @@ void LoopClosing::RunGlobalBundleAdjustment(Map* pActiveMap, unsigned long nLoop
 
 
                     string strNameFile = pKF->mNameFile;
-                    cv::Mat imLeft = cv::imread(strNameFile, CV_LOAD_IMAGE_UNCHANGED);
+                    cv::Mat imLeft = cv::imread(strNameFile, cv::IMREAD_UNCHANGED);
 
                     cv::cvtColor(imLeft, imLeft, CV_GRAY2BGR);
 
