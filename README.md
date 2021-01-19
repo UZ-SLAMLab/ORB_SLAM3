@@ -115,6 +115,8 @@ Execute the following script to process sequences and compute the RMS ATE:
 # 5. TUM-VI Examples
 [TUM-VI dataset](https://vision.in.tum.de/data/datasets/visual-inertial-dataset) was recorded with two fisheye cameras and an inertial sensor.
 
+
+
 1. Download a sequence from https://vision.in.tum.de/data/datasets/visual-inertial-dataset and uncompress it.
 
 2. Open the script "tum_vi_examples.sh" in the root of the project. Change **pathDatasetTUM_VI** variable to point to the directory where the dataset has been uncompressed. 
@@ -210,4 +212,17 @@ Once ORB-SLAM3 has loaded the vocabulary, press space in the rosbag tab.
   ```
 
 
+To run the examples on euroc dataset:  
+1. Download the dataset:
+wget -c http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_01_easy/MH_01_easy.zip  
+2. To run the mono_euroc i.e visual slam on euroc dataset    
+./Examples/Monocular/mono_euroc ./Vocabulary/ORBvoc.txt ./Examples/Monocular/EuRoC.yaml .MH01 ./Examples/Monocular/EuRoC_TimeStamps/MH01.txt dataset-MH01_mono  
+3. To run the mono inertial euroc i.e visual inertial slam on euroc dataset:  
+./Examples/Monocular-Inertial/mono_inertial_euroc ./Vocabulary/ORBvoc.txt ./Examples/Monocular-Inertial/EuRoC.yaml ./MH01 ./Examples/Monocular-Inertial/EuRoC_TimeStamps/MH01.txt dataset-MH01_monoi
 
+To run the visual slam ros node:  
+1. roslaunch orb_slam3_ros ros_mono.launch  
+To run the visual inertial slam ros node:  
+2. roslaunch orb_slam3_ros ros_mono_inertial.launch  
+
+Note the ros_mono node needs usb_cam/image_raw topic being published by the usb_cam package. And ros_mono_inertial node needs usb_cam/image_raw and imu topic being published.  
