@@ -3214,22 +3214,21 @@ bool Tracking::Relocalization()
     {
         KeyFrame* pKF = vpCandidateKFs[i];
         if(pKF->isBad())
-            vbDiscarded[i] = true;
-        else
         {
-            int nmatches = matcher.SearchByBoW(pKF,mCurrentFrame,vvpMapPointMatches[i]);
-            if(nmatches<15)
-            {
-                vbDiscarded[i] = true;
-                continue;
-            }
-            else
-            {
-                MLPnPsolver* pSolver = new MLPnPsolver(mCurrentFrame,vvpMapPointMatches[i]);
-                pSolver->SetRansacParameters(0.99,10,300,6,0.5,5.991);  //This solver needs at least 6 points
-                vpMLPnPsolvers[i] = pSolver;
-            }
+            vbDiscarded[i] = true;
+            continue;
         }
+
+        int nmatches = matcher.SearchByBoW(pKF,mCurrentFrame,vvpMapPointMatches[i]);
+        if(nmatches<15)
+        {
+            vbDiscarded[i] = true;
+            continue;
+        }
+        MLPnPsolver* pSolver = new MLPnPsolver(mCurrentFrame,vvpMapPointMatches[i]);
+        pSolver->SetRansacParameters(0.99,10,300,6,0.5,5.991);  //This solver needs at least 6 points
+        vpMLPnPsolvers[i] = pSolver;
+        ++nCandidates;
     }
 
     // Alternatively perform some iterations of P4P RANSAC
