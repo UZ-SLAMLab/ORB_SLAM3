@@ -1,0 +1,14 @@
+# Compute paths
+get_filename_component( PROJECT_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH )
+SET( ORB_SLAM3_INCLUDE_DIRS "@EXPORT_LIB_INC_DIR@" )
+SET( ORB_SLAM3_INCLUDE_DIR  "@EXPORT_LIB_INC_DIR@" )
+
+# Library dependencies (contains definitions for IMPORTED targets)
+#if( NOT TARGET @PROJECT_NAME@ AND NOT @PROJECT_NAME@_BINARY_DIR )
+#  include( "${PROJECT_CMAKE_DIR}/@PROJECT_NAME@Targets.cmake" )
+#  @ExternConfig@
+#endif()
+
+SET( ORB_SLAM3_LIBRARIES    @PROJECT_NAME@ DBoW2 g2o)
+SET( ORB_SLAM3_LIBRARY      @PROJECT_NAME@ )
+SET( ORB_SLAM3_CMAKEMODULES @CMAKE_CURRENT_SOURCE_DIR@/../CMakeModules )
