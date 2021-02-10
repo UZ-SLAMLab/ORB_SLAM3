@@ -117,7 +117,7 @@ We need numpy and matplotlib installed in pytho2.7. But Ubuntu20.04 has not pip2
 ```shell
 sudo apt install curl
 cd ~/Desktop
-curl https://bootstrap.pypa.io/get-pip.py --output get-pip.py
+curl https://bootstrap.pypa.io/2.7/get-pip.py --output get-pip.py
 sudo python2 get-pip.py
 pip2.7 install numpy matplotlib
 ```
