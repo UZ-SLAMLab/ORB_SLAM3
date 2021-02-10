@@ -328,6 +328,9 @@ protected:
 
     cv::Mat mTlr;
 
+    cv::Mat mask; // valid mask, 255 for valid
+    int mNumMatchThreshold; // number of matches needed to initialize
+
 public:
     cv::Mat mImRight;
 };

@@ -760,7 +760,7 @@ namespace ORB_SLAM3
         return vResultKeys;
     }
 
-    void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints)
+    void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints, cv::InputArray _mask)
     {
         allKeypoints.resize(nlevels);
 
@@ -783,6 +783,14 @@ namespace ORB_SLAM3
             const int nRows = height/W;
             const int wCell = ceil(width/nCols);
             const int hCell = ceil(height/nRows);
+
+            float scale = mvScaleFactor[level];
+            cv::Mat mask = _mask.getMat();
+//            if (!mask.empty()){
+//                std::cout << "current scale" << scale << std::endl;
+//                cv::imshow("mask", mask);
+//                int key = cv::waitKey(0);
+//            }
 
             for(int i=0; i<nRows; i++)
             {
@@ -846,7 +854,19 @@ namespace ORB_SLAM3
                         {
                             (*vit).pt.x+=j*wCell;
                             (*vit).pt.y+=i*hCell;
-                            vToDistributeKeys.push_back(*vit);
+
+                            if (mask.empty()){
+                                vToDistributeKeys.push_back(*vit);
+                            }
+                            else{
+                                int x = (int)std::round(scale*((*vit).pt.x + minBorderX));
+                                int y = (int)std::round(scale*((*vit).pt.y + minBorderY));
+                                // remove if outside mask
+                                cv::Scalar colour = mask.at<uchar>(cv::Point(x, y));
+                                if (colour[0] == 255) {
+                                    vToDistributeKeys.push_back(*vit);
+                                }
+                            }
                         }
                     }
 
@@ -1079,7 +1099,7 @@ namespace ORB_SLAM3
         ComputePyramid(image);
 
         vector < vector<KeyPoint> > allKeypoints;
-        ComputeKeyPointsOctTree(allKeypoints);
+        ComputeKeyPointsOctTree(allKeypoints, _mask);
         //ComputeKeyPointsOld(allKeypoints);
 
         Mat descriptors;
@@ -1123,6 +1143,7 @@ namespace ORB_SLAM3
 
 
             float scale = mvScaleFactor[level]; //getScale(level, firstLevel, scaleFactor);
+//            std::cout << "current scale" << scale << std::endl;
             int i = 0;
             for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
                          keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint){
@@ -1145,7 +1166,32 @@ namespace ORB_SLAM3
                 i++;
             }
         }
-        //cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints" << endl;
+//        cv::Mat mask = _mask.getMat();
+//        if (mask.empty()){
+
+//        }
+//        else{
+//            for (vector<KeyPoint>::iterator kp = _keypoints.begin(); kp != _keypoints.end();){
+//                int x = std::round(kp->pt.x);
+//                int y = std::round(kp->pt.y);
+//                // remove if outside mask
+//    //            std::cout << "x "<< x << " y " << y << std::endl;
+//                cv::Scalar colour = mask.at<uchar>(cv::Point(x, y));
+//                if (colour[0] == 0) {
+//                    kp = _keypoints.erase(kp);
+//                    monoIndex--;
+//                }
+//                else{
+//                    ++kp;
+//                }
+//            }
+//        }
+//        cv::Mat gray = _image.getMat();
+//        cv::drawKeypoints(gray,_keypoints,gray);
+//        cv::imshow("Display window", gray);
+//        int k = cv::waitKey(0); // Wait for a keystroke in the window
+
+        cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints" << endl;
         return monoIndex;
     }
 

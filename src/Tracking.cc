@@ -773,12 +773,43 @@ bool Tracking::ParseORBParamFile(cv::FileStorage &fSettings)
     if(mSensor==System::MONOCULAR || mSensor==System::IMU_MONOCULAR)
         mpIniORBextractor = new ORBextractor(5*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
+    // Load ORB mask
+    string strMaskFname;
+    node = fSettings["ORBextractor.maskFname"];
+    if(!node.empty() && node.isString())
+    {
+        strMaskFname = node.operator std::string();
+        mask = cv::imread(strMaskFname,CV_LOAD_IMAGE_UNCHANGED);
+    }
+    else
+    {
+        std::cerr << "*ORBextractor.readMask parameter doesn't exist or is not a string *" << std::endl;
+    }
+    // load ORB number of matches
+    node = fSettings["ORBextractor.matchNumberThreshold"];
+    if(!node.empty() && node.isInt())
+    {
+        mNumMatchThreshold = node.operator int();
+    }
+    else
+    {
+        std::cerr << "*ORBextractor.matchNumberThreshold parameter doesn't exist or is not a int *" << std::endl;
+        mNumMatchThreshold = 100;
+    }
+
     cout << endl << "ORB Extractor Parameters: " << endl;
     cout << "- Number of Features: " << nFeatures << endl;
     cout << "- Scale Levels: " << nLevels << endl;
     cout << "- Scale Factor: " << fScaleFactor << endl;
     cout << "- Initial Fast Threshold: " << fIniThFAST << endl;
     cout << "- Minimum Fast Threshold: " << fMinThFAST << endl;
+    if(mask.empty()){
+        std::cout << "Could not read the image: " << strMaskFname << std::endl;
+    }
+    else{
+        std::cout << "- Mask loaded from: " << strMaskFname << std::endl;
+    }
+    std::cout << "- Number of matches: " << mNumMatchThreshold << std::endl;
 
     return true;
 }
@@ -1056,19 +1087,23 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp,
 
     if (mSensor == System::MONOCULAR)
     {
-        if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET ||(lastID - initID) < mMaxFrames)
-            mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mpCamera,mDistCoef,mbf,mThDepth);
-        else
-            mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mpCamera,mDistCoef,mbf,mThDepth);
+        if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET ||(lastID - initID) < mMaxFrames){
+            // std::cout << "not initialized or no images yet or not reaching max frames " << std::endl;
+            mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mpCamera,mDistCoef,mbf,mThDepth,mask);
+        }
+        else{
+            // std::cout << "grab mono frames normally" << std::endl;
+            mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mpCamera,mDistCoef,mbf,mThDepth,mask);
+        }
     }
     else if(mSensor == System::IMU_MONOCULAR)
     {
         if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET)
         {
-            mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mpCamera,mDistCoef,mbf,mThDepth,&mLastFrame,*mpImuCalib);
+            mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mpCamera,mDistCoef,mbf,mThDepth,mask,&mLastFrame,*mpImuCalib);
         }
         else
-            mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mpCamera,mDistCoef,mbf,mThDepth,&mLastFrame,*mpImuCalib);
+            mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mpCamera,mDistCoef,mbf,mThDepth,mask,&mLastFrame,*mpImuCalib);
     }
 
     if (mState==NO_IMAGES_YET)
@@ -2063,8 +2098,10 @@ void Tracking::MonocularInitialization()
         int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
 
         // Check if there are enough correspondences
-        if(nmatches<100)
+        // std::cout << "Number of matches" << nmatches << std::endl;
+        if(nmatches<mNumMatchThreshold)
         {
+            // std::cout << "Not enough matches" << std::endl;
             delete mpInitializer;
             mpInitializer = static_cast<Initializer*>(NULL);
             fill(mvIniMatches.begin(),mvIniMatches.end(),-1);
