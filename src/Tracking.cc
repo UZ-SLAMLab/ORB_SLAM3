@@ -1108,7 +1108,7 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp,
 void Tracking::GrabImuData(const IMU::Point &imuMeasurement)
 {
     unique_lock<mutex> lock(mMutexImuQueue);
-    mlQueueImuData.push_back(imuMeasurement);
+    mqImuData.push(imuMeasurement);
 }
 
 void Tracking::PreintegrateIMU()
@@ -1122,49 +1122,38 @@ void Tracking::PreintegrateIMU()
         return;
     }
 
-    // cout << "start loop. Total meas:" << mlQueueImuData.size() << endl;
-
-    mvImuFromLastFrame.clear();
-    mvImuFromLastFrame.reserve(mlQueueImuData.size());
-    if(mlQueueImuData.size() == 0)
     {
-        Verbose::PrintMess("Not IMU data in mlQueueImuData!!", Verbose::VERBOSITY_NORMAL);
-        mCurrentFrame.setIntegrated();
-        return;
-    }
+        unique_lock<mutex> lock(mMutexImuQueue);
 
-    while(true)
-    {
-        bool bSleep = false;
+        // cout << "start loop. Total meas:" << mqImuData.size() << endl;
+
+        mvImuFromLastFrame.clear();
+        mvImuFromLastFrame.reserve(mqImuData.size());
+        if(mqImuData.size() == 0)
         {
-            unique_lock<mutex> lock(mMutexImuQueue);
-            if(!mlQueueImuData.empty())
+            Verbose::PrintMess("Not IMU data in mqImuData!!", Verbose::VERBOSITY_NORMAL);
+            mCurrentFrame.setIntegrated();
+            return;
+        }
+
+        while(mqImuData.size())
+        {
+            const IMU::Point& m = mqImuData.front();
+            if(m.t<mCurrentFrame.mpPrevFrame->mTimeStamp-0.001l)
             {
-                IMU::Point* m = &mlQueueImuData.front();
-                cout.precision(17);
-                if(m->t<mCurrentFrame.mpPrevFrame->mTimeStamp-0.001l)
-                {
-                    mlQueueImuData.pop_front();
-                }
-                else if(m->t<mCurrentFrame.mTimeStamp-0.001l)
-                {
-                    mvImuFromLastFrame.push_back(*m);
-                    mlQueueImuData.pop_front();
-                }
-                else
-                {
-                    mvImuFromLastFrame.push_back(*m);
-                    break;
-                }
+                mqImuData.pop();
+            }
+            else if(m.t<mCurrentFrame.mTimeStamp-0.001l)
+            {
+                mvImuFromLastFrame.push_back(m);
+                mqImuData.pop();
             }
             else
             {
+                mvImuFromLastFrame.push_back(m);
                 break;
-                bSleep = true;
             }
         }
-        if(bSleep)
-            usleep(500);
     }
 
 
@@ -1415,7 +1404,7 @@ void Tracking::Track()
         {
             cerr << "ERROR: Frame with a timestamp older than previous frame detected!" << endl;
             unique_lock<mutex> lock(mMutexImuQueue);
-            mlQueueImuData.clear();
+            while(mqImuData.size()) mqImuData.pop();
             CreateMapInAtlas();
             return;
         }
