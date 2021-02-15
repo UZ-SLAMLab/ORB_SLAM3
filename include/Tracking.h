@@ -42,6 +42,7 @@
 
 #include <mutex>
 #include <unordered_set>
+#include <queue>
 
 namespace ORB_SLAM3
 {
@@ -214,7 +215,7 @@ protected:
     IMU::Preintegrated *mpImuPreintegratedFromLastKF;
 
     // Queue of IMU measurements between frames
-    std::list<IMU::Point> mlQueueImuData;
+    std::queue<IMU::Point> mqImuData;
 
     // Vector of IMU measurements from previous to current frame (to be filled by PreintegrateIMU)
     std::vector<IMU::Point> mvImuFromLastFrame;
