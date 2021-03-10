@@ -22,6 +22,7 @@
 #include<chrono>
 
 #include<opencv2/core/core.hpp>
+#include<opencv2/imgcodecs/legacy/constants_c.h>
 
 #include<System.h>
 
