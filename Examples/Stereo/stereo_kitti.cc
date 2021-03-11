@@ -22,10 +22,15 @@
 #include<iomanip>
 #include<chrono>
 
+#include <gflags/gflags.h>
+
 #include<opencv2/core/core.hpp>
 #include<opencv2/imgcodecs/legacy/constants_c.h>
 
 #include<System.h>
+
+
+DEFINE_bool(introspection_on, false, "Run ORB-SLAM3 with the introspection function - GPU required");
 
 using namespace std;
 
@@ -34,7 +39,7 @@ void LoadImages(const string &strPathToSequence, vector<string> &vstrImageLeft,
 
 int main(int argc, char **argv)
 {
-    if(argc != 4)
+    if(argc < 4)
     {
         cerr << endl << "Usage: ./stereo_kitti path_to_vocabulary path_to_settings path_to_sequence" << endl;
         return 1;
