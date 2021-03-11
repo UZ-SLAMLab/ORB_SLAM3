@@ -143,7 +143,7 @@ target_link_libraries(rgbd_tum ${PROJECT_NAME})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo)
 
 add_executable(stereo_kitti
-Examples/Stereo/stereo_kitti.cc)
+Examples/Stereo/stereo_kitti.cc src/iv_slam_helpers/torch_helpers.cpp)
 target_link_libraries(stereo_kitti ${PROJECT_NAME})
 set_property(TARGET stereo_kitti PROPERTY CXX_STANDARD 14)
 
