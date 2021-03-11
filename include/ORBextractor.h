@@ -53,9 +53,11 @@ public:
     // Compute the ORB features and descriptors on an image.
     // ORB are dispersed on the image using an octree.
     // Mask is ignored in the current implementation.
+    // With introspection
     int operator()( cv::InputArray _image, cv::InputArray _mask,
                     std::vector<cv::KeyPoint>& _keypoints,
-                    cv::OutputArray _descriptors, std::vector<int> &vLappingArea);
+                    cv::OutputArray _descriptors, std::vector<int> &vLappingArea,  
+                    const bool introspection_on = false);
 
     int inline GetLevels(){
         return nlevels;}
@@ -80,10 +82,11 @@ public:
     }
 
     std::vector<cv::Mat> mvImagePyramid;
+    std::vector<cv::Mat> mvCostmapPyramid;
 
 protected:
 
-    void ComputePyramid(cv::Mat image);
+    void ComputePyramid(cv::Mat image, std::vector<cv::Mat>* pyramid) const;
     void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);    
     std::vector<cv::KeyPoint> DistributeOctTree(const std::vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
                                            const int &maxX, const int &minY, const int &maxY, const int &nFeatures, const int &level);
@@ -96,6 +99,10 @@ protected:
     int nlevels;
     int iniThFAST;
     int minThFAST;
+
+    // Non-uniform distribution of features is applied across
+    // the image if quality scores are available
+    bool bqualityScoresAvailable = false;
 
     std::vector<int> mnFeaturesPerLevel;
 

@@ -429,6 +429,7 @@ namespace ORB_SLAM3
         }
 
         mvImagePyramid.resize(nlevels);
+        mvCostmapPyramid.resize(nlevels);
 
         mnFeaturesPerLevel.resize(nlevels);
         float factor = 1.0f / scaleFactor;
@@ -1065,18 +1066,32 @@ namespace ORB_SLAM3
             computeOrbDescriptor(keypoints[i], image, &pattern[0], descriptors.ptr((int)i));
     }
 
+    // With introspection
     int ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
-                                  OutputArray _descriptors, std::vector<int> &vLappingArea)
+                                  OutputArray _descriptors, std::vector<int> &vLappingArea,
+                                  const bool introspection_on)
     {
         //cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
-        if(_image.empty())
+        if(_image.empty()){
             return -1;
+        }
+        
+        Mat quality_score_img;
+        if (!_mask.empty() && introspection_on) {
+            assert(_mask.type() == CV_8UC1 );
+            quality_score_img = _mask.getMat();
+            ComputePyramid(quality_score_img, &mvCostmapPyramid);
+            bqualityScoresAvailable = true;
+        } else {
+            bqualityScoresAvailable = false;
+        }
+        
 
         Mat image = _image.getMat();
         assert(image.type() == CV_8UC1 );
 
         // Pre-compute the scale pyramid
-        ComputePyramid(image);
+        ComputePyramid(image, &mvImagePyramid);
 
         vector < vector<KeyPoint> > allKeypoints;
         ComputeKeyPointsOctTree(allKeypoints);
@@ -1149,22 +1164,28 @@ namespace ORB_SLAM3
         return monoIndex;
     }
 
-    void ORBextractor::ComputePyramid(cv::Mat image)
+    void ORBextractor::ComputePyramid(cv::Mat image,  std::vector<cv::Mat>* pyramid_ptr) const
     {
+        if(!pyramid_ptr){
+            cerr << "ComputePyramid passed a nullptr :(" << endl;
+        }
+
+        std::vector<cv::Mat>& pyramid = *pyramid_ptr;
+        
         for (int level = 0; level < nlevels; ++level)
         {
             float scale = mvInvScaleFactor[level];
             Size sz(cvRound((float)image.cols*scale), cvRound((float)image.rows*scale));
             Size wholeSize(sz.width + EDGE_THRESHOLD*2, sz.height + EDGE_THRESHOLD*2);
             Mat temp(wholeSize, image.type()), masktemp;
-            mvImagePyramid[level] = temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
+            pyramid[level] = temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
 
             // Compute the resized image
             if( level != 0 )
             {
-                resize(mvImagePyramid[level-1], mvImagePyramid[level], sz, 0, 0, INTER_LINEAR);
+                resize(pyramid[level-1], pyramid[level], sz, 0, 0, INTER_LINEAR);
 
-                copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                copyMakeBorder(pyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101+BORDER_ISOLATED);
             }
             else

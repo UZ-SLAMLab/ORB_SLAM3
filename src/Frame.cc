@@ -107,10 +107,18 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
 #ifdef SAVE_TIMES
     std::chrono::steady_clock::time_point time_StartExtORB = std::chrono::steady_clock::now();
 #endif
-    thread threadLeft(&Frame::ExtractORB,this,0,imLeft,0,0);
-    thread threadRight(&Frame::ExtractORB,this,1,imRight,0,0);
-    threadLeft.join();
-    threadRight.join();
+    if (introspection_on) {
+        // With introspection
+        thread threadLeft(&Frame::ExtractORBIntrospectively,this,0,imLeft,0,0, introspection_on, costmap);
+        thread threadRight(&Frame::ExtractORBIntrospectively,this,1,imRight,0,0, introspection_on, costmap);
+        threadLeft.join();
+        threadRight.join();
+    } else {
+        thread threadLeft(&Frame::ExtractORB,this,0,imLeft,0,0);
+        thread threadRight(&Frame::ExtractORB,this,1,imRight,0,0);
+        threadLeft.join();
+        threadRight.join();
+    }
 #ifdef SAVE_TIMES
     std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
 
@@ -414,6 +422,15 @@ void Frame::ExtractORB(int flag, const cv::Mat &im, const int x0, const int x1)
         monoLeft = (*mpORBextractorLeft)(im,cv::Mat(),mvKeys,mDescriptors,vLapping);
     else
         monoRight = (*mpORBextractorRight)(im,cv::Mat(),mvKeysRight,mDescriptorsRight,vLapping);
+}
+
+void Frame::ExtractORBIntrospectively(int flag, const cv::Mat &im, const int x0, const int x1, const bool introspection_on, const cv::Mat &costmap)
+{
+    vector<int> vLapping = {x0,x1};
+    if(flag==0)
+        monoLeft = (*mpORBextractorLeft)(im,costmap,mvKeys,mDescriptors,vLapping, introspection_on);
+    else
+        monoRight = (*mpORBextractorRight)(im,costmap,mvKeysRight,mDescriptorsRight,vLapping, introspection_on);
 }
 
 void Frame::SetPose(cv::Mat Tcw)
