@@ -917,42 +917,93 @@ namespace ORB_SLAM3
 
             float hY = cellH + 6;
 
-            for(int i=0; i<levelRows; i++)
-            {
+            vector<vector<float>> nfeatures_cell(levelRows, vector<float>(levelCols, nfeaturesCell));
+            vector<vector<float>> cell_weights(levelRows, vector<float>(levelCols));
+            float cell_weights_sum = 0.0;
+            // Iterate over the costmap/quality scores if it exists - which means we are doing introspection
+            if (bqualityScoresAvailable){
+                for(int i=0; i<levelRows; i++){
+                    const float iniY = minBorderY + i*cellH - 3;
+                    iniYRow[i] = iniY;
+
+                    if(i == levelRows-1){
+                        hY = maxBorderY+3-iniY;
+                        if(hY<=0){
+                            continue;
+                        }
+                    }
+
+                    float hX = cellW + 6;
+                
+                
+                    for (int j=0; j<levelCols; j++) {
+                    float iniX;
+
+                        if (i==0) {
+                            iniX = minBorderX + j*cellW - 3;
+                            iniXCol[j] = iniX;
+                        } else {
+                            iniX = iniXCol[j];
+                        }
+
+
+                        if(j == levelCols-1) {
+                            hX = maxBorderX+3-iniX;
+                            if(hX<=0){
+                            continue;
+                            }
+                        }
+
+                        
+                        long unsigned int sum = cv::sum(mvCostmapPyramid[level].rowRange(iniY,iniY+hY).colRange(iniX,iniX+hX))[0];
+                        float cost = static_cast<float>(sum)/static_cast<float>((hX) * (hY));
+                        float qual_score = 1.0 / (1.0 + cost/255);
+                        float qual_score_norm = 2 * qual_score - 1;
+                        cell_weights[i][j] = qual_score_norm;
+                        cell_weights_sum+= qual_score_norm;
+                    }
+                }
+            }
+
+             for(int i=0; i<levelRows; i++){
                 const float iniY = minBorderY + i*cellH - 3;
                 iniYRow[i] = iniY;
 
-                if(i == levelRows-1)
-                {
+                if(i == levelRows-1){
                     hY = maxBorderY+3-iniY;
-                    if(hY<=0)
+                    if(hY<=0){
                         continue;
+                    }
                 }
 
                 float hX = cellW + 6;
 
-                for(int j=0; j<levelCols; j++)
-                {
+                for (int j=0; j<levelCols; j++) {
                     float iniX;
 
-                    if(i==0)
-                    {
+                    if (i==0) {
                         iniX = minBorderX + j*cellW - 3;
                         iniXCol[j] = iniX;
-                    }
-                    else
-                    {
+                    } else {
                         iniX = iniXCol[j];
                     }
 
 
-                    if(j == levelCols-1)
-                    {
+                    if(j == levelCols-1) {
                         hX = maxBorderX+3-iniX;
-                        if(hX<=0)
+                        if(hX<=0){
                             continue;
+                        }
                     }
 
+                    // If the predicted quality score image is available,
+                    // set the maximum number of features to be extracted
+                    // from the cell given the mean quality of the cell 
+                    if (bqualityScoresAvailable) {
+                        nfeatures_cell[i][j] = std::max(1.0f, 
+                                    ceil((float)nDesiredFeatures * 
+                                    cell_weights[i][j] / cell_weights_sum));
+                    }
 
                     Mat cellImage = mvImagePyramid[level].rowRange(iniY,iniY+hY).colRange(iniX,iniX+hX);
 
@@ -960,32 +1011,41 @@ namespace ORB_SLAM3
 
                     FAST(cellImage,cellKeyPoints[i][j],iniThFAST,true);
 
-                    if(cellKeyPoints[i][j].size()<=3)
-                    {
+                    if(cellKeyPoints[i][j].size()<=3){
                         cellKeyPoints[i][j].clear();
-
                         FAST(cellImage,cellKeyPoints[i][j],minThFAST,true);
+                    }
+
+                    // Scales the keypoint response values by the predicted quality
+                    // score. This is to affect which features will be selected as
+                    // best ones when they are sorted based on response value by
+                    // KeyPointsFilter::retainBest()
+                    if (bqualityScoresAvailable) {
+                        for (size_t k = 0; k < cellKeyPoints[i][j].size(); k++) {
+                            float cost = static_cast<float>(
+                            mvCostmapPyramid[level].rowRange(iniY,iniY+hY).colRange(iniX,iniX+hX).at<uint8_t>(
+                                    cellKeyPoints[i][j][k].pt.y,
+                                    cellKeyPoints[i][j][k].pt.x));
+                            cellKeyPoints[i][j][k].response *= 2 * ( 1.0f/(1.0f + cost/255.0f)) - 1;
+                        }
                     }
 
 
                     const int nKeys = cellKeyPoints[i][j].size();
                     nTotal[i][j] = nKeys;
 
-                    if(nKeys>nfeaturesCell)
-                    {
+                    if(nKeys>nfeaturesCell){
                         nToRetain[i][j] = nfeaturesCell;
                         bNoMore[i][j] = false;
-                    }
-                    else
-                    {
+                    } else {
                         nToRetain[i][j] = nKeys;
                         nToDistribute += nfeaturesCell-nKeys;
                         bNoMore[i][j] = true;
                         nNoMore++;
                     }
-
                 }
             }
+            
 
 
             // Retain by score
@@ -1094,8 +1154,8 @@ namespace ORB_SLAM3
         ComputePyramid(image, &mvImagePyramid);
 
         vector < vector<KeyPoint> > allKeypoints;
-        ComputeKeyPointsOctTree(allKeypoints);
-        //ComputeKeyPointsOld(allKeypoints);
+        // ComputeKeyPointsOctTree(allKeypoints);   // TODO can we use octtree like the OG ORB-SLAM3 implementation?
+        ComputeKeyPointsOld(allKeypoints);
 
         Mat descriptors;
 
