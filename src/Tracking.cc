@@ -909,7 +909,7 @@ void Tracking::SetStepByStep(bool bSet)
 
 
 
-cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, string filename)
+cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, string filename, const bool introspection_on, const cv::Mat &costmap)
 {
     mImGray = imRectLeft;
     cv::Mat imGrayRight = imRectRight;
@@ -942,14 +942,15 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
         }
     }
 
-    if (mSensor == System::STEREO && !mpCamera2)
+    if (mSensor == System::STEREO && !mpCamera2){
         mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
-    else if(mSensor == System::STEREO && mpCamera2)
+    } else if(mSensor == System::STEREO && mpCamera2){
         mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,mpCamera2,mTlr);
-    else if(mSensor == System::IMU_STEREO && !mpCamera2)
+    } else if(mSensor == System::IMU_STEREO && !mpCamera2){
         mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,&mLastFrame,*mpImuCalib);
-    else if(mSensor == System::IMU_STEREO && mpCamera2)
+    } else if(mSensor == System::IMU_STEREO && mpCamera2){
         mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,mpCamera2,mTlr,&mLastFrame,*mpImuCalib);
+    }
 
     std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
     mCurrentFrame.mNameFile = filename;

@@ -219,7 +219,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
 }
 
-cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
+cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename, const bool introspection_on, const cv::Mat &costmap)
 {
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
     {
@@ -273,7 +273,7 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const
             mpTracker->GrabImuData(vImuMeas[i_imu]);
 
     // std::cout << "start GrabImageStereo" << std::endl;
-    cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft,imRight,timestamp,filename);
+    cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft, imRight, timestamp, filename, introspection_on, costmap);
 
     // std::cout << "out grabber" << std::endl;
 
@@ -284,6 +284,15 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const
 
     return Tcw;
 }
+
+// With introspection
+cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const bool introspection_on, const cv::Mat &costmap){
+    // Handler to allow for default argument order - provide blank args to the the two middle args
+    const vector<IMU::Point> vImuMeas = vector<IMU::Point>();
+    string filename="";
+    return TrackStereo(imLeft, imRight, timestamp, vImuMeas, filename, introspection_on, costmap);
+}
+
 
 cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, string filename)
 {
