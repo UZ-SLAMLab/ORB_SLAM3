@@ -954,7 +954,7 @@ namespace ORB_SLAM3
                             }
                         }
 
-                        
+                        // So first it is converting the cost values associated with each pixel to quality score using the mapping  (1-x)/(1+x) . Then it calculates the sum of the quality scores for all pixels in each image cell. This is later used to weight the maximum number of features to be extracted from each cell
                         long unsigned int sum = cv::sum(mvCostmapPyramid[level].rowRange(iniY,iniY+hY).colRange(iniX,iniX+hX))[0];
                         float cost = static_cast<float>(sum)/static_cast<float>((hX) * (hY));
                         float qual_score = 1.0 / (1.0 + cost/255);

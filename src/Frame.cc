@@ -52,7 +52,7 @@ Frame::Frame(const Frame &frame)
     :mpcpi(frame.mpcpi),mpORBvocabulary(frame.mpORBvocabulary), mpORBextractorLeft(frame.mpORBextractorLeft), mpORBextractorRight(frame.mpORBextractorRight),
      mTimeStamp(frame.mTimeStamp), mK(frame.mK.clone()), mDistCoef(frame.mDistCoef.clone()),
      mbf(frame.mbf), mb(frame.mb), mThDepth(frame.mThDepth), N(frame.N), mvKeys(frame.mvKeys),
-     mvKeysRight(frame.mvKeysRight), mvKeysUn(frame.mvKeysUn), mvuRight(frame.mvuRight),
+     mvKeysRight(frame.mvKeysRight), mvKeysUn(frame.mvKeysUn), mvKeyQualScore(frame.mvKeyQualScore), mvuRight(frame.mvuRight),
      mvDepth(frame.mvDepth), mBowVec(frame.mBowVec), mFeatVec(frame.mFeatVec),
      mDescriptors(frame.mDescriptors.clone()), mDescriptorsRight(frame.mDescriptorsRight.clone()),
      mvpMapPoints(frame.mvpMapPoints), mvbOutlier(frame.mvbOutlier), mImuCalib(frame.mImuCalib), mnCloseMPs(frame.mnCloseMPs),
@@ -126,8 +126,27 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
 
 
     N = mvKeys.size();
-    if(mvKeys.empty())
+    if(mvKeys.empty()){
         return;
+    }
+
+    // Initialize keypoint quality scores    
+    if (introspection_on && !costmap.empty()) {
+        // Point quality is determined via introspection
+        for (int i = 0; i < N; i++) {
+            int px = static_cast<int>(std::round(mvKeys[i].pt.x));
+            int py = static_cast<int>(std::round(mvKeys[i].pt.y));
+            float cost = static_cast<float>(costmap.at<uint8_t>(py, px));
+            float qual_score = 1.0 / (1.0 + cost/256);
+            float qual_score_norm = 2 * qual_score - 1;
+            mvKeyQualScore.push_back(qual_score_norm);
+        }
+    } else {    
+        // All point have same quality
+        for (int i = 0; i < N; i++) {
+            mvKeyQualScore.push_back(1.0);
+        }
+    }
 
     UndistortKeyPoints();
 
@@ -147,16 +166,14 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     mmProjectPoints.clear();// = map<long unsigned int, cv::Point2f>(N, static_cast<cv::Point2f>(NULL));
     mmMatchedInImage.clear();
 
+    // TODO outliers?
 
     // This is done only for the first Frame (or after a change in the calibration)
-    if(mbInitialComputations)
-    {
+    if(mbInitialComputations){
         ComputeImageBounds(imLeft);
 
         mfGridElementWidthInv=static_cast<float>(FRAME_GRID_COLS)/(mnMaxX-mnMinX);
         mfGridElementHeightInv=static_cast<float>(FRAME_GRID_ROWS)/(mnMaxY-mnMinY);
-
-
 
         fx = K.at<float>(0,0);
         fy = K.at<float>(1,1);
@@ -165,7 +182,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
         invfx = 1.0f/fx;
         invfy = 1.0f/fy;
 
-        mbInitialComputations=false;
+        mbInitialComputations = false;
     }
 
     mb = mbf/fx;

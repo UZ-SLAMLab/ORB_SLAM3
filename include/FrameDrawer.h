@@ -59,6 +59,8 @@ protected:
     cv::Mat mIm, mImRight;
     int N;
     vector<cv::KeyPoint> mvCurrentKeys,mvCurrentKeysRight;
+    // Vector of keypoint quality score
+    std::vector<float> mvCurrentKeysQualScore;
     vector<bool> mvbMap, mvbVO;
     bool mbOnlyTracking;
     int mnTracked, mnTrackedVO;

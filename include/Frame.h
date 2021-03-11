@@ -174,6 +174,9 @@ public:
     std::vector<cv::KeyPoint> mvKeys, mvKeysRight;
     std::vector<cv::KeyPoint> mvKeysUn;
 
+    // Vector of keypoint quality score. These are used to perform weighted BA
+    std::vector<float> mvKeyQualScore;
+    
     // Corresponding stereo coordinate and depth for each keypoint.
     std::vector<MapPoint*> mvpMapPoints;
     // "Monocular" keypoints have a negative value.

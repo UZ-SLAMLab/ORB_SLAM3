@@ -41,6 +41,7 @@ cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
     vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
     vector<int> vMatches; // Initialization: correspondeces with reference keypoints
     vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
+    vector<float> vCurrentKeysQual; // Quality score of KeyPoints in current frame
     vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
     vector<pair<cv::Point2f, cv::Point2f> > vTracks;
     int state; // Tracking state
@@ -59,20 +60,20 @@ cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
     {
         unique_lock<mutex> lock(mMutex);
         state=mState;
-        if(mState==Tracking::SYSTEM_NOT_READY)
+        if(mState==Tracking::SYSTEM_NOT_READY){
             mState=Tracking::NO_IMAGES_YET;
-
+        }
+        
         mIm.copyTo(im);
 
-        if(mState==Tracking::NOT_INITIALIZED)
-        {
+        vCurrentKeysQual = mvCurrentKeysQualScore;
+
+        if(mState==Tracking::NOT_INITIALIZED){
             vCurrentKeys = mvCurrentKeys;
             vIniKeys = mvIniKeys;
             vMatches = mvIniMatches;
             vTracks = mvTracks;
-        }
-        else if(mState==Tracking::OK /*&& bOldFeatures*/)
-        {
+        } else if(mState==Tracking::OK /*&& bOldFeatures*/) {
             vCurrentKeys = mvCurrentKeys;
             vbVO = mvbVO;
             vbMap = mvbMap;
@@ -85,7 +86,6 @@ cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
             vpOutlierMPs = mvpOutlierMPs;
             mProjectPoints = mmProjectPoints;
             mMatchedInImage = mmMatchedInImage;
-
         }
         else if(mState==Tracking::LOST)
         {
@@ -126,16 +126,20 @@ cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
                 pt1.y=vCurrentKeys[i].pt.y-r;
                 pt2.x=vCurrentKeys[i].pt.x+r;
                 pt2.y=vCurrentKeys[i].pt.y+r;
+                
+                 // Green at high quality, red at low quality
+                cv::Scalar color = cv::Scalar(0.0,
+                                              255 * vCurrentKeysQual[i],
+                                            255 - 255 * vCurrentKeysQual[i]);
+
 
                 // This is a match to a MapPoint in the map
-                if(vbMap[i])
-                {
-                    cv::rectangle(im,pt1,pt2,cv::Scalar(0,255,0));
-                    cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,255,0),-1);
+                if (vbMap[i]) {
+                    cv::rectangle(im,pt1,pt2,color);
+                    cv::circle(im,vCurrentKeys[i].pt,2,color,-1);
                     mnTracked++;
-                }
-                else // This is match to a "visual odometry" MapPoint created in the last frame
-                {
+                } else {
+                    // This is match to a "visual odometry" MapPoint created in the last frame
                     cv::rectangle(im,pt1,pt2,cv::Scalar(255,0,0));
                     cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(255,0,0),-1);
                     mnTrackedVO++;
@@ -406,7 +410,8 @@ void FrameDrawer::Update(Tracking *pTracker)
     unique_lock<mutex> lock(mMutex);
     pTracker->mImGray.copyTo(mIm);
     mvCurrentKeys=pTracker->mCurrentFrame.mvKeys;
-
+    // For introspectivec keypoint quality coloring
+    mvCurrentKeysQualScore = pTracker->mCurrentFrame.mvKeyQualScore;
     if(both){
         mvCurrentKeysRight = pTracker->mCurrentFrame.mvKeysRight;
         pTracker->mImRight.copyTo(mImRight);
