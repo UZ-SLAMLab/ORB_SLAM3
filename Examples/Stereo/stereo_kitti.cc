@@ -23,14 +23,24 @@
 #include<chrono>
 
 #include <gflags/gflags.h>
+#include <torch/script.h>
+#include <torch/torch.h>
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/imgcodecs/legacy/constants_c.h>
 
 #include<System.h>
 
+DECLARE_bool(help);
 
-DEFINE_bool(introspection_on, false, "Run ORB-SLAM3 with the introspection function - GPU required");
+DEFINE_string(path_to_vocabulary,"" , "Absolute path to the ORB vocabulary.");
+DEFINE_string(path_to_settings,"" , "Absolute path to the settings.");
+DEFINE_string(path_to_sequences,"" , "Absolute path to the stereo image sequences.");
+DEFINE_string(path_to_introspection_model,"" , "Absolute path to the introspection model");
+
+DEFINE_bool(introspection_on, false, "Run ORB-SLAM3 with the introspection function - GPU suggested.");
+DEFINE_bool(gpu_available, false, "Set to true if a GPU is available to use.");
+
 
 using namespace std;
 
@@ -39,22 +49,38 @@ void LoadImages(const string &strPathToSequence, vector<string> &vstrImageLeft,
 
 int main(int argc, char **argv)
 {
-    if(argc < 4)
-    {
-        cerr << endl << "Usage: ./stereo_kitti path_to_vocabulary path_to_settings path_to_sequence" << endl;
-        return 1;
-    }
+    gflags::ParseCommandLineNonHelpFlags(&argc, &argv, true);
 
+    // Load introspection model
+    torch::jit::script::Module introspection_model;
+    torch::Device device = torch::kCPU;
+    if(FLAGS_introspection_on){
+        // Check if we have a GPU to run on
+        if (FLAGS_gpu_available && torch::cuda::is_available()) {
+            device = torch::kCUDA;
+            cout << "Introspection model running on GPU :)" << endl;
+        } else {
+            cout << "Introspection model running on CPU :(" << endl;
+        }
+        try {
+            // Deserialize the ScriptModule from file
+            introspection_model = torch::jit::load(FLAGS_path_to_introspection_model);
+            introspection_model.to(device);
+        } catch (const c10::Error &e) {
+            cerr << "Error deserializing the ScriptModule from file" << endl;
+            return -1;
+        }
+    }
     // Retrieve paths to images
     vector<string> vstrImageLeft;
     vector<string> vstrImageRight;
     vector<double> vTimestamps;
-    LoadImages(string(argv[3]), vstrImageLeft, vstrImageRight, vTimestamps);
+    LoadImages(string(FLAGS_path_to_sequences), vstrImageLeft, vstrImageRight, vTimestamps);
 
     const int nImages = vstrImageLeft.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::STEREO,true);
+    ORB_SLAM3::System SLAM(FLAGS_path_to_vocabulary,FLAGS_path_to_settings,ORB_SLAM3::System::STEREO,true);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
