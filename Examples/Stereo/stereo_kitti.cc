@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 
         // Pass the images to the SLAM system
         if(FLAGS_introspection_on){
-            SLAM.TrackStereo(imLeft,imRight,tframe);
+            SLAM.TrackStereoWithIntrospection(imLeft,imRight,tframe);
         } else {
             SLAM.TrackStereo(imLeft,imRight,tframe);
         }
