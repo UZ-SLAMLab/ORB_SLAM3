@@ -26,6 +26,8 @@
 #include <torch/script.h>
 #include <torch/torch.h>
 
+#include "iv_slam_helpers/torch_helpers.h"
+
 #include<opencv2/core/core.hpp>
 #include<opencv2/imgcodecs/legacy/constants_c.h>
 
@@ -40,6 +42,7 @@ DEFINE_string(path_to_introspection_model,"" , "Absolute path to the introspecti
 
 DEFINE_bool(introspection_on, false, "Run ORB-SLAM3 with the introspection function - GPU suggested.");
 DEFINE_bool(gpu_available, false, "Set to true if a GPU is available to use.");
+DEFINE_bool(viewer_on, true, "Enable image and keyframe viewer.");
 
 
 using namespace std;
@@ -71,6 +74,7 @@ int main(int argc, char **argv)
             return -1;
         }
     }
+
     // Retrieve paths to images
     vector<string> vstrImageLeft;
     vector<string> vstrImageRight;
@@ -80,7 +84,7 @@ int main(int argc, char **argv)
     const int nImages = vstrImageLeft.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(FLAGS_path_to_vocabulary,FLAGS_path_to_settings,ORB_SLAM3::System::STEREO,true);
+    ORB_SLAM3::System SLAM(FLAGS_path_to_vocabulary, FLAGS_path_to_settings, ORB_SLAM3::System::STEREO, FLAGS_viewer_on);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -105,6 +109,38 @@ int main(int argc, char **argv)
                  << string(vstrImageLeft[ni]) << endl;
             return 1;
         }
+        
+        // TODO rectify and undistort OG images?
+
+        // Feed image to model to create cost mask 
+        cv::Mat cost_img_cv;
+        at::Tensor cost_img;
+        if(FLAGS_introspection_on){
+            // Run inference on the introspection model online
+            cv::Mat imLeft_RGB = imLeft;  //TODO initializae imLeft_RGB as blank instead of imLeft
+            cv::cvtColor(imLeft_RGB, imLeft_RGB, CV_BGR2RGB);
+
+            // Convert to float and normalize image
+            imLeft_RGB.convertTo(imLeft_RGB, CV_32FC3, 1.0 / 255.0);
+            cv::subtract(imLeft_RGB, cv::Scalar(0.485, 0.456, 0.406), imLeft_RGB); // TODO what are these numbers
+            cv::divide(imLeft_RGB, cv::Scalar(0.229, 0.224, 0.225), imLeft_RGB);
+
+            auto tensor_img = ORB_SLAM3::CVImgToTensor(imLeft_RGB);
+            // Swap axis
+            tensor_img = ORB_SLAM3::TransposeTensor(tensor_img, {(2), (0), (1)});
+            // Add batch dim
+            tensor_img.unsqueeze_(0);
+
+            tensor_img = tensor_img.to(device);
+            std::vector<torch::jit::IValue> inputs{tensor_img};
+            cost_img = introspection_model.forward(inputs).toTensor();
+            cost_img = (cost_img * 255.0).to(torch::kByte);
+            cost_img = cost_img.to(torch::kCPU);
+
+            cost_img_cv = ORB_SLAM3::ToCvImage(cost_img);
+        }
+
+        // TODO rectify and undistort cost images?
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
@@ -113,7 +149,12 @@ int main(int argc, char **argv)
 #endif
 
         // Pass the images to the SLAM system
-        SLAM.TrackStereo(imLeft,imRight,tframe);
+        if(FLAGS_introspection_on){
+            SLAM.TrackStereo(imLeft,imRight,tframe);
+        } else {
+            SLAM.TrackStereo(imLeft,imRight,tframe);
+        }
+        
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
