@@ -15,11 +15,11 @@ Camera.cx: 317.829040527344
 Camera.cy: 242.992126464844
 
 # D matrix
-# Camera.k1: 0
-# Camera.k2: 0
-# Camera.p1: 0
-# Camera.p2: 0
-# Camera.k3: 0
+Camera.k1: 0.0000000001
+Camera.k2: 0.0000000001
+Camera.p1: 0.0000000001
+Camera.p2: 0.0000000001
+Camera.k3: 0.0000000001
 
 # Computed from chessboard
 # Camera.fx: 3.8239546117370509e+02
@@ -27,11 +27,11 @@ Camera.cy: 242.992126464844
 # Camera.cx: 3.2027438449003421e+02
 # Camera.cy: 2.3990883258792343e+02
 
-Camera.k1: 1.3224423549010711e-02
-Camera.k2: -1.5857661047632438e-02
-Camera.p1: -1.3443119021054313e-03
-Camera.p2: 1.9553483509142503e-03
-Camera.k3: 2.3106074488014841e-02
+# Camera.k1: 1.3224423549010711e-02
+# Camera.k2: -1.5857661047632438e-02
+# Camera.p1: -1.3443119021054313e-03
+# Camera.p2: 1.9553483509142503e-03
+# Camera.k3: 2.3106074488014841e-02
 
 Camera.width: 640
 Camera.height: 480

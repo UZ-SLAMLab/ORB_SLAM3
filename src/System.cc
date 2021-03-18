@@ -333,7 +333,6 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         }
     }
 
-
     cv::Mat Tcw = mpTracker->GrabImageRGBD(im,depthmap,timestamp,filename);
 
     unique_lock<mutex> lock2(mMutexState);
