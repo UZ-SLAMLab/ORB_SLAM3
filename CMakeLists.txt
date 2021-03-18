@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(ORB_SLAM3)
+set(REALSENSE RealSense)
 
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
@@ -7,10 +8,10 @@ ENDIF()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3 -D EIGEN_NO_DEPRECATED_WARNING -Wno-ignored-attributes -Wno-unused-result -Wno-maybe-uninitialized -Wno-unused-variable")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3 -D EIGEN_NO_DEPRECATED_WARNING -Wno-ignored-attributes -Wno-unused-result -Wno-reorder -Wno-maybe-uninitialized -Wno-unused-variable -Wno-sign-compare -Wno-conversion-null -Wno-unused-but-set-variable -Wno-dangling-else -Wno-comment -Wno-deprecated -Wno-unused-local-typedefs")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native -D EIGEN_NO_DEPRECATED_WARNING -Wno-ignored-attributes -Wno-unused-result -Wno-maybe-uninitialized -Wno-unused-variable")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native -D EIGEN_NO_DEPRECATED_WARNING -Wno-ignored-attributes -Wno-unused-result -Wno-reorder -Wno-maybe-uninitialized -Wno-unused-variable -Wno-sign-compare -Wno-conversion-null -Wno-unused-but-set-variable -Wno-dangling-else -Wno-comment -Wno-deprecated -Wno-unused-local-typedefs")
 
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-deprecated -O3 -march=native ")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated -O3 -march=native")
@@ -46,11 +47,13 @@ MESSAGE(${OpenCV_VERSION})
 
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
+find_package(realsense2 REQUIRED)
 
 include_directories(
 ${PROJECT_SOURCE_DIR}
 ${PROJECT_SOURCE_DIR}/include
 ${PROJECT_SOURCE_DIR}/include/CameraModels
+${PROJECT_SOURCE_DIR}/Drivers/RealSense
 ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
 )
@@ -117,15 +120,31 @@ src/TwoViewReconstruction.cc)
 add_subdirectory(Thirdparty/g2o)
 
 target_link_libraries(${PROJECT_NAME}
+${REALSENSE}
 ${OpenCV_LIBS}
 ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
+${realsense2_LIBRARY}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 -lboost_serialization
 -lcrypto
 )
 
+# Adding RealSense driver library
+add_library(${REALSENSE} SHARED
+        Drivers/RealSense/realsense.cc
+        )
+
+target_link_libraries(${REALSENSE}
+        ${OpenCV_LIBS}
+        )
+
+
+# Build Tests for Live cameras
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Test/Live/IRD)
+add_executable(realsense_live Test/Live/IRD/realsense.cc)
+target_link_libraries(realsense_live ${PROJECT_NAME})
 
 # Build examples
 
