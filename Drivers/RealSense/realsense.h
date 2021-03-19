@@ -52,6 +52,14 @@ private:
   uint32_t depth_height = 480;
   uint32_t depth_fps;
 
+  // Gyro Buffer
+  rs2::frame gyro_frame;
+  rs2_vector gyro_data;
+
+  // Gyro Accelerometer
+  rs2::frame acc_frame;
+  rs2_vector acc_data;
+
   // Warmup frames
   uint32_t warm_up_frames = 30;
 
@@ -89,6 +97,8 @@ public:
   rs2_time_t getIRLeftTimestamp();
   rs2_time_t getTemporalFrameDisplacement();
   rs2_time_t getAverageTimestamp();
+  rs2_time_t getGyroTimestamp();
+  rs2_time_t getAccTimestamp();
 
   bool isValidAlignedFrame();
 
@@ -103,6 +113,9 @@ public:
   rs2::frame getDepthFrame();
   rs2::frame getIRLeftFrame();
   rs2::frame getIRRightFrame();
+
+  // Get IMU frames
+  std::vector<double> getIMUFrames();
 
   // Control laser projector
   void enableLaser(float);
@@ -128,6 +141,10 @@ private:
   // Updates for IR Left and Right frames
   void updateIRL();
   void updateIRR();
+
+  // Updates for motion frame
+  void updateGyro();
+  void updateAcc();
 
   // Update Frame
   inline void updateFrame();

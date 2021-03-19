@@ -94,9 +94,12 @@ int main(int argc, char **argv)
           cerr << "Frames are not time consistent" << endl;
         }
       } else if (mode == RealSense::IRD) {
-        // cout << fixed << setw(11) << setprecision(6) << "Timestamp   : " << realsense.getIRLeftTimestamp() << endl;
+        // cout << fixed << setw(11) << setprecision(6) << "IRD Timestamp   : " << realsense.getIRLeftTimestamp() << endl;
+        // cout << fixed << setw(11) << setprecision(6) << "Gyro Timestamp  : " << realsense.getGyroTimestamp() << endl;
+        // cout << fixed << setw(11) << setprecision(6) << "Acc Timestamp   : " << realsense.getAccTimestamp() << endl;
         cv::Mat irMatrix    = realsense.getIRLeftMatrix();
         cv::Mat depthMatrix = realsense.getDepthMatrix();
+        vector<double> imu  = realsense.getIMUFrames();
 
         // Pass the IR Left and Depth images to the SLAM system
         cv::Mat cameraPose = SLAM.TrackRGBD(irMatrix, depthMatrix, realsense.getIRLeftTimestamp());

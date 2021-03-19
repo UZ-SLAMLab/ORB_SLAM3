@@ -104,6 +104,31 @@ rs2_time_t RealSense::getIRLeftTimestamp()
   }
 }
 
+rs2_time_t RealSense::getGyroTimestamp()
+{
+  gyro_frame = frameset.first_or_default(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
+  if (gyro_frame)
+  {
+    rs2_frame * frameP = gyro_frame.get();
+    return(rs2_get_frame_timestamp(frameP, &e));
+  } else {
+    return(-1);
+  }
+}
+
+rs2_time_t RealSense::getAccTimestamp()
+{
+  acc_frame = frameset.first_or_default(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F);
+  if (acc_frame)
+  {
+    rs2_frame * frameP = acc_frame.get();
+    return(rs2_get_frame_timestamp(frameP, &e));
+  } else {
+    return(-1);
+  }
+}
+
+
 // This function gets the temporal displacement between
 // the RGB and Depth frames (their delta).
 rs2_time_t RealSense::getTemporalFrameDisplacement()
@@ -206,6 +231,18 @@ rs2::frame RealSense::getIRRightFrame()
   return(ir_right_frame);
 }
 
+std::vector<double> RealSense::getIMUFrames()
+{
+  std::vector<double> imu;
+  imu.push_back(gyro_data.x);
+  imu.push_back(gyro_data.y);
+  imu.push_back(gyro_data.z);
+  imu.push_back(acc_data.x);
+  imu.push_back(acc_data.y);
+  imu.push_back(acc_data.z);
+  return(imu);
+}
+
 // Initialize
 void RealSense::initialize(rs2_time_t _maxDeltaTimeFrames)
 {
@@ -231,6 +268,9 @@ inline void RealSense::initializeSensor()
       // The following is just needed to get the correct baseline information, it will be then disabled.
       config.enable_stream( rs2_stream::RS2_STREAM_INFRARED, IR_RIGHT, ir_right_width, ir_right_height, rs2_format::RS2_FORMAT_Y8, ir_right_fps );
       config.enable_stream( rs2_stream::RS2_STREAM_DEPTH, depth_width, depth_height, rs2_format::RS2_FORMAT_Z16, depth_fps );
+      // Add streams of gyro and accelerometer to configuration
+      config.enable_stream( rs2_stream::RS2_STREAM_ACCEL, rs2_format::RS2_FORMAT_MOTION_XYZ32F );
+      config.enable_stream( rs2_stream::RS2_STREAM_GYRO,  rs2_format::RS2_FORMAT_MOTION_XYZ32F );
       break;
     case IRL:
       config.enable_stream( rs2_stream::RS2_STREAM_INFRARED, IR_LEFT, ir_left_width, ir_left_height, rs2_format::RS2_FORMAT_Y8, ir_left_fps );
@@ -328,6 +368,8 @@ void RealSense::updateIRD()
   updateFrame();
   updateInfraredIRLeft();
   updateDepth();
+  updateGyro();
+  updateAcc();
 }
 
 void RealSense::updateIRL()
@@ -365,7 +407,7 @@ inline void RealSense::updateColor()
   else
     color_frame = frameset.get_color_frame();
 
-  // Retrive Frame Information
+  // Retrieve Frame Information
   color_width = color_frame.as<rs2::video_frame>().get_width();
   color_height = color_frame.as<rs2::video_frame>().get_height();
 }
@@ -378,7 +420,7 @@ inline void RealSense::updateDepth()
   else
     depth_frame = frameset.get_depth_frame();
 
-  // Retrive Frame Information
+  // Retrieve Frame Information
   depth_width = depth_frame.as<rs2::video_frame>().get_width();
   depth_height = depth_frame.as<rs2::video_frame>().get_height();
 }
@@ -388,7 +430,7 @@ inline void RealSense::updateInfraredIRLeft()
 {
   ir_left_frame  = frameset.get_infrared_frame(IR_LEFT);
 
-  // Retrive Frame Information
+  // Retrieve Frame Information
   ir_left_width  = ir_left_frame.as<rs2::video_frame>().get_width();
   ir_left_height = ir_left_frame.as<rs2::video_frame>().get_height();
 }
@@ -398,9 +440,35 @@ inline void RealSense::updateInfraredIRRight()
 {
   ir_right_frame  = frameset.get_infrared_frame(IR_RIGHT);
 
-  // Retrive Frame Information
+  // Retrieve Frame Information
   ir_right_width  = ir_right_frame.as<rs2::video_frame>().get_width();
   ir_right_height = ir_right_frame.as<rs2::video_frame>().get_height();
+}
+
+// Update Gyro
+inline void RealSense::updateGyro()
+{
+  gyro_frame = frameset.first_or_default(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
+  if (gyro_frame)
+  {
+    auto motion = gyro_frame.as<rs2::motion_frame>();
+
+    // Retrieve Frame Information
+    gyro_data = motion.get_motion_data();
+  }
+}
+
+// Update Accelerometer
+inline void RealSense::updateAcc()
+{
+  acc_frame = frameset.first_or_default(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F);
+  if (acc_frame)
+  {
+    auto motion = acc_frame.as<rs2::motion_frame>();
+
+    // Retrieve Frame Information
+    acc_data = motion.get_motion_data();
+  }
 }
 
 // Draw Data
