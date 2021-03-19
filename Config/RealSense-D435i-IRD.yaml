@@ -62,6 +62,23 @@ ThDepth: 800.0
 # DepthMapFactor = 1000, which is the conversion from millimeters to meters (Realsense provides depth in millimeters)
 DepthMapFactor: 999.999938964844
 
+# Transformation from camera 0 to body-frame (imu)
+Tbc: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: f
+   data: [0.0148655429818, -0.999880929698, 0.00414029679422, -0.0216401454975,
+         0.999557249008, 0.0149672133247, 0.025715529948, -0.064676986768,
+        -0.0257744366974, 0.00375618835797, 0.999660727178, 0.00981073058949,
+         0.0, 0.0, 0.0, 1.0]
+
+# IMU noise
+IMU.NoiseGyro: 1.7e-04
+IMU.NoiseAcc: 2.0e-03
+IMU.GyroWalk: 1.9393e-05 
+IMU.AccWalk: 3.e-03
+IMU.Frequency: 200
+
 # Modeling Realsense D435 Sensor Noise for Improved 3D Reconstruction and Tracking.
 sensor_processor/type: structured_light
 sensor_processor/cutoff_min_depth: 0.2

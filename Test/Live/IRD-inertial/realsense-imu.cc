@@ -65,6 +65,8 @@ int main(int argc, char **argv)
     if(printTrajS.compare("ON") == 0)
       printTraj = true;
 
+    vector<ORB_SLAM3::IMU::Point> vImuMeas;
+
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     System SLAM(argv[1], argv[2], System::RGBD, display);
 
@@ -95,8 +97,16 @@ int main(int argc, char **argv)
         }
       } else if (mode == RealSense::IRD) {
         // cout << fixed << setw(11) << setprecision(6) << "IRD Timestamp   : " << realsense.getIRLeftTimestamp() << endl;
+        // cout << fixed << setw(11) << setprecision(6) << "Gyro Timestamp  : " << realsense.getGyroTimestamp() << endl;
+        // cout << fixed << setw(11) << setprecision(6) << "Acc Timestamp   : " << realsense.getAccTimestamp() << endl;
         cv::Mat irMatrix    = realsense.getIRLeftMatrix();
         cv::Mat depthMatrix = realsense.getDepthMatrix();
+        cv::Point3f acc     = realsense.getAccFrames();
+        cv::Point3f gyro    = realsense.getGyroFrames();
+
+        // Load imu measurements from previous frame
+        vImuMeas.clear();
+        vImuMeas.push_back(ORB_SLAM3::IMU::Point(acc.x,acc.y,acc.z,gyro.x,gyro.y,gyro.z,realsense.getAccTimestamp()));
 
         // Pass the IR Left and Depth images to the SLAM system
         cv::Mat cameraPose = SLAM.TrackRGBD(irMatrix, depthMatrix, realsense.getIRLeftTimestamp());

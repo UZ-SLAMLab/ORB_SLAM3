@@ -231,16 +231,22 @@ rs2::frame RealSense::getIRRightFrame()
   return(ir_right_frame);
 }
 
-std::vector<double> RealSense::getIMUFrames()
+cv::Point3f RealSense::getGyroFrames()
 {
-  std::vector<double> imu;
-  imu.push_back(gyro_data.x);
-  imu.push_back(gyro_data.y);
-  imu.push_back(gyro_data.z);
-  imu.push_back(acc_data.x);
-  imu.push_back(acc_data.y);
-  imu.push_back(acc_data.z);
-  return(imu);
+  cv::Point3f gyro;
+  gyro.x = gyro_data.x;
+  gyro.y = gyro_data.y;
+  gyro.z = gyro_data.z;
+  return(gyro);
+}
+
+cv::Point3f RealSense::getAccFrames()
+{
+  cv::Point3f acc;
+  acc.x = acc_data.x;
+  acc.y = acc_data.y;
+  acc.z = acc_data.z;
+  return(acc);
 }
 
 // Initialize
@@ -321,7 +327,7 @@ inline void RealSense::initializeSensor()
     realSense_device = pipeline_profile.get_device();
   }
 
-  // Disabled by default the laser projector
+  // The laser projector is disabled by default
   disableLaser();
 
   // Camera warmup - dropping several first frames to let auto-exposure stabilize

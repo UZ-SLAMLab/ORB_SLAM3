@@ -115,7 +115,8 @@ public:
   rs2::frame getIRRightFrame();
 
   // Get IMU frames
-  std::vector<double> getIMUFrames();
+  cv::Point3f getAccFrames();
+  cv::Point3f getGyroFrames();
 
   // Control laser projector
   void enableLaser(float);
