@@ -139,6 +139,9 @@ private:
   // Updates for IRD frames
   void updateIRD();
 
+  // Updates for IMU_IRD frame
+  void updateIMU_IRD();
+
   // Updates for IR Left and Right frames
   void updateIRL();
   void updateIRR();

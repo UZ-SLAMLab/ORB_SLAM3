@@ -49,6 +49,9 @@ void RealSense::run()
     case IRR:
       updateIRR();
       break;
+    case IMU_IRD:
+      updateIMU_IRD();
+      break;
     default:
       break;
   }
@@ -77,6 +80,7 @@ rs2_time_t RealSense::getDepthTimestamp()
       cFrame  = aligned_frameset.get_depth_frame();
       break;
     case IRD:
+    case IMU_IRD:
       cFrame  = frameset.get_depth_frame();
       break;
     default:
@@ -92,7 +96,7 @@ rs2_time_t RealSense::getDepthTimestamp()
 
 rs2_time_t RealSense::getIRLeftTimestamp()
 {
-  if ((sensorModality == IRD) || (sensorModality == IRL)) {
+  if ((sensorModality == IMU_IRD) || (sensorModality == IRD) || (sensorModality == IRL)) {
     // Get each frame
     rs2::frame cFrame  = frameset.get_infrared_frame(IR_LEFT);
     rs2_frame * frameP = cFrame.get();
@@ -139,6 +143,7 @@ rs2_time_t RealSense::getTemporalFrameDisplacement()
       return(fabs(getRGBTimestamp()-getDepthTimestamp()));
       break;
     case IRD:
+    case IMU_IRD:
       return(fabs(getIRLeftTimestamp()-getDepthTimestamp()));
       break;
     default:
@@ -158,6 +163,7 @@ rs2_time_t RealSense::getAverageTimestamp()
       return((getRGBTimestamp()+getDepthTimestamp())/2.0);
       break;
     case IRD:
+    case IMU_IRD:
       return((getIRLeftTimestamp()+getDepthTimestamp())/2.0);
       break;
     default:
@@ -274,15 +280,21 @@ inline void RealSense::initializeSensor()
       // The following is just needed to get the correct baseline information, it will be then disabled.
       config.enable_stream( rs2_stream::RS2_STREAM_INFRARED, IR_RIGHT, ir_right_width, ir_right_height, rs2_format::RS2_FORMAT_Y8, ir_right_fps );
       config.enable_stream( rs2_stream::RS2_STREAM_DEPTH, depth_width, depth_height, rs2_format::RS2_FORMAT_Z16, depth_fps );
-      // Add streams of gyro and accelerometer to configuration
-      config.enable_stream( rs2_stream::RS2_STREAM_ACCEL, rs2_format::RS2_FORMAT_MOTION_XYZ32F );
-      config.enable_stream( rs2_stream::RS2_STREAM_GYRO,  rs2_format::RS2_FORMAT_MOTION_XYZ32F );
       break;
     case IRL:
       config.enable_stream( rs2_stream::RS2_STREAM_INFRARED, IR_LEFT, ir_left_width, ir_left_height, rs2_format::RS2_FORMAT_Y8, ir_left_fps );
       break;
     case IRR:
       config.enable_stream( rs2_stream::RS2_STREAM_INFRARED, IR_RIGHT, ir_right_width, ir_right_height, rs2_format::RS2_FORMAT_Y8, ir_right_fps );
+      break;
+    case IMU_IRD:
+      config.enable_stream( rs2_stream::RS2_STREAM_INFRARED, IR_LEFT, ir_left_width, ir_left_height, rs2_format::RS2_FORMAT_Y8, ir_left_fps );
+      // The following is just needed to get the correct baseline information, it will be then disabled.
+      config.enable_stream( rs2_stream::RS2_STREAM_INFRARED, IR_RIGHT, ir_right_width, ir_right_height, rs2_format::RS2_FORMAT_Y8, ir_right_fps );
+      config.enable_stream( rs2_stream::RS2_STREAM_DEPTH, depth_width, depth_height, rs2_format::RS2_FORMAT_Z16, depth_fps );
+      // Add streams of gyro and accelerometer to configuration
+      config.enable_stream( rs2_stream::RS2_STREAM_ACCEL, rs2_format::RS2_FORMAT_MOTION_XYZ32F );
+      config.enable_stream( rs2_stream::RS2_STREAM_GYRO,  rs2_format::RS2_FORMAT_MOTION_XYZ32F );
       break;
     default:
       std::cerr << "Invalid modality selected" << std::endl;
@@ -293,7 +305,7 @@ inline void RealSense::initializeSensor()
   realSense_device = pipeline_profile.get_device();
 
   // Refer to: https://github.com/raulmur/ORB_SLAM2/issues/259
-  if (sensorModality == IRD)
+  if ((sensorModality == IRD) || (sensorModality == IMU_IRD))
   {
     auto depth_sensor = realSense_device.first<rs2::depth_sensor>();
     auto depth_stream = pipeline_profile.get_stream(RS2_STREAM_DEPTH);
@@ -370,6 +382,13 @@ void RealSense::updateRGBD()
 }
 
 void RealSense::updateIRD()
+{
+  updateFrame();
+  updateInfraredIRLeft();
+  updateDepth();
+}
+
+void RealSense::updateIMU_IRD()
 {
   updateFrame();
   updateInfraredIRLeft();
