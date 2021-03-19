@@ -69,6 +69,7 @@ int main(int argc, char **argv)
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     System SLAM(argv[1], argv[2], System::IMU_RGBD, display);
+    Verbose::SetTh(Verbose::VERBOSITY_QUIET);
 
     cout << endl << "-------" << endl;
     cout << "Start processing video stream ..." << endl;
