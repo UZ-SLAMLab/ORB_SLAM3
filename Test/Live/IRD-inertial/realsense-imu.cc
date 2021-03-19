@@ -38,8 +38,8 @@ int main(int argc, char **argv)
     RealSense::sModality mode = RealSense::RGBD;
     if (strcmp(argv[3], "RGBD") == 0)
       mode = RealSense::RGBD;
-    else if (strcmp(argv[3], "IRD") == 0)
-      mode = RealSense::IRD;
+    else if (strcmp(argv[3], "IMU_IRD") == 0)
+      mode = RealSense::IMU_IRD;
 
     RealSense realsense(mode);
     // realsense.enableLaser(40.0);
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     vector<ORB_SLAM3::IMU::Point> vImuMeas;
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    System SLAM(argv[1], argv[2], System::RGBD, display);
+    System SLAM(argv[1], argv[2], System::IMU_RGBD, display);
 
     cout << endl << "-------" << endl;
     cout << "Start processing video stream ..." << endl;
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
         } else {
           cerr << "Frames are not time consistent" << endl;
         }
-      } else if (mode == RealSense::IRD) {
+      } else if (mode == RealSense::IMU_IRD) {
         // cout << fixed << setw(11) << setprecision(6) << "IRD Timestamp   : " << realsense.getIRLeftTimestamp() << endl;
         // cout << fixed << setw(11) << setprecision(6) << "Gyro Timestamp  : " << realsense.getGyroTimestamp() << endl;
         // cout << fixed << setw(11) << setprecision(6) << "Acc Timestamp   : " << realsense.getAccTimestamp() << endl;
@@ -109,7 +109,7 @@ int main(int argc, char **argv)
         vImuMeas.push_back(ORB_SLAM3::IMU::Point(acc.x,acc.y,acc.z,gyro.x,gyro.y,gyro.z,realsense.getAccTimestamp()));
 
         // Pass the IR Left and Depth images to the SLAM system
-        cv::Mat cameraPose = SLAM.TrackRGBD(irMatrix, depthMatrix, realsense.getIRLeftTimestamp());
+        cv::Mat cameraPose = SLAM.TrackRGBD(irMatrix, depthMatrix, realsense.getIRLeftTimestamp(), vImuMeas);
 
         if (printTraj)
           cout << "Camera position" << cameraPose << endl;

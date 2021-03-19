@@ -12,7 +12,7 @@ public:
   // IRD  - Uses Infrared Left camera and Depth camera (aligned, synchronized)
   // IRL  - Uses Infrared Left camera
   // IRR  - Uses Infrared Right camera
-  enum sModality { RGBD, IRD, IRL, IRR };
+  enum sModality { RGBD, IRD, IRL, IRR, IMU_IRD };
 
 private:
   // Sensor modality
