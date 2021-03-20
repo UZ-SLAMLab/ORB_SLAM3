@@ -22,20 +22,6 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 make $1
 
-# echo "Configuring and building Thirdparty/fbow ..."
-# cd Thirdparty/fbow
-# mkdir -p build
-# cd build
-# cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=../ -DUSE_AVX=OFF
-# make install $1
-
-# echo "Configuring and building Thirdparty/DLib ..."
-# cd ../../DLib
-# mkdir -p build
-# cd build
-# cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-# make $1
-
 echo "Configuring and building Thirdparty/g2o ..."
 cd ../../g2o
 mkdir -p build
@@ -56,16 +42,6 @@ else
   tar -xf ORBvoc.txt.tar.gz
 fi
 cd ..
-
-# cd Vocabulary
-# VOCABULARYFILE=`pwd`"/orb_mur.fbow"
-# if test -f "$VOCABULARYFILE"; then
-#   echo "Vocabulary file already extracted."
-# else
-#   echo "Uncompress vocabulary ..."
-#   tar -xf orb_mur.fbow.tar.gz
-# fi
-# cd ..
 
 echo "Configuring and building ORB_SLAM2 ..."
 

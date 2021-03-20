@@ -1,6 +1,12 @@
 # ORB-SLAM3
 Details of changes between the different versions.
 
+### V0.4: Beta version, 20 Mar 2021
+
+- RGB-D Inertial compatibility, the RGB-D sensor modality with inertial sensor is now integrated and working.
+
+- The build.sh script has been modified to explicitly declare the jobs for make, the build type and the ROS script has been included in the same script (it can be compiled for ROS running `./build.sh -j2 Release ROS`).
+
 ### V0.3: Beta version, 4 Sep 2020
 
 - RGB-D compatibility, the RGB-D examples had been adapted to the new version.

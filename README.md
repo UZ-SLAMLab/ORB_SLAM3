@@ -1,6 +1,6 @@
 # ORB-SLAM3
 
-### V0.3: Beta version, 4 Sep 2020
+### V0.4: Beta version, 20 Mar 2021
 **Authors:** Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/).
 
 The [Changelog](https://github.com/UZ-SLAMLab/ORB_SLAM3/Changelog.md) describes the features of each version.

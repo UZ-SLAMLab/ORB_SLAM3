@@ -1424,29 +1424,28 @@ void Tracking::Track()
         }
         else if(mCurrentFrame.mTimeStamp>mLastFrame.mTimeStamp+1.0)
         {
-          // Commenting it out as current frame with live camera is always > old frame + 1.0
-            // cout << "id last: " << mLastFrame.mnId << "    id curr: " << mCurrentFrame.mnId << endl;
-            // if(mpAtlas->isInertial())
-            // {
-            //     if(mpAtlas->isImuInitialized())
-            //     {
-            //         cout << "Timestamp jump detected. State set to LOST. Reseting IMU integration..." << endl;
-            //         if(!pCurrentMap->GetIniertialBA2())
-            //         {
-            //             mpSystem->ResetActiveMap();
-            //         }
-            //         else
-            //         {
-            //             CreateMapInAtlas();
-            //         }
-            //     }
-            //     else
-            //     {
-            //         cout << "Timestamp jump detected, before IMU initialization. Reseting..." << endl;
-            //         mpSystem->ResetActiveMap();
-            //     }
-            // }
-            // return;
+            cout << "id last: " << mLastFrame.mnId << "    id curr: " << mCurrentFrame.mnId << endl;
+            if(mpAtlas->isInertial())
+            {
+                if(mpAtlas->isImuInitialized())
+                {
+                    cout << "Timestamp jump detected. State set to LOST. Reseting IMU integration..." << endl;
+                    if(!pCurrentMap->GetIniertialBA2())
+                    {
+                        mpSystem->ResetActiveMap();
+                    }
+                    else
+                    {
+                        CreateMapInAtlas();
+                    }
+                }
+                else
+                {
+                    cout << "Timestamp jump detected, before IMU initialization. Reseting..." << endl;
+                    mpSystem->ResetActiveMap();
+                }
+            }
+            return;
         }
     }
 
