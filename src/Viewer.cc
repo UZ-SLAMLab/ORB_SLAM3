@@ -172,7 +172,10 @@ void Viewer::Run()
     Ow.SetIdentity();
     pangolin::OpenGlMatrix Twwp; // Oriented with g in the z axis, but y and x from camera
     Twwp.SetIdentity();
-    cv::namedWindow("ORB-SLAM3: Current Frame");
+
+    pangolin::CreateWindowAndBind("ORB-SLAM3: Current Frame",640,500);
+    pangolin::View& d_stream = pangolin::CreateDisplay().SetBounds(0.0, 1.0, 1.0, 0.0, -640.0f/500.0f);
+    pangolin::GlTexture imageTexture(640,500,GL_RGB,false,0,GL_RGB,GL_UNSIGNED_BYTE);
 
     bool bFollow = true;
     bool bLocalizationMode = false;
@@ -237,20 +240,10 @@ void Viewer::Run()
         {
             menuTopView = false;
             bCameraView = false;
-            /*s_cam.SetProjectionMatrix(pangolin::ProjectionMatrix(1024,768,3000,3000,512,389,0.1,1000));
-            s_cam.SetModelViewMatrix(pangolin::ModelViewLookAt(0,0.01,10, 0,0,0,0.0,0.0, 1.0));*/
             s_cam.SetProjectionMatrix(pangolin::ProjectionMatrix(1024,768,3000,3000,512,389,0.1,10000));
             s_cam.SetModelViewMatrix(pangolin::ModelViewLookAt(0,0.01,50, 0,0,0,0.0,0.0, 1.0));
             s_cam.Follow(Ow);
         }
-
-        /*if(menuSideView && mpMapDrawer->mpAtlas->isImuInitialized())
-        {
-            s_cam.SetProjectionMatrix(pangolin::ProjectionMatrix(1024,768,3000,3000,512,389,0.1,10000));
-            s_cam.SetModelViewMatrix(pangolin::ModelViewLookAt(0.0,0.1,30.0,0,0,0,0.0,0.0,1.0));
-            s_cam.Follow(Twwp);
-        }*/
-
 
         if(menuLocalizationMode && !bLocalizationMode)
         {
@@ -280,7 +273,7 @@ void Viewer::Run()
             menuStep = false;
         }
 
-
+        pangolin::BindToContext("ORB-SLAM3: Map Viewer");
         d_cam.Activate(s_cam);
         glClearColor(1.0f,1.0f,1.0f,1.0f);
         mpMapDrawer->DrawCurrentCamera(Twc);
@@ -288,8 +281,6 @@ void Viewer::Run()
             mpMapDrawer->DrawKeyFrames(menuShowKeyFrames,menuShowGraph, menuShowInertialGraph);
         if(menuShowPoints)
             mpMapDrawer->DrawMapPoints();
-
-        pangolin::FinishFrame();
 
         cv::Mat toShow;
         cv::Mat im = mpFrameDrawer->DrawFrame(true);
@@ -302,8 +293,16 @@ void Viewer::Run()
             toShow = im;
         }
 
-        cv::imshow("ORB-SLAM3: Current Frame",toShow);
-        cv::waitKey(mT);
+        pangolin::FinishFrame();
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        pangolin::BindToContext("ORB-SLAM3: Current Frame");
+
+        cv::Mat img(toShow.cols, toShow.rows, CV_16UC1, (void *)toShow.data);
+        imageTexture.Upload((void*)img.data,GL_RGB,GL_UNSIGNED_BYTE);
+        d_stream.Activate();
+        imageTexture.RenderToViewportFlipY();
+        pangolin::FinishFrame();
 
         if(menuReset)
         {

@@ -7,13 +7,10 @@ ENDIF()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
-
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-deprecated -O3 -march=native ")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated -O3 -march=native")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3 -D EIGEN_NO_DEPRECATED_WARNING -Wno-ignored-attributes -Wno-unused-result -Wno-maybe-uninitialized -Wno-unused-variable")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3 -D EIGEN_NO_DEPRECATED_WARNING -Wno-ignored-attributes -Wno-unused-result -Wno-reorder -Wno-maybe-uninitialized -Wno-unused-variable -Wno-sign-compare -Wno-conversion-null -Wno-unused-but-set-variable -Wno-dangling-else -Wno-comment -Wno-deprecated -Wno-unused-local-typedefs")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native -D EIGEN_NO_DEPRECATED_WARNING -Wno-ignored-attributes -Wno-unused-result -Wno-maybe-uninitialized -Wno-unused-variable")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native -D EIGEN_NO_DEPRECATED_WARNING -Wno-ignored-attributes -Wno-unused-result -Wno-reorder -Wno-maybe-uninitialized -Wno-unused-variable -Wno-sign-compare -Wno-conversion-null -Wno-unused-but-set-variable -Wno-dangling-else -Wno-comment -Wno-deprecated -Wno-unused-local-typedefs")
 
 # Check C++11 or C++0x support
 include(CheckCXXCompilerFlag)
@@ -125,7 +122,6 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 -lboost_serialization
 -lcrypto
 )
-
 
 # Build examples
 
