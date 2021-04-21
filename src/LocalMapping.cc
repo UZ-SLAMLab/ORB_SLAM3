@@ -625,7 +625,7 @@ void LocalMapping::CreateNewMapPoints()
                     continue;
 
                 // Euclidean coordinates
-                x3D = x3D_h.get_minor<3,1>(0,0) / x3D_h(3);
+                x3D = x3D_h.get_minor<3,1>(0,0) * (1 / x3D_h(3));
                 bEstimated = true;
 
             }
@@ -934,7 +934,6 @@ void LocalMapping::Release()
 {
     unique_lock<mutex> lock(mMutexStop);
     unique_lock<mutex> lock2(mMutexFinish);
-    unique_lock<mutex> lock3(mMutexNewKFs);
     if(mbFinished)
         return;
     mbStopped = false;
@@ -1194,7 +1193,6 @@ void LocalMapping::ResetIfRequested()
     bool executed_reset = false;
     {
         unique_lock<mutex> lock(mMutexReset);
-        unique_lock<mutex> lock2(mMutexNewKFs);
         if(mbResetRequested)
         {
             executed_reset = true;
@@ -1265,7 +1263,6 @@ bool LocalMapping::isFinished()
 
 void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
 {
-    
     if (mbResetRequested)
         return;
 
@@ -1372,7 +1369,6 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
     // Before this line we are not changing the map
 
     unique_lock<mutex> lock(mpAtlas->GetCurrentMap()->mMutexMapUpdate);
-    unique_lock<mutex> lock2(mMutexNewKFs);
     std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
     if ((fabs(mScale-1.f)>0.00001)||!mbMonocular)
     {
