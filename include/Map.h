@@ -37,39 +37,10 @@ class MapPoint;
 class KeyFrame;
 class Atlas;
 class KeyFrameDatabase;
+class GeometricCamera;
 
 class Map
 {
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive &ar, const unsigned int version)
-    {
-        ar & mnId;
-        ar & mnInitKFid;
-        ar & mnMaxKFid;
-        ar & mnBigChangeIdx;
-        // Set of KeyFrames and MapPoints, in this version the set serializator is not working
-        //ar & mspKeyFrames;
-        //ar & mspMapPoints;
-
-        ar & mvpBackupKeyFrames;
-        ar & mvpBackupMapPoints;
-
-        ar & mvBackupKeyFrameOriginsId;
-
-        ar & mnBackupKFinitialID;
-        ar & mnBackupKFlowerID;
-
-        ar & mbImuInitialized;
-        ar & mbIsInertial;
-        ar & mbIMU_BA1;
-        ar & mbIMU_BA2;
-
-        ar & mnInitKFid;
-        ar & mnMaxKFid;
-        ar & mnLastLoopKFid;
-    }
 
 public:
     Map();
@@ -134,11 +105,6 @@ public:
 
     unsigned int GetLowerKFID();
 
-    void PreSave(std::set<GeometricCamera*> &spCams);
-    void PostLoad(KeyFrameDatabase* pKFDB, ORBVocabulary* pORBVoc, map<long unsigned int, KeyFrame*>& mpKeyFrameId, map<unsigned int, GeometricCamera*> &mpCams);
-
-    void printReprojectionError(list<KeyFrame*> &lpLocalWindowKFs, KeyFrame* mpCurrentKF, string &name, string &name_folder);
-
     vector<KeyFrame*> mvpKeyFrameOrigins;
     vector<unsigned long int> mvBackupKeyFrameOriginsId;
     KeyFrame* mpFirstRegionKF;
@@ -162,14 +128,8 @@ protected:
     std::set<MapPoint*> mspMapPoints;
     std::set<KeyFrame*> mspKeyFrames;
 
-    std::vector<MapPoint*> mvpBackupMapPoints;
-    std::vector<KeyFrame*> mvpBackupKeyFrames;
-
     KeyFrame* mpKFinitial;
     KeyFrame* mpKFlowerID;
-
-    unsigned long int mnBackupKFinitialID;
-    unsigned long int mnBackupKFlowerID;
 
     std::vector<MapPoint*> mvpReferenceMapPoints;
 

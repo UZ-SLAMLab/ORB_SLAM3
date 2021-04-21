@@ -43,33 +43,8 @@ class Frame;
 class KannalaBrandt8;
 class Pinhole;
 
-//BOOST_CLASS_EXPORT_GUID(Pinhole, "Pinhole")
-//BOOST_CLASS_EXPORT_GUID(KannalaBrandt8, "KannalaBrandt8")
-
 class Atlas
 {
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive &ar, const unsigned int version)
-    {
-        //ar.template register_type<Pinhole>();
-        //ar.template register_type<KannalaBrandt8>();
-
-        // Save/load the set of maps, the set is broken in libboost 1.58 for ubuntu 16.04
-        //ar & mspMaps;
-        ar & mvpBackupMaps;
-        ar & mvpCameras;
-        //ar & mvpBackupCamPin;
-        //ar & mvpBackupCamKan;
-        // Need to save/load the static Id from Frame, KeyFrame, MapPoint and Map
-        ar & Map::nNextId;
-        ar & Frame::nNextId;
-        ar & KeyFrame::nNextId;
-        ar & MapPoint::nNextId;
-        ar & GeometricCamera::nNextId;
-        ar & mnLastInitKFidMap;
-    }
 
 public:
     Atlas();
@@ -86,8 +61,6 @@ public:
     // Method for change components in the current map
     void AddKeyFrame(KeyFrame* pKF);
     void AddMapPoint(MapPoint* pMP);
-    //void EraseMapPoint(MapPoint* pMP);
-    //void EraseKeyFrame(KeyFrame* pKF);
 
     void AddCamera(GeometricCamera* pCam);
 
@@ -122,10 +95,6 @@ public:
     void SetImuInitialized();
     bool isImuInitialized();
 
-    // Function for garantee the correction of serialization of this object
-    void PreSave();
-    void PostLoad();
-
     void SetKeyFrameDababase(KeyFrameDatabase* pKFDB);
     KeyFrameDatabase* GetKeyFrameDatabase();
 
@@ -140,15 +109,12 @@ protected:
 
     std::set<Map*> mspMaps;
     std::set<Map*> mspBadMaps;
-    // Its necessary change the container from set to vector because libboost 1.58 and Ubuntu 16.04 have an error with this cointainer
-    std::vector<Map*> mvpBackupMaps;
     Map* mpCurrentMap;
 
     std::vector<GeometricCamera*> mvpCameras;
     std::vector<KannalaBrandt8*> mvpBackupCamKan;
     std::vector<Pinhole*> mvpBackupCamPin;
 
-    //Pinhole testCam;
     std::mutex mMutexAtlas;
 
     unsigned long int mnLastInitKFidMap;

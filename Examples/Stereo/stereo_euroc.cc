@@ -135,6 +135,7 @@ int main(int argc, char **argv)
         // Seq loop
 
         double t_rect = 0;
+        double t_track = 0;
         int num_rect = 0;
         int proccIm = 0;
         for(int ni=0; ni<nImages[seq]; ni++, proccIm++)
@@ -157,25 +158,26 @@ int main(int argc, char **argv)
                 return 1;
             }
 
-
+#ifdef REGISTER_TIMES
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t_Start_Rect = std::chrono::steady_clock::now();
     #else
             std::chrono::monotonic_clock::time_point t_Start_Rect = std::chrono::monotonic_clock::now();
     #endif
+#endif
             cv::remap(imLeft,imLeftRect,M1l,M2l,cv::INTER_LINEAR);
             cv::remap(imRight,imRightRect,M1r,M2r,cv::INTER_LINEAR);
 
+#ifdef REGISTER_TIMES
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t_End_Rect = std::chrono::steady_clock::now();
     #else
             std::chrono::monotonic_clock::time_point t_End_Rect = std::chrono::monotonic_clock::now();
     #endif
-
-            t_rect = std::chrono::duration_cast<std::chrono::duration<double> >(t_End_Rect - t_Start_Rect).count();
+            t_rect = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Rect - t_Start_Rect).count();
+            SLAM.InsertRectTime(t_rect);
+#endif
             double tframe = vTimestampsCam[seq][ni];
-
-
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
     #else
@@ -191,6 +193,11 @@ int main(int argc, char **argv)
             std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
     #endif
 
+#ifdef REGISTER_TIMES
+            t_track = t_rect + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t2 - t1).count();
+            SLAM.InsertTrackTime(t_track);
+#endif
+
             double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
 
             vTimesTrack[ni]=ttrack;
@@ -203,7 +210,7 @@ int main(int argc, char **argv)
                 T = tframe-vTimestampsCam[seq][ni-1];
 
             if(ttrack<T)
-                usleep((T-ttrack)*1e6); // 1e6
+                usleep((T-ttrack)*1e6);
         }
 
         if(seq < num_seq - 1)

@@ -51,233 +51,6 @@ class GeometricCamera;
 class KeyFrame
 {
 
-
-    template<class Archive>
-    void serializeMatrix(Archive& ar, cv::Mat& mat, const unsigned int version)
-    {
-        int cols, rows, type;
-        bool continuous;
-
-        if (Archive::is_saving::value) {
-            cols = mat.cols; rows = mat.rows; type = mat.type();
-            continuous = mat.isContinuous();
-        }
-
-        ar & cols & rows & type & continuous;
-
-        if (Archive::is_loading::value)
-            mat.create(rows, cols, type);
-
-        if (continuous) {
-            const unsigned int data_size = rows * cols * mat.elemSize();
-            ar & boost::serialization::make_array(mat.ptr(), data_size);
-        } else {
-            const unsigned int row_size = cols*mat.elemSize();
-            for (int i = 0; i < rows; i++) {
-                ar & boost::serialization::make_array(mat.ptr(i), row_size);
-            }
-        }
-    }
-
-
-    template<class Archive>
-    void serializeMatrix(Archive& ar, const cv::Mat& mat, const unsigned int version)
-    {
-        cv::Mat matAux = mat;
-
-        serializeMatrix(ar, matAux,version);
-
-        if (Archive::is_loading::value)
-        {
-            cv::Mat* ptr;
-            ptr = (cv::Mat*)( &mat );
-            *ptr = matAux;
-        }
-    }
-
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serializeVectorKeyPoints(Archive& ar, const vector<cv::KeyPoint>& vKP, const unsigned int version)
-    {
-        int NumEl;
-
-        if (Archive::is_saving::value) {
-            NumEl = vKP.size();
-        }
-
-        ar & NumEl;
-
-        vector<cv::KeyPoint> vKPaux = vKP;
-        if (Archive::is_loading::value)
-            vKPaux.reserve(NumEl);
-
-        for(int i=0; i < NumEl; ++i)
-        {
-            cv::KeyPoint KPi;
-
-            if (Archive::is_loading::value)
-                KPi = cv::KeyPoint();
-
-            if (Archive::is_saving::value)
-                KPi = vKPaux[i];
-
-            ar & KPi.angle;
-            ar & KPi.response;
-            ar & KPi.size;
-            ar & KPi.pt.x;
-            ar & KPi.pt.y;
-            ar & KPi.class_id;
-            ar & KPi.octave;
-
-            if (Archive::is_loading::value)
-                vKPaux.push_back(KPi);
-        }
-
-
-        if (Archive::is_loading::value)
-        {
-            vector<cv::KeyPoint> *ptr;
-            ptr = (vector<cv::KeyPoint>*)( &vKP );
-            *ptr = vKPaux;
-        }
-    }
-
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int version)
-    {
-        ar & mnId;
-        ar & const_cast<long unsigned int&>(mnFrameId);
-        ar & const_cast<double&>(mTimeStamp);
-        // Grid
-        ar & const_cast<int&>(mnGridCols);
-        ar & const_cast<int&>(mnGridRows);
-        ar & const_cast<float&>(mfGridElementWidthInv);
-        ar & const_cast<float&>(mfGridElementHeightInv);
-        // Variables of tracking
-        ar & mnTrackReferenceForFrame;
-        ar & mnFuseTargetForKF;
-        // Variables of local mapping
-        ar & mnBALocalForKF;
-        ar & mnBAFixedForKF;
-        ar & mnNumberOfOpt;
-        // Variables used by KeyFrameDatabase
-        ar & mnLoopQuery;
-        ar & mnLoopWords;
-        ar & mLoopScore;
-        ar & mnRelocQuery;
-        ar & mnRelocWords;
-        ar & mRelocScore;
-        ar & mnMergeQuery;
-        ar & mnMergeWords;
-        ar & mMergeScore;
-        ar & mnPlaceRecognitionQuery;
-        ar & mnPlaceRecognitionWords;
-        ar & mPlaceRecognitionScore;
-        ar & mbCurrentPlaceRecognition;
-        // Variables of loop closing
-        serializeMatrix(ar,mTcwGBA,version);
-        serializeMatrix(ar,mTcwBefGBA,version);
-        serializeMatrix(ar,mVwbGBA,version);
-        serializeMatrix(ar,mVwbBefGBA,version);
-        ar & mBiasGBA;
-        ar & mnBAGlobalForKF;
-        // Variables of Merging
-        serializeMatrix(ar,mTcwMerge,version);
-        serializeMatrix(ar,mTcwBefMerge,version);
-        serializeMatrix(ar,mTwcBefMerge,version);
-        serializeMatrix(ar,mVwbMerge,version);
-        serializeMatrix(ar,mVwbBefMerge,version);
-        ar & mBiasMerge;
-        ar & mnMergeCorrectedForKF;
-        ar & mnMergeForKF;
-        ar & mfScaleMerge;
-        ar & mnBALocalForMerge;
-        // Scale
-        ar & mfScale;
-        // Calibration parameters
-        ar & const_cast<float&>(fx);
-        ar & const_cast<float&>(fy);
-        ar & const_cast<float&>(invfx);
-        ar & const_cast<float&>(invfy);
-        ar & const_cast<float&>(cx);
-        ar & const_cast<float&>(cy);
-        ar & const_cast<float&>(mbf);
-        ar & const_cast<float&>(mb);
-        ar & const_cast<float&>(mThDepth);
-        serializeMatrix(ar,mDistCoef,version);
-        // Number of Keypoints
-        ar & const_cast<int&>(N);
-        // KeyPoints
-        serializeVectorKeyPoints(ar,mvKeys,version);
-        serializeVectorKeyPoints(ar,mvKeysUn,version);
-        ar & const_cast<vector<float>& >(mvuRight);
-        ar & const_cast<vector<float>& >(mvDepth);
-        serializeMatrix(ar,mDescriptors,version);
-        // BOW
-        ar & mBowVec;
-        ar & mFeatVec;
-        // Pose relative to parent
-        serializeMatrix(ar,mTcp,version);
-        // Scale
-        ar & const_cast<int&>(mnScaleLevels);
-        ar & const_cast<float&>(mfScaleFactor);
-        ar & const_cast<float&>(mfLogScaleFactor);
-        ar & const_cast<vector<float>& >(mvScaleFactors);
-        ar & const_cast<vector<float>& >(mvLevelSigma2);
-        ar & const_cast<vector<float>& >(mvInvLevelSigma2);
-        // Image bounds and calibration
-        ar & const_cast<int&>(mnMinX);
-        ar & const_cast<int&>(mnMinY);
-        ar & const_cast<int&>(mnMaxX);
-        ar & const_cast<int&>(mnMaxY);
-        serializeMatrix(ar,mK,version);
-        // Pose
-        serializeMatrix(ar,Tcw,version);
-        // MapPointsId associated to keypoints
-        ar & mvBackupMapPointsId;
-        // Grid
-        ar & mGrid;
-        // Connected KeyFrameWeight
-        ar & mBackupConnectedKeyFrameIdWeights;
-        // Spanning Tree and Loop Edges
-        ar & mbFirstConnection;
-        ar & mBackupParentId;
-        ar & mvBackupChildrensId;
-        ar & mvBackupLoopEdgesId;
-        ar & mvBackupMergeEdgesId;
-        // Bad flags
-        ar & mbNotErase;
-        ar & mbToBeErased;
-        ar & mbBad;
-
-        ar & mHalfBaseline;
-
-        // Camera variables
-        ar & mnBackupIdCamera;
-        ar & mnBackupIdCamera2;
-
-        // Fisheye variables
-        /*ar & mvLeftToRightMatch;
-        ar & mvRightToLeftMatch;
-        ar & NLeft;
-        ar & NRight;
-        serializeMatrix(ar, mTlr, version);
-        //serializeMatrix(ar, mTrl, version);
-        serializeVectorKeyPoints(ar, mvKeysRight, version);
-        ar & mGridRight;
-
-        // Inertial variables
-        ar & mImuBias;
-        ar & mBackupImuPreintegrated;
-        ar & mImuCalib;
-        ar & mBackupPrevKFId;
-        ar & mBackupNextKFId;
-        ar & bImu;
-        serializeMatrix(ar, Vw, version);
-        serializeMatrix(ar, Owb, version);*/
-
-    }
-
 public:
     KeyFrame();
     KeyFrame(Frame &F, Map* pMap, KeyFrameDatabase* pKFDB);
@@ -296,6 +69,16 @@ public:
     cv::Mat GetRotation();
     cv::Mat GetTranslation();
     cv::Mat GetVelocity();
+
+    cv::Matx33f GetRotation_();
+    cv::Matx31f GetTranslation_();
+    cv::Matx31f GetCameraCenter_();
+    cv::Matx33f GetRightRotation_();
+    cv::Matx31f GetRightTranslation_();
+    cv::Matx44f GetRightPose_();
+    cv::Matx31f GetRightCameraCenter_();
+    cv::Matx44f GetPose_();
+
 
     // Bag of Words Representation
     void ComputeBoW();
@@ -343,6 +126,7 @@ public:
     // KeyPoint functions
     std::vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r, const bool bRight = false) const;
     cv::Mat UnprojectStereo(int i);
+    cv::Matx31f UnprojectStereo_(int i);
 
     // Image
     bool IsInImage(const float &x, const float &y) const;
@@ -376,10 +160,6 @@ public:
 
     bool ProjectPointDistort(MapPoint* pMP, cv::Point2f &kp, float &u, float &v);
     bool ProjectPointUnDistort(MapPoint* pMP, cv::Point2f &kp, float &u, float &v);
-
-    void PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP, set<GeometricCamera*>& spCam);
-    void PostLoad(map<long unsigned int, KeyFrame*>& mpKFid, map<long unsigned int, MapPoint*>& mpMPid, map<unsigned int, GeometricCamera*>& mpCamId);
-
 
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
     void SetKeyFrameDatabase(KeyFrameDatabase* pKFDB);
@@ -516,6 +296,9 @@ protected:
     cv::Mat Ow;
     cv::Mat Cw; // Stereo middel point. Only for visualization
 
+    cv::Matx44f Tcw_, Twc_, Tlr_;
+    cv::Matx31f Ow_;
+
     // IMU position
     cv::Mat Owb;
 
@@ -527,8 +310,6 @@ protected:
 
     // MapPoints associated to keypoints
     std::vector<MapPoint*> mvpMapPoints;
-    // For save relation without pointer, this is necessary for save/load function
-    std::vector<long long int> mvBackupMapPointsId;
 
     // BoW
     KeyFrameDatabase* mpKeyFrameDB;
@@ -540,8 +321,6 @@ protected:
     std::map<KeyFrame*,int> mConnectedKeyFrameWeights;
     std::vector<KeyFrame*> mvpOrderedConnectedKeyFrames;
     std::vector<int> mvOrderedWeights;
-    // For save relation without pointer, this is necessary for save/load function
-    std::map<long unsigned int, int> mBackupConnectedKeyFrameIdWeights;
 
     // Spanning Tree and Loop Edges
     bool mbFirstConnection;
@@ -549,11 +328,6 @@ protected:
     std::set<KeyFrame*> mspChildrens;
     std::set<KeyFrame*> mspLoopEdges;
     std::set<KeyFrame*> mspMergeEdges;
-    // For save relation without pointer, this is necessary for save/load function
-    long long int mBackupParentId;
-    std::vector<long unsigned int> mvBackupChildrensId;
-    std::vector<long unsigned int> mvBackupLoopEdgesId;
-    std::vector<long unsigned int> mvBackupMergeEdgesId;
 
     // Bad flags
     bool mbNotErase;
@@ -568,14 +342,6 @@ protected:
     std::mutex mMutexConnections;
     std::mutex mMutexFeatures;
     std::mutex mMutexMap;
-
-    // Backup variables for inertial
-    long long int mBackupPrevKFId;
-    long long int mBackupNextKFId;
-    IMU::Preintegrated mBackupImuPreintegrated;
-
-    // Backup for Cameras
-    unsigned int mnBackupIdCamera, mnBackupIdCamera2;
 
 public:
     GeometricCamera* mpCamera, *mpCamera2;
@@ -601,7 +367,7 @@ public:
     cv::Mat GetRightRotation();
     cv::Mat GetRightTranslation();
 
-    cv::Mat imgLeft, imgRight; //TODO Backup??
+    cv::Mat imgLeft, imgRight;
 
     void PrintPointDistribution(){
         int left = 0, right = 0;

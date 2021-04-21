@@ -365,7 +365,6 @@ void KeyFrameDatabase::DetectCandidates(KeyFrame* pKF, float minScore,vector<Key
 
     if(!lKFsSharingWordsMerge.empty())
     {
-        //cout << "BoW candidates: " << lKFsSharingWordsMerge.size() << endl;
         list<pair<float,KeyFrame*> > lScoreAndMatch;
 
         // Only compare against those keyframes that share enough words
@@ -375,7 +374,6 @@ void KeyFrameDatabase::DetectCandidates(KeyFrame* pKF, float minScore,vector<Key
             if((*lit)->mnMergeWords>maxCommonWords)
                 maxCommonWords=(*lit)->mnMergeWords;
         }
-        //cout << "Max common words: " << maxCommonWords << endl;
 
         int minCommonWords = maxCommonWords*0.8f;
 
@@ -391,14 +389,12 @@ void KeyFrameDatabase::DetectCandidates(KeyFrame* pKF, float minScore,vector<Key
                 nscores++;
 
                 float si = mpVoc->score(pKF->mBowVec,pKFi->mBowVec);
-                //cout << "KF score: " << si << endl;
 
                 pKFi->mMergeScore = si;
                 if(si>=minScore)
                     lScoreAndMatch.push_back(make_pair(si,pKFi));
             }
         }
-        //cout << "BoW candidates2: " << lScoreAndMatch.size() << endl;
 
         if(!lScoreAndMatch.empty())
         {
@@ -436,8 +432,6 @@ void KeyFrameDatabase::DetectCandidates(KeyFrame* pKF, float minScore,vector<Key
             // Return all those keyframes with a score higher than 0.75*bestScore
             float minScoreToRetain = 0.75f*bestAccScore;
 
-            //cout << "Min score to retain: " << minScoreToRetain << endl;
-
             set<KeyFrame*> spAlreadyAddedKF;
             vpMergeCand.reserve(lAccScoreAndMatch.size());
 
@@ -453,12 +447,10 @@ void KeyFrameDatabase::DetectCandidates(KeyFrame* pKF, float minScore,vector<Key
                     }
                 }
             }
-            //cout << "Candidates: " << vpMergeCand.size() << endl;
         }
 
     }
 
-    //----
     for(DBoW2::BowVector::const_iterator vit=pKF->mBowVec.begin(), vend=pKF->mBowVec.end(); vit != vend; vit++)
     {
         list<KeyFrame*> &lKFs = mvInvertedFile[vit->first];
@@ -612,7 +604,6 @@ bool compFirst(const pair<float, KeyFrame*> & a, const pair<float, KeyFrame*> & 
 void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &vpLoopCand, vector<KeyFrame*> &vpMergeCand, int nNumCandidates)
 {
     list<KeyFrame*> lKFsSharingWords;
-    //set<KeyFrame*> spInsertedKFsSharing;
     set<KeyFrame*> spConnectedKF;
 
     // Search all keyframes that share a word with current frame
@@ -628,10 +619,6 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
             for(list<KeyFrame*>::iterator lit=lKFs.begin(), lend= lKFs.end(); lit!=lend; lit++)
             {
                 KeyFrame* pKFi=*lit;
-                /*if(spConnectedKF.find(pKFi) != spConnectedKF.end())
-                {
-                    continue;
-                }*/
                 if(pKFi->mnPlaceRecognitionQuery!=pKF->mnId)
                 {
                     pKFi->mnPlaceRecognitionWords=0;
@@ -643,11 +630,6 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
                     }
                 }
                 pKFi->mnPlaceRecognitionWords++;
-                /*if(spInsertedKFsSharing.find(pKFi) == spInsertedKFsSharing.end())
-                {
-                    lKFsSharingWords.push_back(pKFi);
-                    spInsertedKFsSharing.insert(pKFi);
-                }*/
 
             }
         }
@@ -717,20 +699,15 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
             bestAccScore=accScore;
     }
 
-    //cout << "Amount of candidates: " << lAccScoreAndMatch.size() << endl;
-
     lAccScoreAndMatch.sort(compFirst);
 
     vpLoopCand.reserve(nNumCandidates);
     vpMergeCand.reserve(nNumCandidates);
     set<KeyFrame*> spAlreadyAddedKF;
-    //cout << "Candidates in score order " << endl;
-    //for(list<pair<float,KeyFrame*> >::iterator it=lAccScoreAndMatch.begin(), itend=lAccScoreAndMatch.end(); it!=itend; it++)
     int i = 0;
     list<pair<float,KeyFrame*> >::iterator it=lAccScoreAndMatch.begin();
     while(i < lAccScoreAndMatch.size() && (vpLoopCand.size() < nNumCandidates || vpMergeCand.size() < nNumCandidates))
     {
-        //cout << "Accum score: " << it->first << endl;
         KeyFrame* pKFi = it->second;
         if(pKFi->isBad())
             continue;
@@ -750,33 +727,6 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
         i++;
         it++;
     }
-    //-------
-
-    // Return all those keyframes with a score higher than 0.75*bestScore
-    /*float minScoreToRetain = 0.75f*bestAccScore;
-    set<KeyFrame*> spAlreadyAddedKF;
-    vpLoopCand.reserve(lAccScoreAndMatch.size());
-    vpMergeCand.reserve(lAccScoreAndMatch.size());
-    for(list<pair<float,KeyFrame*> >::iterator it=lAccScoreAndMatch.begin(), itend=lAccScoreAndMatch.end(); it!=itend; it++)
-    {
-        const float &si = it->first;
-        if(si>minScoreToRetain)
-        {
-            KeyFrame* pKFi = it->second;
-            if(!spAlreadyAddedKF.count(pKFi))
-            {
-                if(pKF->GetMap() == pKFi->GetMap())
-                {
-                    vpLoopCand.push_back(pKFi);
-                }
-                else
-                {
-                    vpMergeCand.push_back(pKFi);
-                }
-                spAlreadyAddedKF.insert(pKFi);
-            }
-        }
-    }*/
 }
 
 
@@ -892,36 +842,6 @@ vector<KeyFrame*> KeyFrameDatabase::DetectRelocalizationCandidates(Frame *F, Map
     }
 
     return vpRelocCandidates;
-}
-
-void KeyFrameDatabase::PreSave()
-{
-    //Save the information about the inverted index of KF to node
-    mvBackupInvertedFileId.resize(mvInvertedFile.size());
-    for(int i = 0, numEl = mvInvertedFile.size(); i < numEl; ++i)
-    {
-        for(std::list<KeyFrame*>::const_iterator it = mvInvertedFile[i].begin(), end = mvInvertedFile[i].end(); it != end; ++it)
-        {
-            mvBackupInvertedFileId[i].push_back((*it)->mnId);
-        }
-    }
-}
-
-void KeyFrameDatabase::PostLoad(map<long unsigned int, KeyFrame*> mpKFid)
-{
-    mvInvertedFile.clear();
-    mvInvertedFile.resize(mpVoc->size());
-    for(unsigned int i = 0; i < mvBackupInvertedFileId.size(); ++i)
-    {
-        for(long unsigned int KFid : mvBackupInvertedFileId[i])
-        {
-            if(mpKFid.find(KFid) != mpKFid.end())
-            {
-                mvInvertedFile[i].push_back(mpKFid[KFid]);
-            }
-        }
-    }
-
 }
 
 void KeyFrameDatabase::SetORBVocabulary(ORBVocabulary* pORBVoc)

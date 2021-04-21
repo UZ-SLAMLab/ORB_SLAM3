@@ -36,7 +36,6 @@ FrameDrawer::FrameDrawer(Atlas* pAtlas):both(false),mpAtlas(pAtlas)
 
 cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
 {
-    // std::cout << "0" << std::endl;
     cv::Mat im;
     vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
     vector<int> vMatches; // Initialization: correspondeces with reference keypoints
@@ -45,7 +44,6 @@ cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
     vector<pair<cv::Point2f, cv::Point2f> > vTracks;
     int state; // Tracking state
 
-    //
     Frame currentFrame;
     vector<MapPoint*> vpLocalMap;
     vector<cv::KeyPoint> vMatchesKeys;
@@ -71,7 +69,7 @@ cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
             vMatches = mvIniMatches;
             vTracks = mvTracks;
         }
-        else if(mState==Tracking::OK /*&& bOldFeatures*/)
+        else if(mState==Tracking::OK)
         {
             vCurrentKeys = mvCurrentKeys;
             vbVO = mvbVO;
@@ -94,7 +92,7 @@ cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
     }
 
     if(im.channels()<3) //this should be always true
-        cvtColor(im,im,CV_GRAY2BGR);
+        cvtColor(im,im,cv::COLOR_GRAY2BGR);
 
     //Draw
     if(state==Tracking::NOT_INITIALIZED)
@@ -141,12 +139,8 @@ cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
                     mnTrackedVO++;
                 }
             }
-            /*else
-            {
-                cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,0,255),-1);
-            }*/
+
         }
-        // std::cout << "2.3" << std::endl;
     }
     else if(state==Tracking::OK && !bOldFeatures)
     {
@@ -154,9 +148,6 @@ cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
         int nTracked2 = 0;
         mnTrackedVO=0;
         int n = vCurrentKeys.size();
-
-        // cout << "----------------------" << endl;
-        // cout << "Number of matches in old method: " << n << endl;
 
         for(int i=0; i < n; ++i)
         {
@@ -168,10 +159,6 @@ cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
             }
         }
 
-        n = mProjectPoints.size();
-        //cout << "Number of projected points: " << n << endl;
-        n = mMatchedInImage.size();
-        //cout << "Number of matched points: " << n << endl;
         map<long unsigned int, cv::Point2f>::iterator it_match = mMatchedInImage.begin();
         while(it_match != mMatchedInImage.end())
         {
@@ -191,37 +178,9 @@ cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
 
 
             it_match++;
-            //it_proj = mProjectPoints.erase(it_proj);
         }
-        //for(int i=0; i < n; ++i)
-        //{
-            /*if(!vpMatchedMPs[i])
-                continue;*/
-
-            //cv::circle(im,vProjectPoints[i],2,cv::Scalar(255,0,0),-1);
-            /*cv::Point2f point3d_proy;
-            float u, v;
-            bool bIsInImage = currentFrame.ProjectPointDistort(vpMatchedMPs[i] , point3d_proy, u, v);
-            if(bIsInImage)
-            {
-                //cout << "-Point is out of the image" << point3d_proy.x << ", " << point3d_proy.y << endl;
-                cv::circle(im,vMatchesKeys[i].pt,2,cv::Scalar(255,0,0),-1);
-                continue;
-            }
-
-            //cout << "+Point CV " << point3d_proy.x << ", " << point3d_proy.y << endl;
-            //cout << "+Point coord " << u << ", " << v << endl;
-            cv::Point2f point_im = vMatchesKeys[i].pt;
-
-            cv::line(im,cv::Point2f(u, v), point_im,cv::Scalar(0, 255, 0), 1);*/
-
-        //}
-
-        /*cout << "Number of tracker in old method: " << mnTracked << endl;
-        cout << "Number of tracker in new method: " << nTracked2 << endl;*/
 
         n = vOutlierKeys.size();
-        //cout << "Number of outliers: " << n << endl;
         for(int i=0; i < n; ++i)
         {
             cv::Point2f point3d_proy;
@@ -233,34 +192,7 @@ cv::Mat FrameDrawer::DrawFrame(bool bOldFeatures)
             cv::line(im,cv::Point2f(u, v), point_im,cv::Scalar(0, 0, 255), 1);
         }
 
-//        for(int i=0;i<n;i++)
-//        {
-//            if(vbVO[i] || vbMap[i])
-//            {
-//                cv::Point2f pt1,pt2;
-//                pt1.x=vCurrentKeys[i].pt.x-r;
-//                pt1.y=vCurrentKeys[i].pt.y-r;
-//                pt2.x=vCurrentKeys[i].pt.x+r;
-//                pt2.y=vCurrentKeys[i].pt.y+r;
-
-//                // This is a match to a MapPoint in the map
-//                if(vbMap[i])
-//                {
-//                    cv::rectangle(im,pt1,pt2,cv::Scalar(0,255,0));
-//                    cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,255,0),-1);
-//                    mnTracked++;
-//                }
-//                else // This is match to a "visual odometry" MapPoint created in the last frame
-//                {
-//                    cv::rectangle(im,pt1,pt2,cv::Scalar(255,0,0));
-//                    cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(255,0,0),-1);
-//                    mnTrackedVO++;
-//                }
-//            }
-//        }
-
     }
-    // std::cout << "3" << std::endl;
 
     cv::Mat imWithInfo;
     DrawTextInfo(im,state, imWithInfo);
@@ -305,7 +237,7 @@ cv::Mat FrameDrawer::DrawRightFrame()
     } // destroy scoped mutex -> release mutex
 
     if(im.channels()<3) //this should be always true
-        cvtColor(im,im,CV_GRAY2BGR);
+        cvtColor(im,im,cv::COLOR_GRAY2BGR);
 
     //Draw
     if(state==Tracking::NOT_INITIALIZED) //INITIALIZING
@@ -416,8 +348,6 @@ void FrameDrawer::Update(Tracking *pTracker)
         N = mvCurrentKeys.size();
     }
 
-    //cout << "Number of matches in frame: " << N << endl;
-    // cout << "Number of matches in frame: " << N << endl;
     mvbVO = vector<bool>(N,false);
     mvbMap = vector<bool>(N,false);
     mbOnlyTracking = pTracker->mbOnlyTracking;
@@ -425,7 +355,6 @@ void FrameDrawer::Update(Tracking *pTracker)
     //Variables for the new visualization
     mCurrentFrame = pTracker->mCurrentFrame;
     mmProjectPoints = mCurrentFrame.mmProjectPoints;
-    //mmMatchedInImage = mCurrentFrame.mmMatchedInImage;
     mmMatchedInImage.clear();
 
     mvpLocalMap = pTracker->GetLocalMapMPS();
@@ -437,8 +366,6 @@ void FrameDrawer::Update(Tracking *pTracker)
     mvOutlierKeys.reserve(N);
     mvpOutlierMPs.clear();
     mvpOutlierMPs.reserve(N);
-    //mvProjectPoints.clear();
-    //mvProjectPoints.reserve(N);
 
     if(pTracker->mLastProcessedState==Tracking::NOT_INITIALIZED)
     {
@@ -459,18 +386,8 @@ void FrameDrawer::Update(Tracking *pTracker)
                     else
                         mvbVO[i]=true;
 
-                    //mvpMatchedMPs.push_back(pMP);
-                    //mvMatchedKeys.push_back(mvCurrentKeys[i]);
                     mmMatchedInImage[pMP->mnId] = mvCurrentKeys[i].pt;
 
-                    //cv::Point2f point3d_proy;
-                    //float u, v;
-                    //bool bIsInImage = mCurrentFrame.ProjectPointDistort(pMP, point3d_proy, u, v);
-                    //if(bIsInImage)
-                    //{
-                        //mvMatchedKeys.push_back(mvCurrentKeys[i]);
-                        //mvProjectPoints.push_back(cv::Point2f(u, v));
-                    //}
                 }
                 else
                 {

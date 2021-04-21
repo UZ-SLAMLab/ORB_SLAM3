@@ -103,7 +103,7 @@ int main(int argc, char **argv)
         {
 
             // Read image from file
-            im = cv::imread(vstrImageFilenames[seq][ni],cv::IMREAD_GRAYSCALE);
+            im = cv::imread(vstrImageFilenames[seq][ni],cv::IMREAD_UNCHANGED);
 
             // clahe
             clahe->apply(im,im);
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
                 T = tframe-vTimestampsCam[seq][ni-1];
 
             if(ttrack<T)
-                usleep((T-ttrack)*1e6); // 1e6
+                usleep((T-ttrack)*1e6);
 
         }
         if(seq < num_seq - 1)
@@ -158,12 +158,8 @@ int main(int argc, char **argv)
 
     }
 
-    // cout << "ttrack_tot = " << ttrack_tot << std::endl;
     // Stop all threads
     SLAM.Shutdown();
-
-
-    // Tracking time statistics
 
     // Save camera trajectory
 

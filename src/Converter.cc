@@ -190,7 +190,7 @@ std::vector<float> Converter::toEuler(const cv::Mat &R)
     assert(isRotationMatrix(R));
     float sy = sqrt(R.at<float>(0,0) * R.at<float>(0,0) +  R.at<float>(1,0) * R.at<float>(1,0) );
 
-    bool singular = sy < 1e-6; // If
+    bool singular = sy < 1e-6;
 
     float x, y, z;
     if (!singular)
