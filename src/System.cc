@@ -785,8 +785,6 @@ void System::ChangeDataset()
 
 #ifdef REGISTER_TIMES
 void System::InsertRectTime(double& time)
-
-bool System::LoadAtlas(string filename, int type)
 {
     mpTracker->vdRectStereo_ms.push_back(time);
 }
