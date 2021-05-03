@@ -65,8 +65,6 @@ namespace ORB_SLAM3{
         void SetRansacParameters(double probability = 0.99, int minInliers = 8, int maxIterations = 300, int minSet = 6, float epsilon = 0.4,
                                  float th2 = 5.991);
 
-        //Find metod is necessary?
-
         cv::Mat iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers);
 
         //Type definitions needed by the original code

@@ -31,7 +31,6 @@ cv::Mat NormalizeRotation(const cv::Mat &R)
 {
     cv::Mat U,w,Vt;
     cv::SVDecomp(R,w,U,Vt,cv::SVD::FULL_UV);
-    // assert(cv::determinant(U*Vt)>0);
     return U*Vt;
 }
 
