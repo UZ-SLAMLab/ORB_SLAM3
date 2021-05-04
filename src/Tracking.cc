@@ -82,6 +82,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     }
 
     mbInitWith3KFs = false;
+    SetStepByStep(mbStep);
 
     mnNumDataset = 0;
 
@@ -1656,7 +1657,6 @@ void Tracking::ComputeVelocitiesAccBias(const vector<Frame*> &vpFs, float &bax, 
 
 void Tracking::Track()
 {
-
     if (bStepByStep)
     {
         while(!mbStep)
