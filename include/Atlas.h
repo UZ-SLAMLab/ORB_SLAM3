@@ -45,6 +45,28 @@ class Pinhole;
 
 class Atlas
 {
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+        //ar.template register_type<Pinhole>();
+        //ar.template register_type<KannalaBrandt8>();
+
+        //Save/Load all objects
+        ar & mspMaps;
+        ar & mvpBackupMaps;
+        //ar & mvpCameras;
+        ar & mvpBackupCamPin;
+        //ar & mvpBackupCamKan;
+        //// Need to save/load the static Id from Frame, KeyFrame, MapPoint and Map
+        ar & Map::nNextId;
+        ar & Frame::nNextId;
+        ar & KeyFrame::nNextId;
+        ar & MapPoint::nNextId;
+        ar & GeometricCamera::nNextId;
+        ar & mnLastInitKFidMap;
+    }
 
 public:
     Atlas();
@@ -95,6 +117,11 @@ public:
     void SetImuInitialized();
     bool isImuInitialized();
 
+    // Function for garantee the correction of serialization of this object
+    void PreSave();
+    void PostLoad();
+    
+
     void SetKeyFrameDababase(KeyFrameDatabase* pKFDB);
     KeyFrameDatabase* GetKeyFrameDatabase();
 
@@ -109,6 +136,7 @@ protected:
 
     std::set<Map*> mspMaps;
     std::set<Map*> mspBadMaps;
+    std::vector<Map*> mvpBackupMaps;
     Map* mpCurrentMap;
 
     std::vector<GeometricCamera*> mvpCameras;

@@ -36,6 +36,16 @@
 namespace ORB_SLAM3 {
     class GeometricCamera {
 
+        friend class boost::serialization::access;
+
+        template<class Archive>
+        void serialize(Archive& ar, const unsigned int version)
+        {
+            ar & mnId;
+            ar & mnType;
+            ar & mvParameters;
+        }
+
     public:
         GeometricCamera() {}
         GeometricCamera(const std::vector<float> &_vParameters) : mvParameters(_vParameters) {}
