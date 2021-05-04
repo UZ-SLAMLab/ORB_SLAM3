@@ -113,6 +113,7 @@ include/OptimizableTypes.h
 include/MLPnPsolver.h
 include/TwoViewReconstruction.h
 include/Config.h
+include/serialize_tuple.h
 )
 
 add_subdirectory(Thirdparty/g2o)
@@ -148,6 +149,15 @@ target_link_libraries(stereo_kitti ${PROJECT_NAME})
 add_executable(stereo_euroc
 Examples/Stereo/stereo_euroc.cc)
 target_link_libraries(stereo_euroc ${PROJECT_NAME})
+
+add_executable(stereo_save
+Examples/Stereo/stereo_save.cc)
+target_link_libraries(stereo_save ${PROJECT_NAME})
+
+add_executable(stereo_load
+Examples/Stereo/stereo_load.cc)
+target_link_libraries(stereo_load ${PROJECT_NAME})
+
 
 add_executable(stereo_tum_vi
 Examples/Stereo/stereo_tum_vi.cc)
