@@ -1396,7 +1396,7 @@ void LoopClosing::MergeLocal()
         pKFi->UpdateConnections();
     }
 
-    bool bStop = false;
+    bool bStop = true;
     Verbose::PrintMess("MERGE: Start local BA ", Verbose::VERBOSITY_DEBUG);
     vpLocalCurrentWindowKFs.clear();
     vpMergeConnectedKFs.clear();
