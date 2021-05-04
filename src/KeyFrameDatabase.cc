@@ -29,6 +29,11 @@ using namespace std;
 namespace ORB_SLAM3
 {
 
+KeyFrameDatabase::KeyFrameDatabase ()
+{
+    //Constructor called by boost when loading KFDB
+}
+
 KeyFrameDatabase::KeyFrameDatabase (const ORBVocabulary &voc):
     mpVoc(&voc)
 {
@@ -710,7 +715,11 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
     {
         KeyFrame* pKFi = it->second;
         if(pKFi->isBad())
+        {
+            i++;
+            it++;
             continue;
+        }
 
         if(!spAlreadyAddedKF.count(pKFi))
         {
@@ -844,6 +853,36 @@ vector<KeyFrame*> KeyFrameDatabase::DetectRelocalizationCandidates(Frame *F, Map
     return vpRelocCandidates;
 }
 
+void KeyFrameDatabase::PreSave()
+{
+    //Save the information about the inverted index of KF to node
+    mvBackupInvertedFileId.resize(mvInvertedFile.size());
+    for(int i = 0, numEl = mvInvertedFile.size(); i < numEl; ++i)
+    {
+        for(std::list<KeyFrame*>::const_iterator it = mvInvertedFile[i].begin(), end = mvInvertedFile[i].end(); it != end; ++it)
+        {
+            mvBackupInvertedFileId[i].push_back((*it)->mnId);
+        }
+    }
+}
+
+void KeyFrameDatabase::PostLoad(map<long unsigned int, KeyFrame*> mpKFid)
+{
+    mvInvertedFile.clear();
+    mvInvertedFile.resize(mpVoc->size());
+    for(unsigned int i = 0; i < mvBackupInvertedFileId.size(); ++i)
+    {
+        for(long unsigned int KFid : mvBackupInvertedFileId[i])
+        {
+            if(mpKFid.find(KFid) != mpKFid.end())
+            {
+                mvInvertedFile[i].push_back(mpKFid[KFid]);
+            }
+        }
+    }
+
+}
+
 void KeyFrameDatabase::SetORBVocabulary(ORBVocabulary* pORBVoc)
 {
     ORBVocabulary** ptr;
@@ -852,6 +891,13 @@ void KeyFrameDatabase::SetORBVocabulary(ORBVocabulary* pORBVoc)
 
     mvInvertedFile.clear();
     mvInvertedFile.resize(mpVoc->size());
+}
+
+void KeyFrameDatabase::SetORBVocabularyPostLoad(const ORBVocabulary &voc)
+{   
+    //Set ORB Vocabulary Post Load
+    //mvInvertedFile is kept untouched
+    mpVoc= &voc;
 }
 
 } //namespace ORB_SLAM
