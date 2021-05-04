@@ -470,6 +470,11 @@ void MapPoint::UpdateNormalAndDepth()
         tuple<int,int> indexes = mit -> second;
         int leftIndex = get<0>(indexes), rightIndex = get<1>(indexes);
 
+        if ((pKF->GetCameraCenter()).empty())
+        {
+            return;
+        }
+
         if(leftIndex != -1){
             cv::Mat Owi = pKF->GetCameraCenter();
             cv::Mat normali = mWorldPos - Owi;
@@ -575,6 +580,78 @@ void MapPoint::UpdateMap(Map* pMap)
 {
     unique_lock<mutex> lock(mMutexMap);
     mpMap = pMap;
+}
+
+void MapPoint::PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP)
+{  
+    
+    mBackupReplacedId = -1;
+    if(mpReplaced && spMP.find(mpReplaced) != spMP.end())
+        mBackupReplacedId = mpReplaced->mnId;
+
+    /*
+    mBackupObservationsId1.clear();
+    mBackupObservationsId2.clear();
+
+    // Save the id and position in each KF who view it
+    for(std::map<KeyFrame*,std::tuple<int,int> >::const_iterator it = mObservations.begin(), end = mObservations.end(); it != end; ++it)
+    {
+        KeyFrame* pKFi = it->first;
+        if(spKF.find(pKFi) != spKF.end())
+        {
+            mBackupObservationsId1[it->first->mnId] = get<0>(it->second);
+            mBackupObservationsId2[it->first->mnId] = get<1>(it->second);
+        }
+        else
+        {
+            EraseObservation(pKFi);
+        }
+    }
+    */
+
+    // Save the id of the reference KF
+    if(spKF.find(mpRefKF) != spKF.end())
+    {
+        mBackupRefKFId = mpRefKF->mnId;
+    }
+
+}
+
+void MapPoint::PostLoad(map<long unsigned int, KeyFrame*>& mpKFid, map<long unsigned int, MapPoint*>& mpMPid)
+{
+    
+    //mpRefKF = mpKFid[mBackupRefKFId];
+    if(!mpRefKF)
+    {
+        cout << "MP without KF reference " << mBackupRefKFId << "; Num obs: " << nObs << endl;
+    }
+    
+    mpReplaced = static_cast<MapPoint*>(NULL);
+    if(mBackupReplacedId>=0)
+    {
+       map<long unsigned int, MapPoint*>::iterator it = mpMPid.find(mBackupReplacedId);
+       if (it != mpMPid.end())
+        mpReplaced = it->second;
+    }
+    /*
+    
+    mObservations.clear();
+
+    for(map<long unsigned int, int>::const_iterator it = mBackupObservationsId1.begin(), end = mBackupObservationsId1.end(); it != end; ++it)
+    {
+        KeyFrame* pKFi = mpKFid[it->first];
+        map<long unsigned int, int>::const_iterator it2 = mBackupObservationsId2.find(it->first);
+        std::tuple<int, int> indexes = tuple<int,int>(it->second,it2->second);
+        if(pKFi)
+        {
+           mObservations[pKFi] = indexes;
+        }
+    }
+
+    mBackupObservationsId1.clear();
+    mBackupObservationsId2.clear();
+    */
+    
 }
 
 } //namespace ORB_SLAM
