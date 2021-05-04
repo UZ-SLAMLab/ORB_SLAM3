@@ -74,25 +74,62 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     bool loadedAtlas = false;
 
-    //----
-    //Load ORB Vocabulary
-    cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
+	//----
+	//Load ORB Vocabulary
+	cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
 
-    mpVocabulary = new ORBVocabulary();
-    bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
-    if(!bVocLoad)
+	mpVocabulary = new ORBVocabulary();
+	bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+	if(!bVocLoad)
+	{
+		cerr << "Wrong path to vocabulary. " << endl;
+		cerr << "Falied to open at: " << strVocFile << endl;
+		exit(-1);
+	}
+	cout << "Vocabulary loaded!" << endl << endl;
+
+    if(strLoadingFile.empty())
     {
-        cerr << "Wrong path to vocabulary. " << endl;
-        cerr << "Falied to open at: " << strVocFile << endl;
-        exit(-1);
+        //Create KeyFrame Database
+        mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
+
+        //Create the Atlas
+        mpAtlas = new Atlas(0);
     }
-    cout << "Vocabulary loaded!" << endl << endl;
+    else
+    {
+		// Load the file with an earlier session
+        cout << "Load File " << strLoadingFile << endl;
 
-    //Create KeyFrame Database
-    mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
+        //clock_t start = clock();
+        bool isRead = LoadAtlas(strLoadingFile,1);
 
-    //Create the Atlas
-    mpAtlas = new Atlas(0);
+        if(!isRead)
+        {
+            cout << "Error to load the file, please try with other session file" << endl;
+            exit(-1);
+        }
+
+		//Set Vocabulary Post Load
+        mpKeyFrameDatabase->SetORBVocabularyPostLoad(*mpVocabulary);
+
+		//Set KFDB and Vocubulary to Atlas
+        mpAtlas->SetKeyFrameDababase(mpKeyFrameDatabase);
+        mpAtlas->SetORBVocabulary(mpVocabulary);
+
+        mpAtlas->PostLoad();
+        //cout << "KF in DB: " << mpKeyFrameDatabase->mnNumKFs << "; words: " << mpKeyFrameDatabase->mnNumWords << endl;
+
+        loadedAtlas = true;
+
+        mpAtlas->CreateNewMap();
+
+        //clock_t timeElapsed = clock() - start;
+        //unsigned msElapsed = timeElapsed / (CLOCKS_PER_SEC / 1000);
+        //cout << "Binary file read in " << msElapsed << " ms" << endl;
+
+        //usleep(10*1000*1000);
+    }
 
     if (mSensor==IMU_STEREO || mSensor==IMU_MONOCULAR)
         mpAtlas->SetInertialSensor();
@@ -760,6 +797,93 @@ void System::ChangeDataset()
     }
 
     mpTracker->NewDataset();
+}
+
+void System::SaveAtlas(int type, string saveFileName){
+    //cout << endl << "Enter the name of the file if you want to save the current Atlas session. To exit press ENTER: ";
+    //string saveFileName;
+    //getline(cin,saveFileName);
+    if(!saveFileName.empty())
+    {
+        // Save the current session
+        mpAtlas->PreSave();
+        mpKeyFrameDatabase->PreSave();
+
+        string pathSaveFileName = "./";
+        pathSaveFileName = pathSaveFileName.append(saveFileName);
+        pathSaveFileName = pathSaveFileName.append(".osa");
+
+        if(type == TEXT_FILE) // File text
+        {
+            cout << "Starting to write the save text file " << endl;
+            std::remove(pathSaveFileName.c_str());
+            std::ofstream ofs(pathSaveFileName, std::ios::binary);
+            boost::archive::text_oarchive oa(ofs);
+
+            oa << mpAtlas;
+            oa << mpKeyFrameDatabase;
+            cout << "End to write the save text file" << endl;
+        }
+        else if(type == BINARY_FILE) // File binary
+        {
+            cout << "Starting to write the save binary file" << endl;
+            std::remove(pathSaveFileName.c_str());
+            std::ofstream ofs(pathSaveFileName, std::ios::binary);
+            boost::archive::binary_oarchive oa(ofs);
+
+            oa << mpAtlas;
+            oa << mpKeyFrameDatabase;
+            cout << "End to write save binary file" << endl;
+        }
+
+    }
+}
+
+
+bool System::LoadAtlas(string filename, int type)
+{
+    bool isRead = false;
+
+    if(type == TEXT_FILE)
+    {
+        cout << "Starting to read the save text file " << endl;
+        std::ifstream ifs(filename, std::ios::binary);
+        if(!ifs.good())
+        {
+            cout << "Load file not found" << endl;
+            return false;
+        }
+        boost::archive::text_iarchive ia(ifs);
+        
+        ia >> mpAtlas;
+        ia >> mpKeyFrameDatabase;
+        cout << "End to load the save text file " << endl;
+        isRead = true;
+    }
+    else if(type == BINARY_FILE) // File binary
+    {
+        cout << "Starting to read the save binary file"  << endl;
+        std::ifstream ifs(filename, std::ios::binary);
+        if(!ifs.good())
+        {
+            cout << "Load file not found" << endl;
+            return false;
+        }
+        boost::archive::binary_iarchive ia(ifs);
+        
+        ia >> mpAtlas;
+        ia >> mpKeyFrameDatabase;
+        cout << "End to load the save binary file" << endl;
+        isRead = true;
+    }
+
+    
+    if(isRead)
+    {
+        return true;
+    }
+    
+    return false;
 }
 
 #ifdef REGISTER_TIMES

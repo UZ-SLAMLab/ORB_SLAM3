@@ -23,6 +23,7 @@
 #include"KeyFrame.h"
 #include"Frame.h"
 #include"Map.h"
+#include"serialize_tuple.h"
 
 #include<opencv2/core/core.hpp>
 #include<mutex>
@@ -40,6 +41,92 @@ class Frame;
 
 class MapPoint
 {
+    template<class Archive>
+    void serializeMatrix(Archive &ar, cv::Mat& mat, const unsigned int version)
+    {
+        int cols, rows, type;
+        bool continuous;
+
+        if (Archive::is_saving::value) {
+            cols = mat.cols; rows = mat.rows; type = mat.type();
+            continuous = mat.isContinuous();
+        }
+
+        ar & cols & rows & type & continuous;
+        if (Archive::is_loading::value)
+            mat.create(rows, cols, type);
+
+        if (continuous) {
+            const unsigned int data_size = rows * cols * mat.elemSize();
+            ar & boost::serialization::make_array(mat.ptr(), data_size);
+        } else {
+            const unsigned int row_size = cols*mat.elemSize();
+            for (int i = 0; i < rows; i++) {
+                ar & boost::serialization::make_array(mat.ptr(i), row_size);
+            }
+        }
+    }
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+        ar & mnId;
+        ar & mnFirstKFid;
+        ar & mnFirstFrame;
+        ar & nObs;
+        // Variables used by the tracking
+        ar & mTrackProjX;
+        ar & mTrackProjY;
+        ar & mTrackDepth;
+        ar & mTrackDepthR;
+        ar & mTrackProjXR;
+        ar & mTrackProjYR;
+        ar & mbTrackInView;
+        ar & mbTrackInViewR;
+        ar & mnTrackScaleLevel;
+        ar & mnTrackScaleLevelR;
+        ar & mTrackViewCos;
+        ar & mTrackViewCosR;
+        ar & mnTrackReferenceForFrame;
+        ar & mnLastFrameSeen;
+
+        // Variables used by local mapping
+        ar & mnBALocalForKF;
+        ar & mnFuseCandidateForKF;
+
+        // Variables used by loop closing and merging
+        ar & mnLoopPointForKF;
+        ar & mnCorrectedByKF;
+        ar & mnCorrectedReference;
+        serializeMatrix(ar,mPosGBA,version);
+        ar & mnBAGlobalForKF;
+        ar & mnBALocalForMerge;
+        serializeMatrix(ar,mPosMerge,version);
+        serializeMatrix(ar,mNormalVectorMerge,version);
+
+        // Protected variables
+        serializeMatrix(ar,mWorldPos,version);
+        //ar & BOOST_SERIALIZATION_NVP(mBackupObservationsId);
+        ar & mBackupObservationsId1;
+        ar & mBackupObservationsId2;
+        ar & mObservations;
+        serializeMatrix(ar,mNormalVector,version);
+        serializeMatrix(ar,mDescriptor,version);
+        ar & mBackupRefKFId;
+        ar & mpRefKF;
+        ar & mnVisible;
+        ar & mnFound;
+
+        ar & mbBad;
+        ar & mBackupReplacedId;
+        //ar & mpReplaced;
+
+        ar & mfMinDistance;
+        ar & mfMaxDistance;
+
+    }
+
 
 public:
     MapPoint();
@@ -97,6 +184,9 @@ public:
     Map* GetMap();
     void UpdateMap(Map* pMap);
 
+    void PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP);
+    void PostLoad(map<long unsigned int, KeyFrame*>& mpKFid, map<long unsigned int, MapPoint*>& mpMPid);
+
 public:
     long unsigned int mnId;
     static long unsigned int nNextId;
@@ -144,7 +234,13 @@ public:
 
     unsigned int mnOriginMapId;
 
-protected:    
+
+protected:
+
+
+     // For save relation without pointer, this is necessary for save/load function
+     std::map<long unsigned int, int> mBackupObservationsId1;
+     std::map<long unsigned int, int> mBackupObservationsId2;
 
      // Position in absolute coordinates
      cv::Mat mWorldPos;
@@ -162,6 +258,7 @@ protected:
 
      // Reference KeyFrame
      KeyFrame* mpRefKF;
+     long unsigned int mBackupRefKFId;
 
      // Tracking counters
      int mnVisible;
@@ -170,6 +267,9 @@ protected:
      // Bad flag (we do not currently erase MapPoint from memory)
      bool mbBad;
      MapPoint* mpReplaced;
+
+     // For save relation without pointer, this is necessary for save/load function
+     long long int mBackupReplacedId;
 
      // Scale invariance distances
      float mfMinDistance;

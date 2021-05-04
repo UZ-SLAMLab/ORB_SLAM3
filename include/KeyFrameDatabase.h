@@ -32,6 +32,8 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/list.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/set.hpp>
 
 #include<mutex>
 
@@ -47,9 +49,21 @@ class Map;
 class KeyFrameDatabase
 {
 
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+    	//ar & mpVoc;// Cannot be serialized (DBoW2 object)
+    	ar & mvInvertedFile;//Required for KeyFrame References
+      	ar & mvBackupInvertedFileId;
+    }
+
 public:
 
-    KeyFrameDatabase(const ORBVocabulary &voc);
+   KeyFrameDatabase();
+
+   KeyFrameDatabase(const ORBVocabulary &voc);
 
    void add(KeyFrame* pKF);
 
@@ -69,7 +83,12 @@ public:
    // Relocalization
    std::vector<KeyFrame*> DetectRelocalizationCandidates(Frame* F, Map* pMap);
 
+
+   void PreSave();
+   void PostLoad(map<long unsigned int, KeyFrame*> mpKFid);
+   
    void SetORBVocabulary(ORBVocabulary* pORBVoc);
+   void SetORBVocabularyPostLoad(const ORBVocabulary &voc);
 
 protected:
 
@@ -78,6 +97,9 @@ protected:
 
   // Inverted file
   std::vector<list<KeyFrame*> > mvInvertedFile;
+
+  // For save relation without pointer, this is necessary for save/load function
+  std::vector<list<long unsigned int> > mvBackupInvertedFileId;
 
   // Mutex
   std::mutex mMutex;
