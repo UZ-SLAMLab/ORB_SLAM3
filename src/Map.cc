@@ -489,5 +489,112 @@ void Map::SetLastMapChange(int currentChangeId)
     mnMapChangeNotified = currentChangeId;
 }
 
+void Map::PreSave(std::set<GeometricCamera*> &spCams)
+{
+    int nMPWithoutObs = 0;
+    for(MapPoint* pMPi : mspMapPoints)
+    {
+        if(pMPi->GetObservations().size() == 0)
+        {
+            nMPWithoutObs++;
+        }
+        map<KeyFrame*, std::tuple<int,int>> mpObs = pMPi->GetObservations();
+        for(map<KeyFrame*, std::tuple<int,int>>::iterator it= mpObs.begin(), end=mpObs.end(); it!=end; ++it)
+        {
+            if(it->first->GetMap() != this)
+            {
+                pMPi->EraseObservation(it->first); //We need to find where the KF is set as Bad but the observation is not removed
+            }
+
+        }
+    }
+    cout << "  Bad MapPoints removed" << endl;
+
+    // Saves the id of KF origins
+    mvBackupKeyFrameOriginsId.reserve(mvpKeyFrameOrigins.size());
+    for(int i = 0, numEl = mvpKeyFrameOrigins.size(); i < numEl; ++i)
+    {
+        mvBackupKeyFrameOriginsId.push_back(mvpKeyFrameOrigins[i]->mnId);
+    }
+
+    mvpBackupMapPoints.clear();
+    // Backup of set container to vector
+    //std::copy(mspMapPoints.begin(), mspMapPoints.end(), std::back_inserter(mvpBackupMapPoints));
+    for(MapPoint* pMPi : mspMapPoints)
+    {
+        //cout << "Pre-save of mappoint " << pMPi->mnId << endl;
+        //mvpBackupMapPoints.push_back(pMPi);
+        pMPi->PreSave(mspKeyFrames,mspMapPoints);
+    }
+    cout << "  MapPoints back up done!!" << endl;
+
+    mvpBackupKeyFrames.clear();
+    //std::copy(mspKeyFrames.begin(), mspKeyFrames.end(), std::back_inserter(mvpBackupKeyFrames));
+    for(KeyFrame* pKFi : mspKeyFrames)
+    {
+        //mvpBackupKeyFrames.push_back(pKFi);
+        pKFi->PreSave(mspKeyFrames,mspMapPoints, spCams);
+    }
+    cout << "  KeyFrames back up done!!" << endl;
+
+    mnBackupKFinitialID = -1;
+    if(mpKFinitial)
+    {
+        mnBackupKFinitialID = mpKFinitial->mnId;
+    }
+
+    mnBackupKFlowerID = -1;
+    if(mpKFlowerID)
+    {
+        mnBackupKFlowerID = mpKFlowerID->mnId;
+    }
+
+}
+
+void Map::PostLoad(KeyFrameDatabase* pKFDB, ORBVocabulary* pORBVoc, map<long unsigned int, KeyFrame*>& mpKeyFrameId, map<unsigned int, GeometricCamera*> &mpCams)
+{
+    /*
+    std::copy(mvpBackupMapPoints.begin(), mvpBackupMapPoints.end(), std::inserter(mspMapPoints, mspMapPoints.begin()));
+    std::copy(mvpBackupKeyFrames.begin(), mvpBackupKeyFrames.end(), std::inserter(mspKeyFrames, mspKeyFrames.begin()));
+    */
+
+    map<long unsigned int,MapPoint*> mpMapPointId;
+    for(MapPoint* pMPi : mspMapPoints)
+    {
+        pMPi->UpdateMap(this);
+        mpMapPointId[pMPi->mnId] = pMPi;
+    }
+
+    //map<long unsigned int, KeyFrame*> mpKeyFrameId;
+    for(KeyFrame* pKFi : mspKeyFrames)
+    {
+        pKFi->UpdateMap(this);
+        pKFi->SetORBVocabulary(pORBVoc);
+        pKFi->SetKeyFrameDatabase(pKFDB);
+        mpKeyFrameId[pKFi->mnId] = pKFi;
+    }
+
+    cout << "Number of KF: " << mspKeyFrames.size() << endl;
+    cout << "Number of MP: " << mspMapPoints.size() << endl;
+
+    // References reconstruction between different instances
+    for(MapPoint* pMPi : mspMapPoints)
+    {
+        //cout << "Post-Load of mappoint " << pMPi->mnId << endl;
+        pMPi->PostLoad(mpKeyFrameId, mpMapPointId);
+    }
+    cout << "End to rebuild MapPoint references" << endl;
+
+    for(KeyFrame* pKFi : mspKeyFrames)
+    {
+        pKFi->PostLoad(mpKeyFrameId, mpMapPointId, mpCams);
+        pKFDB->add(pKFi);
+    }
+
+    cout << "End to rebuild KeyFrame references" << endl;
+
+    mvpBackupMapPoints.clear();
+}
+
 
 } //namespace ORB_SLAM3
