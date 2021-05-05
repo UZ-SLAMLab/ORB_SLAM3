@@ -69,7 +69,17 @@ include_directories(
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
-#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+if ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
+  # we don't support the Debug and Release subdirs
+  foreach (config ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${config}" config_upper)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${config_upper} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${config_upper} "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${config_upper} "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+  endforeach ()
+endif ()
+
 
 set(ORB_SLAM3_LIB_TYPE SHARED)
 IF(WIN32)
@@ -205,7 +215,7 @@ add_executable(mono_inertial_euroc
 target_link_libraries(mono_inertial_euroc ${PROJECT_NAME})
 
 add_executable(mono_inertial_tum_vi
-Examples/Monocular-Inertial/mono_inertial_tum_vi.cc)
+  Examples/Monocular-Inertial/mono_inertial_tum_vi.cc)
 target_link_libraries(mono_inertial_tum_vi ${PROJECT_NAME})
 
 # Stereo-Inertial examples
