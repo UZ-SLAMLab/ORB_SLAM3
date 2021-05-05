@@ -626,7 +626,7 @@ void LocalMapping::CreateNewMapPoints()
                     continue;
 
                 // Euclidean coordinates
-                #if (CV_VERSION_MAJOR >=4) || (CV_VERSION_MAJOR == 3 && CV_VERSION_MINOR >= 5) || (CV_VERSION_MAJOR == 3 && CV_VERSION_MINOR == 4)  && CV_VERSION_REVISION >= 10)
+                #if (CV_VERSION_MAJOR >=4) || (CV_VERSION_MAJOR == 3 && CV_VERSION_MINOR >= 5) || (CV_VERSION_MAJOR == 3 && CV_VERSION_MINOR == 4 && CV_VERSION_REVISION >= 10)
                 x3D = x3D_h.get_minor<3,1>(0,0) / x3D_h(3);
                 #else
                 // OpenCV 3.2
