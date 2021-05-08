@@ -25,6 +25,14 @@
 
 #include<opencv2/core/core.hpp>
 
+//For use in sockets
+#include <boost/asio.hpp>
+#define SOCKET_PROGRAM
+
+using namespace boost::asio;
+using ip::tcp;
+
+
 #include"System.h"
 #include "Converter.h"
 
