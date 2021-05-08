@@ -145,6 +145,14 @@ int main(int argc, char **argv)
   std::thread sync_thread(&ImageGrabber::SyncWithImu,&igb);
 
   ros::spin();
+  
+  // Stop all threads
+  SLAM.Shutdown();
+  
+  // Save camera trajectory
+  SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+  
+  ros::shutdown();
 
   return 0;
 }
