@@ -38,6 +38,13 @@ using ip::tcp;
 
 using namespace std;
 
+string read_(tcp::socket & socket) {
+       boost::asio::streambuf buf;
+       boost::asio::read_until( socket, buf, "\n" );
+       string data = boost::asio::buffer_cast<const char*>(buf.data());
+       return data;
+}
+
 void LoadImages(const string &strImagePath, const string &strPathTimes,
                 vector<string> &vstrImages, vector<double> &vTimeStamps);
 
@@ -99,6 +106,15 @@ int main(int argc, char **argv)
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR,true);
 
+    #ifdef SOCKET_PROGRAM
+    //Aditya setup the sockets for file transfer
+    boost::asio::io_service io_service;
+    //listen for new connection
+    tcp::acceptor acceptor_(io_service, tcp::endpoint(tcp::v4(), 65000 ));
+    //socket creation 
+    tcp::socket socket_(io_service);
+#endif //SOCKET_PROGRAM  
+
     int proccIm = 0;
     for (seq = 0; seq<num_seq; seq++)
     {
@@ -109,9 +125,31 @@ int main(int argc, char **argv)
         cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
         for(int ni=0; ni<nImages[seq]; ni++, proccIm++)
         {
+#ifdef SOCKET_PROGRAM
+            //fetch a file from file server.
+            // request/message from client
+            //waiting for connection
+            acceptor_.accept(socket_);
+            boost::system::error_code error;
+            
+            // getting response from server
+            boost::asio::streambuf receive_buffer;
+            size_t file_size  = boost::asio::read(socket_, receive_buffer, boost::asio::transfer_all(), error);
+            const void* file_data;
+            if( error && error != boost::asio::error::eof ) {
+                cout << "receive failed: " << error.message() << endl;
+            }
+            else {
+                file_data = boost::asio::buffer_cast<const void*>(receive_buffer.data());
+                //cout << data << endl;
+            }
+        size_t steps = sizeof(char);
+            im = cv::imdecode(cv::Mat(1,file_size,CV_8UC1, const_cast<void*>(file_data), steps), cv::IMREAD_UNCHANGED);
 
+#else //SOCKET_PROGRAM
             // Read image from file
             im = cv::imread(vstrImageFilenames[seq][ni],cv::IMREAD_UNCHANGED);
+#endif //SOCKET_PROGRAM  
 
             // clahe
             clahe->apply(im,im);
