@@ -152,7 +152,6 @@ int main(int argc, char **argv)
                 file_data = boost::asio::buffer_cast<const uchar*>(receive_buffer.data());
                 //cout << data << endl;
             }
-            size_t steps = sizeof(char);
             cout<<"Size of received file: "<<file_size<<endl;
             //Need little elbow grease to make this buffer acceptable to imdecode
             cv::Mat pngData(1,file_size,CV_8UC1);
@@ -160,6 +159,10 @@ int main(int argc, char **argv)
             cv::InputArray data(pngData);
             //im = cv::imdecode(cv::Mat(1,file_size,CV_8UC1, const_cast<void*>(file_data), steps), cv::IMREAD_UNCHANGED);
             im = cv::imdecode(data,cv::IMREAD_UNCHANGED);
+	    if(im.data==NULL)
+	      cout<<"im is NULL\n";
+	    else
+	      cout<<"im = "<<endl<<im<<endl<<endl;
             
 
 #else //SOCKET_PROGRAM
@@ -188,6 +191,8 @@ int main(int argc, char **argv)
 
             // Pass the image to the SLAM system
             SLAM.TrackMonocular(im,tframe); // TODO change to monocular_inertial
+
+	    cout<<"Tracked!!"<<endl;
 
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
