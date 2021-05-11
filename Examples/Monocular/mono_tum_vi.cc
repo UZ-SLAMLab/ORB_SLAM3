@@ -159,7 +159,7 @@ int main(int argc, char **argv)
             pngData.data = const_cast<void*>(file_data);
             cv::InputArray data(pngData);
             //im = cv::imdecode(cv::Mat(1,file_size,CV_8UC1, const_cast<void*>(file_data), steps), cv::IMREAD_UNCHANGED);
-            im = cv::imdecode(data,CV::IMREAD_UNCHANGED);
+            im = cv::imdecode(data,cv::IMREAD_UNCHANGED);
             
 
 #else //SOCKET_PROGRAM
