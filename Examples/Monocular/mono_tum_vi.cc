@@ -156,7 +156,7 @@ int main(int argc, char **argv)
             cout<<"Size of received file: "<<file_size<<endl;
             //Need little elbow grease to make this buffer acceptable to imdecode
             cv::Mat pngData(1,file_size,CV_8UC1);
-            pngData.data = const_cast<void*>(file_data);
+            pngData.data = const_cast<uchar*>(file_data);
             cv::InputArray data(pngData);
             //im = cv::imdecode(cv::Mat(1,file_size,CV_8UC1, const_cast<void*>(file_data), steps), cv::IMREAD_UNCHANGED);
             im = cv::imdecode(data,cv::IMREAD_UNCHANGED);
