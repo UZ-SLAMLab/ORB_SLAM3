@@ -20,7 +20,7 @@
 #ifndef TRACKING_H
 #define TRACKING_H
 
-#define REGISTER_TIMES
+//#define REGISTER_TIMES
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
