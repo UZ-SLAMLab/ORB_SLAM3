@@ -135,7 +135,7 @@ int main(int argc, char **argv)
             // request/message from client
             //waiting for connection
             //acceptor_.accept(socket_);
-            //boost::system::error_code error;
+            boost::system::error_code error;
             
             // getting response from server
             boost::asio::streambuf receive_buffer;
