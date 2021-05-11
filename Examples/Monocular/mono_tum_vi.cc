@@ -80,6 +80,7 @@ int main(int argc, char **argv)
     nImages.resize(num_seq);
 
     int tot_images = 0;
+#ifndef SOCKET_PROGRAM
     for (seq = 0; seq<num_seq; seq++)
     {
         cout << "Loading images for sequence " << seq << "...";
@@ -96,6 +97,7 @@ int main(int argc, char **argv)
         }
 
     }
+#endif //socket_program
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
     vTimesTrack.resize(tot_images);
@@ -123,7 +125,8 @@ int main(int argc, char **argv)
         cv::Mat im;
         proccIm = 0;
         cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
-        for(int ni=0; ni<nImages[seq]; ni++, proccIm++)
+        //for(int ni=0; ni<nImages[seq]; ni++, proccIm++)
+        for(int ni=0; ni<num_seq; ni++, proccIm++)
         {
 #ifdef SOCKET_PROGRAM
             //fetch a file from file server.
