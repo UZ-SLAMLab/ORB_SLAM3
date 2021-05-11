@@ -112,9 +112,11 @@ int main(int argc, char **argv)
     //Aditya setup the sockets for file transfer
     boost::asio::io_service io_service;
     //listen for new connection
-    tcp::acceptor acceptor_(io_service, tcp::endpoint(tcp::v4(), 65000 ));
+    //tcp::acceptor acceptor_(io_service, tcp::endpoint(tcp::v4(), 65000 ));
+    boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string('127.0.0.1'),65000);
     //socket creation 
     tcp::socket socket_(io_service);
+    socket_.connect(endpoint);
 #endif //SOCKET_PROGRAM  
 
     int proccIm = 0;
@@ -132,8 +134,8 @@ int main(int argc, char **argv)
             //fetch a file from file server.
             // request/message from client
             //waiting for connection
-            acceptor_.accept(socket_);
-            boost::system::error_code error;
+            //acceptor_.accept(socket_);
+            //boost::system::error_code error;
             
             // getting response from server
             boost::asio::streambuf receive_buffer;
