@@ -35,8 +35,30 @@ using ip::tcp;
 
 #include"System.h"
 #include "Converter.h"
+#include "send_file_cpp.h"
 
 using namespace std;
+
+void rec_data(void)
+{
+      try
+    {
+      {
+        boost::mutex::scoped_lock lk(debug_mutex);
+        std::cout << "Receiving data...\n";
+      }
+      async_tcp_server recv_file_tcp_server(65000);
+      if(debugmode)
+        {
+          boost::mutex::scoped_lock lk(debug_mutex);
+          debug_global << "Received\n";
+        }
+    }
+      catch(std::exception const& e)
+    {
+      std::cerr << "Exception in " << __PRETTY_FUNCTION__ << ": " << e.what() << "\n";
+    };
+};
 
 string read_(tcp::socket & socket) {
        boost::asio::streambuf buf;
@@ -108,7 +130,8 @@ int main(int argc, char **argv)
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR,true);
 
-    #ifdef SOCKET_PROGRAM
+#ifdef SOCKET_PROGRAM
+    /*
     //Aditya setup the sockets for file transfer
     boost::asio::io_service io_service;
     //listen for new connection
@@ -117,6 +140,7 @@ int main(int argc, char **argv)
     //socket creation 
     tcp::socket socket_(io_service);
     socket_.connect(endpoint);
+    */
 #endif //SOCKET_PROGRAM  
 
     int proccIm = 0;
@@ -130,6 +154,7 @@ int main(int argc, char **argv)
         //for(int ni=0; ni<nImages[seq]; ni++, proccIm++)
         for(int ni=0; ni<num_seq; ni++, proccIm++)
         {
+            /*
 #ifdef SOCKET_PROGRAM
             //fetch a file from file server.
             // request/message from client
@@ -164,7 +189,8 @@ int main(int argc, char **argv)
 	    else
 	      cout<<"im = "<<endl<<im<<endl<<endl;
             
-
+*/          rec_data();
+            im = cv:imread("test.txt",cv::IMREAD_UNCHANGED);
 #else //SOCKET_PROGRAM
             // Read image from file
             im = cv::imread(vstrImageFilenames[seq][ni],cv::IMREAD_UNCHANGED);
