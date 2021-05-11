@@ -144,12 +144,12 @@ int main(int argc, char **argv)
             // getting response from server
             boost::asio::streambuf receive_buffer;
             size_t file_size  = boost::asio::read(socket_, receive_buffer, boost::asio::transfer_all(), error);
-            const void* file_data;
+            const uchar* file_data;
             if( error && error != boost::asio::error::eof ) {
                 cout << "receive failed: " << error.message() << endl;
             }
             else {
-                file_data = boost::asio::buffer_cast<const void*>(receive_buffer.data());
+                file_data = boost::asio::buffer_cast<const uchar*>(receive_buffer.data());
                 //cout << data << endl;
             }
             size_t steps = sizeof(char);
