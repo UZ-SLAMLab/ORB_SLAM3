@@ -126,6 +126,7 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 -lboost_serialization
 -lcrypto
 -lboost_system
+-g
 )
 
 
@@ -170,7 +171,7 @@ Examples/Monocular/mono_euroc.cc)
 target_link_libraries(mono_euroc ${PROJECT_NAME})
 
 add_executable(mono_tum_vi
-Examples/Monocular/mono_tum_vi.cc)
+  Examples/Monocular/mono_tum_vi.cc)
 target_link_libraries(mono_tum_vi ${PROJECT_NAME})
 
 # Monocular-Inertial examples

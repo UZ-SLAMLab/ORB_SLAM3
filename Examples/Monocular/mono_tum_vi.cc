@@ -102,7 +102,7 @@ int main(int argc, char **argv)
     nImages.resize(num_seq);
 
     int tot_images = 0;
-#ifndef SOCKET_PROGRAM
+    //#ifndef SOCKET_PROGRAM
     for (seq = 0; seq<num_seq; seq++)
     {
         cout << "Loading images for sequence " << seq << "...";
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
         }
 
     }
-#endif //socket_program
+    //#endif //socket_program
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
     vTimesTrack.resize(tot_images);
@@ -154,8 +154,9 @@ int main(int argc, char **argv)
         //for(int ni=0; ni<nImages[seq]; ni++, proccIm++)
         for(int ni=0; ni<num_seq; ni++, proccIm++)
         {
-            /*
+
 #ifdef SOCKET_PROGRAM
+	  /*
             //fetch a file from file server.
             // request/message from client
             //waiting for connection
@@ -188,9 +189,13 @@ int main(int argc, char **argv)
 	      cout<<"im is NULL\n";
 	    else
 	      cout<<"im = "<<endl<<im<<endl<<endl;
-            
-*/          rec_data();
-            im = cv:imread("test.txt",cv::IMREAD_UNCHANGED);
+           */
+          rec_data();
+	  im = cv::imread("test.txt",cv::IMREAD_UNCHANGED);
+	  if(im.data==NULL)
+	    cout<<"im is NULL\n";
+	  else
+	    cout<<"im = not null"<<endl;
 #else //SOCKET_PROGRAM
             // Read image from file
             im = cv::imread(vstrImageFilenames[seq][ni],cv::IMREAD_UNCHANGED);
