@@ -137,6 +137,10 @@ int main(int argc, char **argv)
             //acceptor_.accept(socket_);
             boost::system::error_code error;
             
+            std::string message ="Hello From SLAM";
+            boost::array<char, 128>buf;
+            std::copy(message.begin(),message.end(),buf.begin());
+            socket_.write_some(boost::asio::buffer(buf, message.size()), error);
             // getting response from server
             boost::asio::streambuf receive_buffer;
             size_t file_size  = boost::asio::read(socket_, receive_buffer, boost::asio::transfer_all(), error);
