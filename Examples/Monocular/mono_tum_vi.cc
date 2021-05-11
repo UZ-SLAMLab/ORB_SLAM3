@@ -148,8 +148,9 @@ int main(int argc, char **argv)
                 file_data = boost::asio::buffer_cast<const void*>(receive_buffer.data());
                 //cout << data << endl;
             }
-        size_t steps = sizeof(char);
+            size_t steps = sizeof(char);
             im = cv::imdecode(cv::Mat(1,file_size,CV_8UC1, const_cast<void*>(file_data), steps), cv::IMREAD_UNCHANGED);
+            cout<<"Dimensions of received file: "<<im.dims<<endl;
 
 #else //SOCKET_PROGRAM
             // Read image from file
