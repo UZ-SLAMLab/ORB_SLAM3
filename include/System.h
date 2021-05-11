@@ -20,6 +20,8 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+#define REGISTER_TIMES
+
 #include <unistd.h>
 #include<stdio.h>
 #include<stdlib.h>
