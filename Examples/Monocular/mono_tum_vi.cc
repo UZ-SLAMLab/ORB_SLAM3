@@ -153,8 +153,9 @@ int main(int argc, char **argv)
                 //cout << data << endl;
             }
             size_t steps = sizeof(char);
+            cout<<"Size of received file: "<<file_size<<endl;
             im = cv::imdecode(cv::Mat(1,file_size,CV_8UC1, const_cast<void*>(file_data), steps), cv::IMREAD_UNCHANGED);
-            cout<<"Dimensions of received file: "<<im.dims<<endl;
+            
 
 #else //SOCKET_PROGRAM
             // Read image from file
