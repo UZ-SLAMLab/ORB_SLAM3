@@ -1068,6 +1068,7 @@ namespace ORB_SLAM3
     int ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
                                   OutputArray _descriptors, std::vector<int> &vLappingArea)
     {
+      std::chrono::steady_clock::time_point time_begin = std::chrono::steady_clock::now();
         //cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
         if(_image.empty())
             return -1;
@@ -1146,6 +1147,9 @@ namespace ORB_SLAM3
             }
         }
         //cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints" << endl;
+	std::chrono::steady_clock::time_point time_end = std::chrono::steady_clock::now();
+	double time_spent = std::chrono::duration_cast<std::chrono::duration<double,std::micro> >(time_end - time_begin).count();
+	cout<<"TIme spent ORB "<<time_spent<<endl;
         return monoIndex;
     }
 
