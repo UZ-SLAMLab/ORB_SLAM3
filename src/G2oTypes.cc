@@ -349,7 +349,7 @@ bool VertexPose::write(std::ostream& os) const
 void EdgeMono::linearizeOplus()
 {
     const VertexPose* VPose = static_cast<const VertexPose*>(_vertices[1]);
-    const g2o::VertexSBAPointXYZ* VPoint = static_cast<const g2o::VertexSBAPointXYZ*>(_vertices[0]);
+    const g2o::VertexPointXYZ* VPoint = static_cast<const g2o::VertexPointXYZ*>(_vertices[0]);
 
     const Eigen::Matrix3d &Rcw = VPose->estimate().Rcw[cam_idx];
     const Eigen::Vector3d &tcw = VPose->estimate().tcw[cam_idx];
@@ -397,7 +397,7 @@ void EdgeMonoOnlyPose::linearizeOplus()
 void EdgeStereo::linearizeOplus()
 {
     const VertexPose* VPose = static_cast<const VertexPose*>(_vertices[1]);
-    const g2o::VertexSBAPointXYZ* VPoint = static_cast<const g2o::VertexSBAPointXYZ*>(_vertices[0]);
+    const g2o::VertexPointXYZ* VPoint = static_cast<const g2o::VertexPointXYZ*>(_vertices[0]);
 
     const Eigen::Matrix3d &Rcw = VPose->estimate().Rcw[cam_idx];
     const Eigen::Vector3d &tcw = VPose->estimate().tcw[cam_idx];

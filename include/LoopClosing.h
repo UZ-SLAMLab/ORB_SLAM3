@@ -32,7 +32,7 @@
 #include <boost/algorithm/string.hpp>
 #include <thread>
 #include <mutex>
-#include "Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
+#include "g2o/types/sim3/types_seven_dof_expmap.h"
 
 namespace ORB_SLAM3
 {
@@ -47,8 +47,8 @@ class LoopClosing
 {
 public:
 
-    typedef pair<set<KeyFrame*>,int> ConsistentGroup;    
-    typedef map<KeyFrame*,g2o::Sim3,std::less<KeyFrame*>,
+    typedef std::pair<std::set<KeyFrame*>,int> ConsistentGroup;    
+    typedef std::map<KeyFrame*,g2o::Sim3,std::less<KeyFrame*>,
         Eigen::aligned_allocator<std::pair<KeyFrame* const, g2o::Sim3> > > KeyFrameAndPose;
 
 public:
@@ -71,11 +71,11 @@ public:
     void RunGlobalBundleAdjustment(Map* pActiveMap, unsigned long nLoopKF);
 
     bool isRunningGBA(){
-        unique_lock<std::mutex> lock(mMutexGBA);
+        std::unique_lock<std::mutex> lock(mMutexGBA);
         return mbRunningGBA;
     }
     bool isFinishedGBA(){
-        unique_lock<std::mutex> lock(mMutexGBA);
+        std::unique_lock<std::mutex> lock(mMutexGBA);
         return mbFinishedGBA;
     }   
 
@@ -121,12 +121,12 @@ protected:
     bool DetectCommonRegionsFromLastKF(KeyFrame* pCurrentKF, KeyFrame* pMatchedKF, g2o::Sim3 &gScw, int &nNumProjMatches,
                                             std::vector<MapPoint*> &vpMPs, std::vector<MapPoint*> &vpMatchedMPs);
     int FindMatchesByProjection(KeyFrame* pCurrentKF, KeyFrame* pMatchedKFw, g2o::Sim3 &g2oScw,
-                                set<MapPoint*> &spMatchedMPinOrigin, vector<MapPoint*> &vpMapPoints,
-                                vector<MapPoint*> &vpMatchedMapPoints);
+                                std::set<MapPoint*> &spMatchedMPinOrigin, std::vector<MapPoint*> &vpMapPoints,
+                                std::vector<MapPoint*> &vpMatchedMapPoints);
 
 
-    void SearchAndFuse(const KeyFrameAndPose &CorrectedPosesMap, vector<MapPoint*> &vpMapPoints);
-    void SearchAndFuse(const vector<KeyFrame*> &vConectedKFs, vector<MapPoint*> &vpMapPoints);
+    void SearchAndFuse(const KeyFrameAndPose &CorrectedPosesMap, std::vector<MapPoint*> &vpMapPoints);
+    void SearchAndFuse(const std::vector<KeyFrame*> &vConectedKFs, std::vector<MapPoint*> &vpMapPoints);
 
     void CorrectLoop();
 
@@ -216,9 +216,9 @@ protected:
 
 
 
-    vector<double> vdPR_CurrentTime;
-    vector<double> vdPR_MatchedTime;
-    vector<int> vnPR_TypeRecogn;
+    std::vector<double> vdPR_CurrentTime;
+    std::vector<double> vdPR_MatchedTime;
+    std::vector<int> vnPR_TypeRecogn;
 };
 
 } //namespace ORB_SLAM

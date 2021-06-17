@@ -17,12 +17,12 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
 # Check C++11 or C++0x support
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 if(COMPILER_SUPPORTS_CXX11)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
    add_definitions(-DCOMPILEDWITHC11)
-   message(STATUS "Using flag -std=c++11.")
+   message(STATUS "Using flag -std=c++14.")
 elseif(COMPILER_SUPPORTS_CXX0X)
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
    add_definitions(-DCOMPILEDWITHC0X)
@@ -44,7 +44,8 @@ endif()
 MESSAGE("OPENCV VERSION:")
 MESSAGE(${OpenCV_VERSION})
 
-find_package(Eigen3 3.1.0 REQUIRED)
+#find_package(Eigen3 3.1.0 REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(Pangolin REQUIRED)
 find_package(realsense2)
 
@@ -115,14 +116,43 @@ include/TwoViewReconstruction.h
 include/Config.h
 )
 
-add_subdirectory(Thirdparty/g2o)
+#add_subdirectory(Thirdparty/g2o)
 
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
 ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
-${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+-lDBoW2
+-lDLib2
+#${g2o_LIBS}
+-lg2o_cli
+-lg2o_core
+-lg2o_csparse_extension
+-lg2o_ext_freeglut_minimal
+-lg2o_hierarchical
+-lg2o_interface
+-lg2o_opengl_helper
+-lg2o_parser
+-lg2o_simulator
+-lg2o_solver_csparse
+-lg2o_solver_dense
+-lg2o_solver_eigen
+-lg2o_solver_pcg
+-lg2o_solver_slam2d_linear
+-lg2o_solver_structure_only
+-lg2o_stuff
+-lg2o_types_data
+-lg2o_types_icp
+-lg2o_types_sba
+-lg2o_types_sclam2d
+-lg2o_types_sim3
+-lg2o_types_slam2d
+-lg2o_types_slam2d_addons
+-lg2o_types_slam3d
+-lg2o_types_slam3d_addons
+-lg2o_viewer
+#${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2
+#${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o
 -lboost_serialization
 -lcrypto
 )

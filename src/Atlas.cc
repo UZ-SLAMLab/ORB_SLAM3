@@ -57,20 +57,20 @@ Atlas::~Atlas()
 
 void Atlas::CreateNewMap()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
-    cout << "Creation of new map with id: " << Map::nNextId << endl;
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
+    std::cout << "Creation of new map with id: " << Map::nNextId << std::endl;
     if(mpCurrentMap){
-        cout << "Exits current map " << endl;
+        std::cout << "Exits current map " << std::endl;
         if(!mspMaps.empty() && mnLastInitKFidMap < mpCurrentMap->GetMaxKFid())
             mnLastInitKFidMap = mpCurrentMap->GetMaxKFid()+1; //The init KF is the next of current maximum
 
         mpCurrentMap->SetStoredMap();
-        cout << "Saved map with ID: " << mpCurrentMap->GetId() << endl;
+        std::cout << "Saved map with ID: " << mpCurrentMap->GetId() << std::endl;
 
         //if(mHasViewer)
         //    mpViewer->AddMapToCreateThumbnail(mpCurrentMap);
     }
-    cout << "Creation of new map with last KF id: " << mnLastInitKFidMap << endl;
+    std::cout << "Creation of new map with last KF id: " << mnLastInitKFidMap << std::endl;
 
     mpCurrentMap = new Map(mnLastInitKFidMap);
     mpCurrentMap->SetCurrentMap();
@@ -79,8 +79,8 @@ void Atlas::CreateNewMap()
 
 void Atlas::ChangeMap(Map* pMap)
 {
-    unique_lock<mutex> lock(mMutexAtlas);
-    cout << "Chage to map with id: " << pMap->GetId() << endl;
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
+    std::cout << "Chage to map with id: " << pMap->GetId() << std::endl;
     if(mpCurrentMap){
         mpCurrentMap->SetStoredMap();
     }
@@ -91,7 +91,7 @@ void Atlas::ChangeMap(Map* pMap)
 
 unsigned long int Atlas::GetLastInitKFid()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     return mnLastInitKFidMap;
 }
 
@@ -120,55 +120,55 @@ void Atlas::AddCamera(GeometricCamera* pCam)
 
 void Atlas::SetReferenceMapPoints(const std::vector<MapPoint*> &vpMPs)
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     mpCurrentMap->SetReferenceMapPoints(vpMPs);
 }
 
 void Atlas::InformNewBigChange()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     mpCurrentMap->InformNewBigChange();
 }
 
 int Atlas::GetLastBigChangeIdx()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     return mpCurrentMap->GetLastBigChangeIdx();
 }
 
 long unsigned int Atlas::MapPointsInMap()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     return mpCurrentMap->MapPointsInMap();
 }
 
 long unsigned Atlas::KeyFramesInMap()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     return mpCurrentMap->KeyFramesInMap();
 }
 
 std::vector<KeyFrame*> Atlas::GetAllKeyFrames()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     return mpCurrentMap->GetAllKeyFrames();
 }
 
 std::vector<MapPoint*> Atlas::GetAllMapPoints()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     return mpCurrentMap->GetAllMapPoints();
 }
 
 std::vector<MapPoint*> Atlas::GetReferenceMapPoints()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     return mpCurrentMap->GetReferenceMapPoints();
 }
 
-vector<Map*> Atlas::GetAllMaps()
+std::vector<Map*> Atlas::GetAllMaps()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     struct compFunctor
     {
         inline bool operator()(Map* elem1 ,Map* elem2)
@@ -176,26 +176,26 @@ vector<Map*> Atlas::GetAllMaps()
             return elem1->GetId() < elem2->GetId();
         }
     };
-    vector<Map*> vMaps(mspMaps.begin(),mspMaps.end());
-    sort(vMaps.begin(), vMaps.end(), compFunctor());
+    std::vector<Map*> vMaps(mspMaps.begin(),mspMaps.end());
+    std::sort(vMaps.begin(), vMaps.end(), compFunctor());
     return vMaps;
 }
 
 int Atlas::CountMaps()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     return mspMaps.size();
 }
 
 void Atlas::clearMap()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     mpCurrentMap->clear();
 }
 
 void Atlas::clearAtlas()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     /*for(std::set<Map*>::iterator it=mspMaps.begin(), send=mspMaps.end(); it!=send; it++)
     {
         (*it)->clear();
@@ -208,7 +208,7 @@ void Atlas::clearAtlas()
 
 Map* Atlas::GetCurrentMap()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     if(!mpCurrentMap)
         CreateNewMap();
     while(mpCurrentMap->IsBad())
@@ -237,25 +237,25 @@ void Atlas::RemoveBadMaps()
 
 bool Atlas::isInertial()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     return mpCurrentMap->IsInertial();
 }
 
 void Atlas::SetInertialSensor()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     mpCurrentMap->SetInertialSensor();
 }
 
 void Atlas::SetImuInitialized()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     mpCurrentMap->SetImuInitialized();
 }
 
 bool Atlas::isImuInitialized()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     return mpCurrentMap->isImuInitialized();
 }
 
@@ -281,7 +281,7 @@ ORBVocabulary* Atlas::GetORBVocabulary()
 
 long unsigned int Atlas::GetNumLivedKF()
 {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     long unsigned int num = 0;
     for(Map* mMAPi : mspMaps)
     {
@@ -292,7 +292,7 @@ long unsigned int Atlas::GetNumLivedKF()
 }
 
 long unsigned int Atlas::GetNumLivedMP() {
-    unique_lock<mutex> lock(mMutexAtlas);
+    std::unique_lock<std::mutex> lock(mMutexAtlas);
     long unsigned int num = 0;
     for (Map *mMAPi : mspMaps) {
         num += mMAPi->GetAllMapPoints().size();

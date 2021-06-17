@@ -27,7 +27,7 @@ namespace ORB_SLAM3
 {
 
 
-MapDrawer::MapDrawer(Atlas* pAtlas, const string &strSettingPath):mpAtlas(pAtlas)
+MapDrawer::MapDrawer(Atlas* pAtlas, const std::string &strSettingPath):mpAtlas(pAtlas)
 {
     cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
 
@@ -40,7 +40,7 @@ MapDrawer::MapDrawer(Atlas* pAtlas, const string &strSettingPath):mpAtlas(pAtlas
         {
             throw -1;
         }
-        catch(exception &e)
+        catch(std::exception &e)
         {
 
         }
@@ -122,10 +122,10 @@ bool MapDrawer::ParseViewerParamFile(cv::FileStorage &fSettings)
 
 void MapDrawer::DrawMapPoints()
 {
-    const vector<MapPoint*> &vpMPs = mpAtlas->GetAllMapPoints();
-    const vector<MapPoint*> &vpRefMPs = mpAtlas->GetReferenceMapPoints();
+    const std::vector<MapPoint*> &vpMPs = mpAtlas->GetAllMapPoints();
+    const std::vector<MapPoint*> &vpRefMPs = mpAtlas->GetReferenceMapPoints();
 
-    set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
+    std::set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
 
     if(vpMPs.empty())
         return;
@@ -147,7 +147,7 @@ void MapDrawer::DrawMapPoints()
     glBegin(GL_POINTS);
     glColor3f(1.0,0.0,0.0);
 
-    for(set<MapPoint*>::iterator sit=spRefMPs.begin(), send=spRefMPs.end(); sit!=send; sit++)
+    for(std::set<MapPoint*>::iterator sit=spRefMPs.begin(), send=spRefMPs.end(); sit!=send; sit++)
     {
         if((*sit)->isBad())
             continue;
@@ -165,7 +165,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
     const float h = w*0.75;
     const float z = w*0.6;
 
-    const vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
+    const std::vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
 
     if(bDrawKF)
     {
@@ -229,11 +229,11 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
         for(size_t i=0; i<vpKFs.size(); i++)
         {
             // Covisibility Graph
-            const vector<KeyFrame*> vCovKFs = vpKFs[i]->GetCovisiblesByWeight(100);
+            const std::vector<KeyFrame*> vCovKFs = vpKFs[i]->GetCovisiblesByWeight(100);
             cv::Mat Ow = vpKFs[i]->GetCameraCenter();
             if(!vCovKFs.empty())
             {
-                for(vector<KeyFrame*>::const_iterator vit=vCovKFs.begin(), vend=vCovKFs.end(); vit!=vend; vit++)
+                for(std::vector<KeyFrame*>::const_iterator vit=vCovKFs.begin(), vend=vCovKFs.end(); vit!=vend; vit++)
                 {
                     if((*vit)->mnId<vpKFs[i]->mnId)
                         continue;
@@ -253,8 +253,8 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
             }
 
             // Loops
-            set<KeyFrame*> sLoopKFs = vpKFs[i]->GetLoopEdges();
-            for(set<KeyFrame*>::iterator sit=sLoopKFs.begin(), send=sLoopKFs.end(); sit!=send; sit++)
+            std::set<KeyFrame*> sLoopKFs = vpKFs[i]->GetLoopEdges();
+            for(std::set<KeyFrame*>::iterator sit=sLoopKFs.begin(), send=sLoopKFs.end(); sit!=send; sit++)
             {
                 if((*sit)->mnId<vpKFs[i]->mnId)
                     continue;
@@ -290,7 +290,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
         glEnd();
     }
 
-    vector<Map*> vpMaps = mpAtlas->GetAllMaps();
+    std::vector<Map*> vpMaps = mpAtlas->GetAllMaps();
 
     if(bDrawKF)
     {
@@ -299,7 +299,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
             if(pMap == mpAtlas->GetCurrentMap())
                 continue;
 
-            vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
+            std::vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
 
             for(size_t i=0; i<vpKFs.size(); i++)
             {
@@ -397,7 +397,7 @@ void MapDrawer::DrawCurrentCamera(pangolin::OpenGlMatrix &Twc)
 
 void MapDrawer::SetCurrentCameraPose(const cv::Mat &Tcw)
 {
-    unique_lock<mutex> lock(mMutexCamera);
+    std::unique_lock<std::mutex> lock(mMutexCamera);
     mCameraPose = Tcw.clone();
 }
 
@@ -408,7 +408,7 @@ void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M, pangolin
         cv::Mat Rwc(3,3,CV_32F);
         cv::Mat twc(3,1,CV_32F);
         {
-            unique_lock<mutex> lock(mMutexCamera);
+            std::unique_lock<std::mutex> lock(mMutexCamera);
             Rwc = mCameraPose.rowRange(0,3).colRange(0,3).t();
             twc = -Rwc*mCameraPose.rowRange(0,3).col(3);
         }
@@ -453,7 +453,7 @@ void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M, pangolin
         cv::Mat twc(3,1,CV_32F);
         cv::Mat Rwwp(3,3,CV_32F);
         {
-            unique_lock<mutex> lock(mMutexCamera);
+            std::unique_lock<std::mutex> lock(mMutexCamera);
             Rwc = mCameraPose.rowRange(0,3).colRange(0,3).t();
             twc = -Rwc*mCameraPose.rowRange(0,3).col(3);
         }

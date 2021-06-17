@@ -21,8 +21,8 @@
 #define KEYFRAME_H
 
 #include "MapPoint.h"
-#include "Thirdparty/DBoW2/DBoW2/BowVector.h"
-#include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
+#include "DBoW2/BowVector.h"
+#include "DBoW2/FeatureVector.h"
 #include "ORBVocabulary.h"
 #include "ORBextractor.h"
 #include "Frame.h"
@@ -110,7 +110,7 @@ public:
 
     // Merge Edges
     void AddMergeEdge(KeyFrame* pKF);
-    set<KeyFrame*> GetMergeEdges();
+    std::set<KeyFrame*> GetMergeEdges();
 
     // MapPoint observation functions
     int GetNumberMPs();
@@ -277,7 +277,7 @@ public:
 
     unsigned int mnOriginMapId;
 
-    string mNameFile;
+    std::string mNameFile;
 
     int mnDataset;
 
@@ -378,7 +378,7 @@ public:
                 else right++;
             }
         }
-        cout << "Point distribution in KeyFrame: left-> " << left << " --- right-> " << right << endl;
+        std::cout << "Point distribution in KeyFrame: left-> " << left << " --- right-> " << right << std::endl;
     }
 
 

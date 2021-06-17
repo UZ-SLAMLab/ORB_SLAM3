@@ -105,8 +105,8 @@ public:
 
     unsigned int GetLowerKFID();
 
-    vector<KeyFrame*> mvpKeyFrameOrigins;
-    vector<unsigned long int> mvBackupKeyFrameOriginsId;
+    std::vector<KeyFrame*> mvpKeyFrameOrigins;
+    std::vector<unsigned long int> mvBackupKeyFrameOriginsId;
     KeyFrame* mpFirstRegionKF;
     std::mutex mMutexMapUpdate;
 
