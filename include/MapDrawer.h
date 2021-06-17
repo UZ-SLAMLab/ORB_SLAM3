@@ -33,7 +33,7 @@ namespace ORB_SLAM3
 class MapDrawer
 {
 public:
-    MapDrawer(Atlas* pAtlas, const string &strSettingPath);
+    MapDrawer(Atlas* pAtlas, const std::string &strSettingPath);
 
     Atlas* mpAtlas;
 

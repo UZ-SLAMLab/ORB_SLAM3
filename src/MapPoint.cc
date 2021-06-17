@@ -25,7 +25,7 @@ namespace ORB_SLAM3
 {
 
 long unsigned int MapPoint::nNextId=0;
-mutex MapPoint::mGlobalMutex;
+std::mutex MapPoint::mGlobalMutex;
 
 MapPoint::MapPoint():
     mnFirstKFid(0), mnFirstFrame(0), nObs(0), mnTrackReferenceForFrame(0),
@@ -52,7 +52,7 @@ MapPoint::MapPoint(const cv::Mat &Pos, KeyFrame *pRefKF, Map* pMap):
     mbTrackInView = false;
 
     // MapPoints can be created from Tracking and Local Mapping. This mutex avoid conflicts with id.
-    unique_lock<mutex> lock(mpMap->mMutexPointCreation);
+    std::unique_lock<std::mutex> lock(mpMap->mMutexPointCreation);
     mnId=nNextId++;
 }
 
@@ -73,7 +73,7 @@ MapPoint::MapPoint(const double invDepth, cv::Point2f uv_init, KeyFrame* pRefKF,
 
     // Worldpos is not set
     // MapPoints can be created from Tracking and Local Mapping. This mutex avoid conflicts with id.
-    unique_lock<mutex> lock(mpMap->mMutexPointCreation);
+    std::unique_lock<std::mutex> lock(mpMap->mMutexPointCreation);
     mnId=nNextId++;
 }
 
@@ -116,65 +116,65 @@ MapPoint::MapPoint(const cv::Mat &Pos, Map* pMap, Frame* pFrame, const int &idxF
     pFrame->mDescriptors.row(idxF).copyTo(mDescriptor);
 
     // MapPoints can be created from Tracking and Local Mapping. This mutex avoid conflicts with id.
-    unique_lock<mutex> lock(mpMap->mMutexPointCreation);
+    std::unique_lock<std::mutex> lock(mpMap->mMutexPointCreation);
     mnId=nNextId++;
 }
 
 void MapPoint::SetWorldPos(const cv::Mat &Pos)
 {
-    unique_lock<mutex> lock2(mGlobalMutex);
-    unique_lock<mutex> lock(mMutexPos);
+    std::unique_lock<std::mutex> lock2(mGlobalMutex);
+    std::unique_lock<std::mutex> lock(mMutexPos);
     Pos.copyTo(mWorldPos);
     mWorldPosx = cv::Matx31f(Pos.at<float>(0), Pos.at<float>(1), Pos.at<float>(2));
 }
 
 cv::Mat MapPoint::GetWorldPos()
 {
-    unique_lock<mutex> lock(mMutexPos);
+    std::unique_lock<std::mutex> lock(mMutexPos);
     return mWorldPos.clone();
 }
 
 cv::Mat MapPoint::GetNormal()
 {
-    unique_lock<mutex> lock(mMutexPos);
+    std::unique_lock<std::mutex> lock(mMutexPos);
     return mNormalVector.clone();
 }
 
 cv::Matx31f MapPoint::GetWorldPos2()
 {
-    unique_lock<mutex> lock(mMutexPos);
+    std::unique_lock<std::mutex> lock(mMutexPos);
     return mWorldPosx;
 }
 
 cv::Matx31f MapPoint::GetNormal2()
 {
-    unique_lock<mutex> lock(mMutexPos);
+    std::unique_lock<std::mutex> lock(mMutexPos);
     return mNormalVectorx;
 }
 
 KeyFrame* MapPoint::GetReferenceKeyFrame()
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     return mpRefKF;
 }
 
 void MapPoint::AddObservation(KeyFrame* pKF, int idx)
 {
-    unique_lock<mutex> lock(mMutexFeatures);
-    tuple<int,int> indexes;
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
+    std::tuple<int,int> indexes;
 
     if(mObservations.count(pKF)){
         indexes = mObservations[pKF];
     }
     else{
-        indexes = tuple<int,int>(-1,-1);
+        indexes = std::tuple<int,int>(-1,-1);
     }
 
     if(pKF -> NLeft != -1 && idx >= pKF -> NLeft){
-        get<1>(indexes) = idx;
+        std::get<1>(indexes) = idx;
     }
     else{
-        get<0>(indexes) = idx;
+        std::get<0>(indexes) = idx;
     }
 
     mObservations[pKF]=indexes;
@@ -189,11 +189,11 @@ void MapPoint::EraseObservation(KeyFrame* pKF)
 {
     bool bBad=false;
     {
-        unique_lock<mutex> lock(mMutexFeatures);
+        std::unique_lock<std::mutex> lock(mMutexFeatures);
         if(mObservations.count(pKF))
         {
-            tuple<int,int> indexes = mObservations[pKF];
-            int leftIndex = get<0>(indexes), rightIndex = get<1>(indexes);
+            std::tuple<int,int> indexes = mObservations[pKF];
+            int leftIndex = std::get<0>(indexes), rightIndex = std::get<1>(indexes);
 
             if(leftIndex != -1){
                 if(!pKF->mpCamera2 && pKF->mvuRight[leftIndex]>=0)
@@ -223,30 +223,30 @@ void MapPoint::EraseObservation(KeyFrame* pKF)
 
 std::map<KeyFrame*, std::tuple<int,int>>  MapPoint::GetObservations()
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     return mObservations;
 }
 
 int MapPoint::Observations()
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     return nObs;
 }
 
 void MapPoint::SetBadFlag()
 {
-    map<KeyFrame*, tuple<int,int>> obs;
+    std::map<KeyFrame*, std::tuple<int,int>> obs;
     {
-        unique_lock<mutex> lock1(mMutexFeatures);
-        unique_lock<mutex> lock2(mMutexPos);
+        std::unique_lock<std::mutex> lock1(mMutexFeatures);
+        std::unique_lock<std::mutex> lock2(mMutexPos);
         mbBad=true;
         obs = mObservations;
         mObservations.clear();
     }
-    for(map<KeyFrame*, tuple<int,int>>::iterator mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
+    for(std::map<KeyFrame*, std::tuple<int,int>>::iterator mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
     {
         KeyFrame* pKF = mit->first;
-        int leftIndex = get<0>(mit -> second), rightIndex = get<1>(mit -> second);
+        int leftIndex = std::get<0>(mit -> second), rightIndex = std::get<1>(mit -> second);
         if(leftIndex != -1){
             pKF->EraseMapPointMatch(leftIndex);
         }
@@ -260,8 +260,8 @@ void MapPoint::SetBadFlag()
 
 MapPoint* MapPoint::GetReplaced()
 {
-    unique_lock<mutex> lock1(mMutexFeatures);
-    unique_lock<mutex> lock2(mMutexPos);
+    std::unique_lock<std::mutex> lock1(mMutexFeatures);
+    std::unique_lock<std::mutex> lock2(mMutexPos);
     return mpReplaced;
 }
 
@@ -271,10 +271,10 @@ void MapPoint::Replace(MapPoint* pMP)
         return;
 
     int nvisible, nfound;
-    map<KeyFrame*,tuple<int,int>> obs;
+    std::map<KeyFrame*,std::tuple<int,int>> obs;
     {
-        unique_lock<mutex> lock1(mMutexFeatures);
-        unique_lock<mutex> lock2(mMutexPos);
+        std::unique_lock<std::mutex> lock1(mMutexFeatures);
+        std::unique_lock<std::mutex> lock2(mMutexPos);
         obs=mObservations;
         mObservations.clear();
         mbBad=true;
@@ -283,13 +283,13 @@ void MapPoint::Replace(MapPoint* pMP)
         mpReplaced = pMP;
     }
 
-    for(map<KeyFrame*,tuple<int,int>>::iterator mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
+    for(std::map<KeyFrame*,std::tuple<int,int>>::iterator mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
     {
         // Replace measurement in keyframe
         KeyFrame* pKF = mit->first;
 
-        tuple<int,int> indexes = mit -> second;
-        int leftIndex = get<0>(indexes), rightIndex = get<1>(indexes);
+        std::tuple<int,int> indexes = mit -> second;
+        int leftIndex = std::get<0>(indexes), rightIndex = std::get<1>(indexes);
 
         if(!pMP->IsInKeyFrame(pKF))
         {
@@ -321,8 +321,8 @@ void MapPoint::Replace(MapPoint* pMP)
 
 bool MapPoint::isBad()
 {
-    unique_lock<mutex> lock1(mMutexFeatures,std::defer_lock);
-    unique_lock<mutex> lock2(mMutexPos,std::defer_lock);
+    std::unique_lock<std::mutex> lock1(mMutexFeatures,std::defer_lock);
+    std::unique_lock<std::mutex> lock2(mMutexPos,std::defer_lock);
     lock(lock1, lock2);
 
     return mbBad;
@@ -330,31 +330,31 @@ bool MapPoint::isBad()
 
 void MapPoint::IncreaseVisible(int n)
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     mnVisible+=n;
 }
 
 void MapPoint::IncreaseFound(int n)
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     mnFound+=n;
 }
 
 float MapPoint::GetFoundRatio()
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     return static_cast<float>(mnFound)/mnVisible;
 }
 
 void MapPoint::ComputeDistinctiveDescriptors()
 {
     // Retrieve all observed descriptors
-    vector<cv::Mat> vDescriptors;
+    std::vector<cv::Mat> vDescriptors;
 
-    map<KeyFrame*,tuple<int,int>> observations;
+    std::map<KeyFrame*,std::tuple<int,int>> observations;
 
     {
-        unique_lock<mutex> lock1(mMutexFeatures);
+        std::unique_lock<std::mutex> lock1(mMutexFeatures);
         if(mbBad)
             return;
         observations=mObservations;
@@ -365,13 +365,13 @@ void MapPoint::ComputeDistinctiveDescriptors()
 
     vDescriptors.reserve(observations.size());
 
-    for(map<KeyFrame*,tuple<int,int>>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+    for(std::map<KeyFrame*,std::tuple<int,int>>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
     {
         KeyFrame* pKF = mit->first;
 
         if(!pKF->isBad()){
-            tuple<int,int> indexes = mit -> second;
-            int leftIndex = get<0>(indexes), rightIndex = get<1>(indexes);
+            std::tuple<int,int> indexes = mit -> second;
+            int leftIndex = std::get<0>(indexes), rightIndex = std::get<1>(indexes);
 
             if(leftIndex != -1){
                 vDescriptors.push_back(pKF->mDescriptors.row(leftIndex));
@@ -405,8 +405,8 @@ void MapPoint::ComputeDistinctiveDescriptors()
     int BestIdx = 0;
     for(size_t i=0;i<N;i++)
     {
-        vector<int> vDists(Distances[i],Distances[i]+N);
-        sort(vDists.begin(),vDists.end());
+        std::vector<int> vDists(Distances[i],Distances[i]+N);
+        std::sort(vDists.begin(),vDists.end());
         int median = vDists[0.5*(N-1)];
 
         if(median<BestMedian)
@@ -417,40 +417,40 @@ void MapPoint::ComputeDistinctiveDescriptors()
     }
 
     {
-        unique_lock<mutex> lock(mMutexFeatures);
+        std::unique_lock<std::mutex> lock(mMutexFeatures);
         mDescriptor = vDescriptors[BestIdx].clone();
     }
 }
 
 cv::Mat MapPoint::GetDescriptor()
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     return mDescriptor.clone();
 }
 
-tuple<int,int> MapPoint::GetIndexInKeyFrame(KeyFrame *pKF)
+std::tuple<int,int> MapPoint::GetIndexInKeyFrame(KeyFrame *pKF)
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     if(mObservations.count(pKF))
         return mObservations[pKF];
     else
-        return tuple<int,int>(-1,-1);
+        return std::tuple<int,int>(-1,-1);
 }
 
 bool MapPoint::IsInKeyFrame(KeyFrame *pKF)
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     return (mObservations.count(pKF));
 }
 
 void MapPoint::UpdateNormalAndDepth()
 {
-    map<KeyFrame*,tuple<int,int>> observations;
+    std::map<KeyFrame*,std::tuple<int,int>> observations;
     KeyFrame* pRefKF;
     cv::Mat Pos;
     {
-        unique_lock<mutex> lock1(mMutexFeatures);
-        unique_lock<mutex> lock2(mMutexPos);
+        std::unique_lock<std::mutex> lock1(mMutexFeatures);
+        std::unique_lock<std::mutex> lock2(mMutexPos);
         if(mbBad)
             return;
         observations=mObservations;
@@ -463,12 +463,12 @@ void MapPoint::UpdateNormalAndDepth()
 
     cv::Mat normal = cv::Mat::zeros(3,1,CV_32F);
     int n=0;
-    for(map<KeyFrame*,tuple<int,int>>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+    for(std::map<KeyFrame*,std::tuple<int,int>>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
     {
         KeyFrame* pKF = mit->first;
 
-        tuple<int,int> indexes = mit -> second;
-        int leftIndex = get<0>(indexes), rightIndex = get<1>(indexes);
+        std::tuple<int,int> indexes = mit -> second;
+        int leftIndex = std::get<0>(indexes), rightIndex = std::get<1>(indexes);
 
         if(leftIndex != -1){
             cv::Mat Owi = pKF->GetCameraCenter();
@@ -487,8 +487,8 @@ void MapPoint::UpdateNormalAndDepth()
     cv::Mat PC = Pos - pRefKF->GetCameraCenter();
     const float dist = cv::norm(PC);
 
-    tuple<int ,int> indexes = observations[pRefKF];
-    int leftIndex = get<0>(indexes), rightIndex = get<1>(indexes);
+    std::tuple<int ,int> indexes = observations[pRefKF];
+    int leftIndex = std::get<0>(indexes), rightIndex = std::get<1>(indexes);
     int level;
     if(pRefKF -> NLeft == -1){
         level = pRefKF->mvKeysUn[leftIndex].octave;
@@ -504,7 +504,7 @@ void MapPoint::UpdateNormalAndDepth()
     const int nLevels = pRefKF->mnScaleLevels;
 
     {
-        unique_lock<mutex> lock3(mMutexPos);
+        std::unique_lock<std::mutex> lock3(mMutexPos);
         mfMaxDistance = dist*levelScaleFactor;
         mfMinDistance = mfMaxDistance/pRefKF->mvScaleFactors[nLevels-1];
         mNormalVector = normal/n;
@@ -514,20 +514,20 @@ void MapPoint::UpdateNormalAndDepth()
 
 void MapPoint::SetNormalVector(cv::Mat& normal)
 {
-    unique_lock<mutex> lock3(mMutexPos);
+    std::unique_lock<std::mutex> lock3(mMutexPos);
     mNormalVector = normal;
     mNormalVectorx = cv::Matx31f(mNormalVector.at<float>(0), mNormalVector.at<float>(1), mNormalVector.at<float>(2));
 }
 
 float MapPoint::GetMinDistanceInvariance()
 {
-    unique_lock<mutex> lock(mMutexPos);
+    std::unique_lock<std::mutex> lock(mMutexPos);
     return 0.8f*mfMinDistance;
 }
 
 float MapPoint::GetMaxDistanceInvariance()
 {
-    unique_lock<mutex> lock(mMutexPos);
+    std::unique_lock<std::mutex> lock(mMutexPos);
     return 1.2f*mfMaxDistance;
 }
 
@@ -535,7 +535,7 @@ int MapPoint::PredictScale(const float &currentDist, KeyFrame* pKF)
 {
     float ratio;
     {
-        unique_lock<mutex> lock(mMutexPos);
+        std::unique_lock<std::mutex> lock(mMutexPos);
         ratio = mfMaxDistance/currentDist;
     }
 
@@ -552,7 +552,7 @@ int MapPoint::PredictScale(const float &currentDist, Frame* pF)
 {
     float ratio;
     {
-        unique_lock<mutex> lock(mMutexPos);
+        std::unique_lock<std::mutex> lock(mMutexPos);
         ratio = mfMaxDistance/currentDist;
     }
 
@@ -567,13 +567,13 @@ int MapPoint::PredictScale(const float &currentDist, Frame* pF)
 
 Map* MapPoint::GetMap()
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     return mpMap;
 }
 
 void MapPoint::UpdateMap(Map* pMap)
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     mpMap = pMap;
 }
 
