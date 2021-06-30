@@ -23,7 +23,7 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
-#include <openssl/md5.h>
+//#include <openssl/md5.h> // TODO: unused even in UZ_SLAMLAB code
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/archive/text_iarchive.hpp>

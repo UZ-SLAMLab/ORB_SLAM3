@@ -1,31 +1,21 @@
 cmake_minimum_required(VERSION 2.8)
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
-project(g2o)
+set(G2O_TARGET "g2o")
+project(${G2O_TARGET})
 
+# Default build type
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+message(STATUS "BUILD TYPE:" ${CMAKE_BUILD_TYPE})
+
+# Library type
 set(G2O_LIB_TYPE SHARED)
 if(WIN32)
   set(G2O_LIB_TYPE STATIC)
 endif(WIN32)
 
 set(G2O_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
-
-set(G2O_C_FLAGS)
-set(G2O_CXX_FLAGS)
-
-# default built type
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
-
-message(STATUS "BUILD TYPE:" ${CMAKE_BUILD_TYPE})
-
-
-# There seems to be an issue with MSVC8
-# see http://eigen.tuxfamily.org/bz/show_bug.cgi?id=83
-if(MSVC90)
-  add_definitions(-DEIGEN_DONT_ALIGN_STATICALLY=1)
-  message(STATUS "Disabling memory alignment for MSVC8")
-endif(MSVC90)
 
 # Set the output directory for the build executables and libraries
 set(G2O_RUNTIME_OUTPUT_DIRECTORY ${G2O_SOURCE_DIR}/bin CACHE PATH "Target for the binaries")
@@ -37,10 +27,10 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${G2O_LIBRARY_OUTPUT_DIRECTORY})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${G2O_LIBRARY_OUTPUT_DIRECTORY})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${G2O_RUNTIME_OUTPUT_DIRECTORY})
 
-# Set search directory for looking for our custom CMake scripts to
-# look for SuiteSparse, QGLViewer, and Eigen3.
-list(APPEND CMAKE_MODULE_PATH ${G2O_SOURCE_DIR}/cmake_modules)
 
+# Compiler options
+set(G2O_C_FLAGS)
+set(G2O_CXX_FLAGS)
 
 # Detect OS and define macros appropriately
 if(WIN32)
@@ -79,7 +69,6 @@ endif(OPENMP_FOUND AND G2O_USE_OPENMP)
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
   set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native")
-
   # activate warnings
   set(G2O_C_FLAGS "${G2O_C_FLAGS} -Wall -W")
   set(G2O_CXX_FLAGS "${G2O_CXX_FLAGS} -Wall -W")
@@ -90,34 +79,12 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   set(G2O_CXX_FLAGS "${G2O_CXX_FLAGS} /W3")
 endif()
 
-# specifying compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${G2O_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${G2O_C_FLAGS}")
 
-# Find Eigen3
-set(EIGEN3_INCLUDE_DIR ${G2O_EIGEN3_INCLUDE})
-find_package(Eigen3 3.1.0 REQUIRED)
-if(EIGEN3_FOUND)
-  set(G2O_EIGEN3_INCLUDE ${EIGEN3_INCLUDE_DIR} CACHE PATH "Directory of Eigen3")
-else(EIGEN3_FOUND)
-  set(G2O_EIGEN3_INCLUDE "" CACHE PATH "Directory of Eigen3")
-endif(EIGEN3_FOUND)
 
-# Generate config.h
-set(G2O_CXX_COMPILER "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER}")
-configure_file(config.h.in ${G2O_SOURCE_DIR}/config.h)
-
-# set up the top-level include directories
-include_directories(
-  ${G2O_SOURCE_DIR}/core
-  ${G2O_SOURCE_DIR}/types
-  ${G2O_SOURCE_DIR}/stuff
-  ${G2O_EIGEN3_INCLUDE}
-)
-
-
-# Include the subdirectories
-add_library(g2o ${G2O_LIB_TYPE}
+# Target definition
+add_library(${G2O_TARGET} ${G2O_LIB_TYPE}
   #types
   g2o/types/types_sba.h
   g2o/types/types_six_dof_expmap.h
@@ -148,6 +115,7 @@ add_library(g2o ${G2O_LIB_TYPE}
   g2o/core/matrix_structure.cpp
   g2o/core/batch_stats.cpp
   g2o/core/matrix_structure.h
+  g2o/core/matrix_operations.h
   g2o/core/batch_stats.h
   g2o/core/openmp_mutex.h
   g2o/core/block_solver.h
@@ -205,3 +173,38 @@ add_library(g2o ${G2O_LIB_TYPE}
   g2o/stuff/property.cpp
   g2o/stuff/property.h
 )
+
+target_include_directories(${G2O_TARGET} PUBLIC
+  ${G2O_SOURCE_DIR}/core
+  ${G2O_SOURCE_DIR}/types
+  ${G2O_SOURCE_DIR}/stuff
+)
+
+
+# Dependencies
+# Set search directory for looking for our custom CMake scripts to
+# look for SuiteSparse, QGLViewer, and Eigen3.
+list(APPEND CMAKE_MODULE_PATH ${G2O_SOURCE_DIR}/cmake_modules)
+
+# Find Eigen3
+set(EIGEN3_INCLUDE_DIR ${G2O_EIGEN3_INCLUDE}) # take hint
+find_package(Eigen3 3.1.0 REQUIRED)
+if(EIGEN3_FOUND)
+  set(G2O_EIGEN3_INCLUDE ${EIGEN3_INCLUDE_DIR} CACHE PATH "Directory of Eigen3")
+else(EIGEN3_FOUND)
+  set(G2O_EIGEN3_INCLUDE "" CACHE PATH "Directory of Eigen3")
+endif(EIGEN3_FOUND)
+target_link_libraries(${G2O_TARGET} PRIVATE Eigen3::Eigen)
+#include_directories(${G2O_EIGEN3_INCLUDE}) # not needed in modern cmake
+
+# There seems to be an issue with MSVC8
+# see http://eigen.tuxfamily.org/bz/show_bug.cgi?id=83
+if(MSVC90)
+  add_definitions(-DEIGEN_DONT_ALIGN_STATICALLY=1)
+  message(STATUS "Disabling memory alignment for MSVC8")
+endif(MSVC90)
+
+
+# Generate config.h
+set(G2O_CXX_COMPILER "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER}")
+configure_file(config.h.in ${G2O_SOURCE_DIR}/config.h)

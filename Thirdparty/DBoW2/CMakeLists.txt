@@ -1,11 +1,14 @@
 cmake_minimum_required(VERSION 2.8)
-project(DBoW2)
+set(DBOW2_TARGET "DBoW2")
+project(${DBOW2_TARGET})
 
 set(DBOW2_LIB_TYPE SHARED)
 if(WIN32)
   set(DBOW2_LIB_TYPE STATIC)
 endif(WIN32)
 
+
+# Compiler options
 # Compiler specific options for gcc
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3 -march=native")
@@ -17,6 +20,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
 endif()
 
+
+# Target definition
 set(HDRS_DBOW2
   DBoW2/BowVector.h
   DBoW2/FORB.h
@@ -37,7 +42,10 @@ set(SRCS_DUTILS
   DUtils/Random.cpp
   DUtils/Timestamp.cpp)
 
-add_library(DBoW2 ${DBOW2_LIB_TYPE} ${SRCS_DBOW2} ${SRCS_DUTILS})
+add_library(${DBOW2_TARGET} ${DBOW2_LIB_TYPE} ${SRCS_DBOW2} ${SRCS_DUTILS})
+
+
+# Dependencies
 
 # add OpenCV
 find_package(OpenCV 4 QUIET)
@@ -51,10 +59,10 @@ if(NOT OpenCV_FOUND)
   endif()
 endif()
 MESSAGE(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
-include_directories(${OpenCV_INCLUDE_DIRS})
-target_link_libraries(DBoW2 ${OpenCV_LIBS})
+#include_directories(${OpenCV_INCLUDE_DIRS}) # not needed in modern cmake
+target_link_libraries(${DBOW2_TARGET} PRIVATE ${OpenCV_LIBS})
 
 # add Boost
 find_package(Boost REQUIRED COMPONENTS serialization)
 message(STATUS "Boost_LIBRARIES: ${Boost_LIBRARIES}")
-target_link_libraries(DBoW2 ${Boost_LIBRARIES})
+target_link_libraries(${DBOW2_TARGET} PRIVATE ${Boost_LIBRARIES})
