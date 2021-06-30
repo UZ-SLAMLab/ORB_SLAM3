@@ -266,7 +266,8 @@ void LocalMapping::Run()
             // Safe area to stop
             while(isStopped() && !CheckFinish())
             {
-                usleep(3000);
+                // cout << "LM: sleep if is stopped" << endl;
+                std::this_thread::sleep_for(std::chrono::microseconds(3000));
             }
             if(CheckFinish())
                 break;
@@ -280,7 +281,7 @@ void LocalMapping::Run()
         if(CheckFinish())
             break;
 
-        usleep(3000);
+        std::this_thread::sleep_for(std::chrono::microseconds(3000));
     }
 
     SetFinish();
@@ -625,7 +626,16 @@ void LocalMapping::CreateNewMapPoints()
                     continue;
 
                 // Euclidean coordinates
+                #if (CV_VERSION_MAJOR >=4) || (CV_VERSION_MAJOR == 3 && CV_VERSION_MINOR >= 5) || (CV_VERSION_MAJOR == 3 && CV_VERSION_MINOR == 4 && CV_VERSION_REVISION >= 10)
                 x3D = x3D_h.get_minor<3,1>(0,0) / x3D_h(3);
+                #else
+                // OpenCV 3.2
+                x3D = x3D_h.get_minor<3,1>(0,0);
+                x3D(0) = x3D(0) / x3D_h(3);
+                x3D(1) = x3D(1) / x3D_h(3);
+                x3D(2) = x3D(2) / x3D_h(3);
+                #endif
+
                 bEstimated = true;
 
             }
@@ -732,7 +742,7 @@ void LocalMapping::CreateNewMapPoints()
             cv::Mat x3D_(x3D);
             MapPoint* pMP = new MapPoint(x3D_,mpCurrentKeyFrame,mpAtlas->GetCurrentMap());
 
-            pMP->AddObservation(mpCurrentKeyFrame,idx1);            
+            pMP->AddObservation(mpCurrentKeyFrame,idx1);
             pMP->AddObservation(pKF2,idx2);
 
             mpCurrentKeyFrame->AddMapPoint(pMP,idx1);
@@ -1161,7 +1171,7 @@ void LocalMapping::RequestReset()
             if(!mbResetRequested)
                 break;
         }
-        usleep(3000);
+        std::this_thread::sleep_for(std::chrono::microseconds(3000));
     }
     cout << "LM: Map reset, Done!!!" << endl;
 }
@@ -1183,7 +1193,7 @@ void LocalMapping::RequestResetActiveMap(Map* pMap)
             if(!mbResetRequestedActiveMap)
                 break;
         }
-        usleep(3000);
+        std::this_thread::sleep_for(std::chrono::microseconds(3000));
     }
     cout << "LM: Active map reset, Done!!!" << endl;
 }
@@ -1250,7 +1260,7 @@ bool LocalMapping::CheckFinish()
 void LocalMapping::SetFinish()
 {
     unique_lock<mutex> lock(mMutexFinish);
-    mbFinished = true;    
+    mbFinished = true;
     unique_lock<mutex> lock2(mMutexStop);
     mbStopped = true;
 }

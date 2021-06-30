@@ -293,7 +293,7 @@ void Viewer::Run()
         {
             while(isStopped())
             {
-                usleep(3000);
+                std::this_thread::sleep_for(std::chrono::microseconds(3000));
             }
         }
 

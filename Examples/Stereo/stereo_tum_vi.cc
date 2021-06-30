@@ -17,16 +17,15 @@
 */
 
 
-#include<iostream>
-#include<algorithm>
-#include<fstream>
-#include<iomanip>
-#include<chrono>
-#include <unistd.h>
+#include <iostream>
+#include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <chrono>
 
-#include<opencv2/core/core.hpp>
+#include <opencv2/core/core.hpp>
 
-#include<System.h>
+#include <System.h>
 
 using namespace std;
 
@@ -147,8 +146,10 @@ int main(int argc, char **argv)
             else if(ni>0)
                 T = tframe-vTimestampsCam[seq][ni-1];
 
-            if(ttrack<T)
-                usleep((T-ttrack)*1e6);
+            if (ttrack < T) {
+                long usec = static_cast<long>((T - ttrack) * 1e6);
+                std::this_thread::sleep_for(std::chrono::microseconds(usec));
+            }
         }
         if(seq < num_seq - 1)
         {

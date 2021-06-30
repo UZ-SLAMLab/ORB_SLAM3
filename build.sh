@@ -25,7 +25,14 @@ cd ..
 
 echo "Configuring and building ORB_SLAM3 ..."
 
+# Set this path. Dependencies are assumed to be installed to this folder:
+ORBSLAM3_DEPENDENCIES_INSTALL_DIR=""
+echo "ORBSLAM3_DEPENDENCIES_INSTALL_DIR=$ORBSLAM3_DEPENDENCIES_INSTALL_DIR"
+
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_PREFIX_PATH=$ORBSLAM3_DEPENDENCIES_INSTALL_DIR
+
 make -j

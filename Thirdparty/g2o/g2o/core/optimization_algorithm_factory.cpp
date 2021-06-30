@@ -29,6 +29,7 @@
 #include <iostream>
 #include <typeinfo>
 #include <cassert>
+#include <algorithm> // for std::min/max
 
 using namespace std;
 

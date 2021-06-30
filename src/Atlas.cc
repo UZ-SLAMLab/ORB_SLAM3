@@ -211,8 +211,9 @@ Map* Atlas::GetCurrentMap()
     unique_lock<mutex> lock(mMutexAtlas);
     if(!mpCurrentMap)
         CreateNewMap();
-    while(mpCurrentMap->IsBad())
-        usleep(3000);
+    while (mpCurrentMap->IsBad()) {
+        std::this_thread::sleep_for(std::chrono::microseconds(3000));
+    }
 
     return mpCurrentMap;
 }

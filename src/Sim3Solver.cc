@@ -21,7 +21,9 @@
 
 #include <vector>
 #include <cmath>
+
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/core_c.h>
 
 #include "KeyFrame.h"
 #include "ORBmatcher.h"
@@ -127,7 +129,7 @@ void Sim3Solver::SetRansacParameters(double probability, int minInliers, int max
 {
     mRansacProb = probability;
     mRansacMinInliers = minInliers;
-    mRansacMaxIts = maxIterations;    
+    mRansacMaxIts = maxIterations;
 
     N = mvpMapPoints1.size(); // number of correspondences
 
