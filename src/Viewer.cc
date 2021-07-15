@@ -133,7 +133,7 @@ void Viewer::CreatePanel()
     mbStopped = false;
 
     pangolin::CreateWindowAndBind("ORB-SLAM3: Map Viewer",1024,768);
-
+    
     // 3D Mouse handler requires depth testing to be enabled
     glEnable(GL_DEPTH_TEST);
 
@@ -165,7 +165,7 @@ void Viewer::CreatePanel()
     d_cam = std::unique_ptr<pangolin::View>(&pangolin::CreateDisplay()
             .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f/768.0f)
             .SetHandler(new pangolin::Handler3D(*s_cam)));
-
+   
     // pangolin::OpenGlMatrix Twc, Twr;
     Twc.SetIdentity();
     // pangolin::OpenGlMatrix Ow; // Oriented with g in the z axis
@@ -188,6 +188,8 @@ void Viewer::CreatePanel()
 
 bool Viewer::RefreshWithCheckFinish()
 {
+    if(isFinished()) return true;
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     mpMapDrawer->GetCurrentOpenGLCameraMatrix(Twc,Ow,Twwp);
@@ -339,6 +341,7 @@ void Viewer::Run()
 {
     while(1)
     {
+      
         if(RefreshWithCheckFinish())
             break;
     }
