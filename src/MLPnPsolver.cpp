@@ -369,13 +369,10 @@ namespace ORB_SLAM3 {
 
         Eigen::Matrix3d planarTest = points3 * points3.transpose();
         Eigen::FullPivHouseholderQR<Eigen::Matrix3d> rankTest(planarTest);
-        //int r, c;
-        //double minEigenVal = abs(eigen_solver.eigenvalues().real().minCoeff(&r, &c));
         Eigen::Matrix3d eigenRot;
         eigenRot.setIdentity();
 
         // if yes -> transform points to new eigen frame
-        //if (minEigenVal < 1e-3 || minEigenVal == 0.0)
         //rankTest.setThreshold(1e-10);
         if (rankTest.rank() == 2) {
             planar = true;
@@ -529,7 +526,6 @@ namespace ORB_SLAM3 {
             tmp << 0.0, result1(0, 0), result1(1, 0),
                     0.0, result1(2, 0), result1(3, 0),
                     0.0, result1(4, 0), result1(5, 0);
-            //double scale = 1 / sqrt(tmp.col(1).norm() * tmp.col(2).norm());
             // row 3
             tmp.col(0) = tmp.col(1).cross(tmp.col(2));
             tmp.transposeInPlace();
@@ -732,7 +728,6 @@ namespace ORB_SLAM3 {
             // solve
             Eigen::LDLT<Eigen::MatrixXd> chol(A);
             dx = chol.solve(g);
-            //dx = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(g);
             // this is to prevent the solution from falling into a wrong minimum
             // if the linear estimate is spurious
             if (dx.array().abs().maxCoeff() > 5.0 || dx.array().abs().minCoeff() > 1.0)
@@ -757,7 +752,6 @@ namespace ORB_SLAM3 {
         rodrigues_t w(x[0], x[1], x[2]);
         translation_t T(x[3], x[4], x[5]);
 
-        //rotation_t R = math::cayley2rot(c);
         rotation_t R = rodrigues2rot(w);
         int ii = 0;
 

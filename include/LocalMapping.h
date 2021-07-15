@@ -95,11 +95,6 @@ public:
     double mFirstTs;
     int mnMatchesInliers;
 
-    // For debugging (erase in normal mode)
-    int mInitFr;
-    int mIdxIteration;
-    string strSequence;
-
     bool mbNotBA1;
     bool mbNotBA2;
     bool mbBadImu;
@@ -109,6 +104,25 @@ public:
     // not consider far points (clouds)
     bool mbFarPoints;
     float mThFarPoints;
+
+#ifdef REGISTER_TIMES
+    vector<double> vdKFInsert_ms;
+    vector<double> vdMPCulling_ms;
+    vector<double> vdMPCreation_ms;
+    vector<double> vdLBA_ms;
+    vector<double> vdKFCulling_ms;
+    vector<double> vdLMTotal_ms;
+
+
+    vector<double> vdLBASync_ms;
+    vector<double> vdKFCullingSync_ms;
+    vector<int> vnLBA_edges;
+    vector<int> vnLBA_KFopt;
+    vector<int> vnLBA_KFfixed;
+    vector<int> vnLBA_MPs;
+    int nLBA_exec;
+    int nLBA_abort;
+#endif
 protected:
 
     bool CheckNewKeyFrames();
@@ -120,8 +134,10 @@ protected:
     void KeyFrameCulling();
 
     cv::Mat ComputeF12(KeyFrame* &pKF1, KeyFrame* &pKF2);
+    cv::Matx33f ComputeF12_(KeyFrame* &pKF1, KeyFrame* &pKF2);
 
     cv::Mat SkewSymmetricMatrix(const cv::Mat &v);
+    cv::Matx33f SkewSymmetricMatrix_(const cv::Matx31f &v);
 
     System *mpSystem;
 

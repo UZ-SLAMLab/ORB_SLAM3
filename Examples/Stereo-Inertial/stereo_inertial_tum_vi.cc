@@ -114,10 +114,6 @@ int main(int argc, char **argv)
     cout << endl << "-------" << endl;
     cout.precision(17);
 
-    /*cout << "Start processing sequence ..." << endl;
-    cout << "Images in the sequence: " << nImages << endl;
-    cout << "IMU data in the sequence: " << nImu << endl << endl;*/
-
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_STEREO, true, 0, file_name);
 
@@ -156,22 +152,15 @@ int main(int argc, char **argv)
 
             if(ni>0)
             {
-                // cout << "t_cam " << tframe << endl;
 
                 while(vTimestampsImu[seq][first_imu[seq]]<=vTimestampsCam[seq][ni])
                 {
-                    // vImuMeas.push_back(ORB_SLAM3::IMU::Point(vAcc[first_imu],vGyro[first_imu],vTimestampsImu[first_imu]));
                     vImuMeas.push_back(ORB_SLAM3::IMU::Point(vAcc[seq][first_imu[seq]].x,vAcc[seq][first_imu[seq]].y,vAcc[seq][first_imu[seq]].z,
                                                              vGyro[seq][first_imu[seq]].x,vGyro[seq][first_imu[seq]].y,vGyro[seq][first_imu[seq]].z,
                                                              vTimestampsImu[seq][first_imu[seq]]));
-                    // cout << "t_imu = " << fixed << vImuMeas.back().t << endl;
                     first_imu[seq]++;
                 }
             }
-
-            /*cout << "first imu: " << first_imu[seq] << endl;
-            cout << "first imu time: " << fixed << vTimestampsImu[seq][0] << endl;
-            cout << "size vImu: " << vImuMeas.size() << endl;*/
 
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
@@ -190,7 +179,6 @@ int main(int argc, char **argv)
 
             double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
             ttrack_tot += ttrack;
-            // std::cout << "ttrack: " << ttrack << std::endl;
 
             vTimesTrack[ni]=ttrack;
 
@@ -202,7 +190,7 @@ int main(int argc, char **argv)
                 T = tframe-vTimestampsCam[seq][ni-1];
 
             if(ttrack<T)
-                usleep((T-ttrack)*1e6); // 1e6
+                usleep((T-ttrack)*1e6);
         }
         if(seq < num_seq - 1)
         {
@@ -215,8 +203,6 @@ int main(int argc, char **argv)
 
     // Stop all threads
     SLAM.Shutdown();
-
-    // Tracking time statistics
 
     // Save camera trajectory
     std::chrono::system_clock::time_point scNow = std::chrono::system_clock::now();
