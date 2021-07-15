@@ -213,6 +213,8 @@ void Map::SetStoredMap()
 
 void Map::clear()
 {
+    unique_lock<mutex> lock(mMutexMap);
+    unique_lock<mutex> lock2(mMutexMapUpdate);
 //    for(set<MapPoint*>::iterator sit=mspMapPoints.begin(), send=mspMapPoints.end(); sit!=send; sit++)
 //        delete *sit;
 

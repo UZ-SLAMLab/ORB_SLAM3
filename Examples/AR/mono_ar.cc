@@ -36,7 +36,7 @@ using namespace std;
 
 ORB_SLAM3::ViewerAR viewerAR;
 bool bRGB = true;
-bool bARMode = false;
+bool bARMode = true;
 
 cv::Mat K;
 cv::Mat DistCoef;
@@ -175,7 +175,8 @@ int main(int argc, char **argv)
             break;
         }
     
-        tframe = 1 / FPS;
+        double time = 1 / FPS;
+        tframe += time;
         igb.GrabImage(im, tframe);
         
         if(bARMode)
@@ -236,8 +237,10 @@ int processing(char **argv, ORB_SLAM3::System *slamPtr)
             break;
         }
     
-        tframe = 1 / FPS;
+        double time = 1 / FPS;
+        tframe += time;
         igb.GrabImage(im, tframe);
+
     }
     cap->release();
     delete cap;
