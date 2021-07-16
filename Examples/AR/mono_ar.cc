@@ -251,16 +251,16 @@ int processing(char **argv, ORB_SLAM3::System *slamPtr)
 
 void ImageGrabber::GrabImage(const cv::Mat& image, const double &timestamp)
 {
+    cv::Mat Tcw = mpSLAM->TrackMonocular(image, timestamp);
     if(bARMode)
     {   
         cv::Mat im = image.clone();
         cv::Mat imu;
-        cv::Mat Tcw = mpSLAM->TrackMonocular(image, timestamp);
 
         int state = mpSLAM->GetTrackingState();
         vector<ORB_SLAM3::MapPoint*> vMPs = mpSLAM->GetTrackedMapPoints();
         vector<cv::KeyPoint> vKeys = mpSLAM->GetTrackedKeyPointsUn();
-
+  
         cv::undistort(im,imu,K,DistCoef);
 
         if(bRGB)
@@ -270,12 +270,7 @@ void ImageGrabber::GrabImage(const cv::Mat& image, const double &timestamp)
             cv::cvtColor(imu,imu,CV_RGB2BGR);
             viewerAR.SetImagePose(imu,Tcw,state,vKeys,vMPs);
         }  
-    }  
-    else
-    {
-        mpSLAM->TrackMonocular(image, timestamp);
     }
-
 }
 
 
