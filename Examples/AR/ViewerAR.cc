@@ -110,12 +110,12 @@ void ViewerAR::Refresh()
     vector<cv::KeyPoint> vKeys;
     vector<MapPoint*> vMPs;
 
-    if(menu_LocalizationMode && !bLocalizationMode)
+    if(*menu_LocalizationMode && !bLocalizationMode)
     {
         mpSystem->ActivateLocalizationMode();
         bLocalizationMode = true;
     }
-    else if(!menu_LocalizationMode && bLocalizationMode)
+    else if(!*menu_LocalizationMode && bLocalizationMode)
     {
         mpSystem->DeactivateLocalizationMode();
         bLocalizationMode = false;
@@ -249,10 +249,13 @@ void ViewerAR::Refresh()
     }
 
     if(*menu_drawim)
-    {
-        cv::namedWindow("ShowTest");    
-        cv::imshow("ShowTest", im);
-        cv::waitKey(1);
+    {   
+        if(!im.empty())
+        {
+            cv::namedWindow("ShowTest");    
+            cv::imshow("ShowTest", im);
+            cv::waitKey(1);
+        }
     }
 }
 
