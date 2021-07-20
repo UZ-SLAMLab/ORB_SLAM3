@@ -178,6 +178,11 @@ public:
 
     void InsertTrackTime(double& time);
 #endif
+    void RunViewer();
+    void CreatePanelToViewer();
+    bool RefreshViewerWithCheckFinish();
+    void SetViewerFinish();
+    //void SaveAtlas(int type);
 
 private:
 

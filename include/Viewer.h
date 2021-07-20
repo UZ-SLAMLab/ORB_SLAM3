@@ -58,6 +58,10 @@ public:
 
     void SetTrackingPause();
 
+    void CreatePanel();
+    bool RefreshWithCheckFinish();
+    void SetFinish();
+
     bool both;
 private:
 
@@ -77,7 +81,7 @@ private:
     float mViewpointX, mViewpointY, mViewpointZ, mViewpointF;
 
     bool CheckFinish();
-    void SetFinish();
+  
     bool mbFinishRequested;
     bool mbFinished;
     std::mutex mMutexFinish;
@@ -87,6 +91,32 @@ private:
     std::mutex mMutexStop;
 
     bool mbStopTrack;
+
+    std::unique_ptr<pangolin::Var<bool>> menuFollowCamera;
+    std::unique_ptr<pangolin::Var<bool>> menuCamView;
+    std::unique_ptr<pangolin::Var<bool>> menuTopView;
+    // pangolin::Var<bool> menuSideView("menu.Side View",false,false);
+    std::unique_ptr<pangolin::Var<bool>> menuShowPoints;
+    std::unique_ptr<pangolin::Var<bool>> menuShowKeyFrames;
+    std::unique_ptr<pangolin::Var<bool>> menuShowGraph;
+    std::unique_ptr<pangolin::Var<bool>> menuShowInertialGraph;
+    std::unique_ptr<pangolin::Var<bool>> menuLocalizationMode;
+    std::unique_ptr<pangolin::Var<bool>> menuReset;
+    std::unique_ptr<pangolin::Var<bool>> menuStepByStep;  // false, true
+    std::unique_ptr<pangolin::Var<bool>> menuStep;
+
+    std::unique_ptr<pangolin::OpenGlRenderState> s_cam;
+    std::unique_ptr<pangolin::View> d_cam;
+
+    pangolin::OpenGlMatrix Twc, Twr;
+    pangolin::OpenGlMatrix Ow; // Oriented with g in the z axis
+    pangolin::OpenGlMatrix Twwp; // Oriented with g in the z axis, but y and x from camera
+
+
+    bool bFollow = true;
+    bool bLocalizationMode = false;
+    bool bStepByStep = false;
+    bool bCameraView = true;
 
 };
 

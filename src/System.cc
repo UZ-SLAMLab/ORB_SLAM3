@@ -23,7 +23,7 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
-#include <openssl/md5.h>
+// #include <openssl/md5.h>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -33,10 +33,18 @@
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 
+
+ 
 namespace ORB_SLAM3
 {
 
+bool has_suffix(const std::string &str, const std::string &suffix) {
+    std::size_t index = str.find(suffix, str.size() - suffix.size());
+    return (index != std::string::npos);
+}
+
 Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
+
 
 System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
                const bool bUseViewer, const int initFr, const string &strSequence, const string &strLoadingFile):
@@ -79,13 +87,20 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
 
     mpVocabulary = new ORBVocabulary();
-    bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+
+    bool bVocLoad = false;
+    if (has_suffix(strVocFile, ".txt"))
+	  bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+	else
+	  bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
+
     if(!bVocLoad)
     {
         cerr << "Wrong path to vocabulary. " << endl;
         cerr << "Falied to open at: " << strVocFile << endl;
         exit(-1);
     }
+
     cout << "Vocabulary loaded!" << endl << endl;
 
     //Create KeyFrame Database
@@ -127,7 +142,13 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     if(bUseViewer)
     {
         mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
+
+#ifndef __APPLE__    
         mptViewer = new thread(&Viewer::Run, mpViewer);
+#else
+        cout << "MacOS *** Terminating app due to uncaught exception 'NSInternalInconsistencyException', reason: 'nextEventMatchingMask should only be called from the Main Thread!', System class RunViewer method to Main.\n"<< endl;   
+#endif
+
         mpTracker->SetViewer(mpViewer);
         mpLoopCloser->mpViewer = mpViewer;
         mpViewer->both = mpFrameDrawer->both;
@@ -773,6 +794,30 @@ void System::InsertTrackTime(double& time)
     mpTracker->vdTrackTotal_ms.push_back(time);
 }
 #endif
+void System::RunViewer()
+{
+    if(mpViewer)
+        mpViewer->Run();
+}
+
+void System::CreatePanelToViewer()
+{
+    if(mpViewer)
+        mpViewer->CreatePanel();
+}
+
+bool System::RefreshViewerWithCheckFinish()
+{
+    if(mpViewer)
+       return mpViewer->RefreshWithCheckFinish();
+    return false;   
+}
+
+void System::SetViewerFinish()
+{
+    if(mpViewer)
+        mpViewer->SetFinish();
+}
 
 
 } //namespace ORB_SLAM

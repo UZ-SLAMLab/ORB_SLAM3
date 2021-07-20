@@ -345,7 +345,7 @@ bool LoopClosing::NewDetectCommonRegions()
             mbLoopDetected = mnLoopNumCoincidences >= 3;
             mnLoopNumNotFound = 0;
 
-            if(!mbLoopDetected)
+            if(mbLoopDetected)
             {
                 cout << "PR: Loop detected with Reffine Sim3" << endl;
             }
@@ -544,8 +544,17 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
 
         // Current KF against KF with covisibles version
         std::vector<KeyFrame*> vpCovKFi = pKFi->GetBestCovisibilityKeyFrames(nNumCovisibles);
-        vpCovKFi.push_back(vpCovKFi[0]);
-        vpCovKFi[0] = pKFi;
+        // vpCovKFi.push_back(vpCovKFi[0]);
+        // vpCovKFi[0] = pKFi;
+        if(vpCovKFi.size() > 0)
+        {
+            vpCovKFi.push_back(vpCovKFi[0]);
+            vpCovKFi[0] = pKFi;
+        }
+        else
+        {
+            vpCovKFi.push_back(pKFi);
+        }
 
         std::vector<std::vector<MapPoint*> > vvpMatchedMPs;
         vvpMatchedMPs.resize(vpCovKFi.size());
@@ -1892,6 +1901,7 @@ void LoopClosing::RequestResetActiveMap(Map *pMap)
 void LoopClosing::ResetIfRequested()
 {
     unique_lock<mutex> lock(mMutexReset);
+     unique_lock<mutex> lock2(mMutexLoopQueue);
     if(mbResetRequested)
     {
         cout << "Loop closer reset requested..." << endl;
