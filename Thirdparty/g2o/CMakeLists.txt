@@ -15,18 +15,23 @@ if(WIN32)
   set(G2O_LIB_TYPE STATIC)
 endif(WIN32)
 
+if(G2O_LIB_TYPE MATCHES SHARED)
+  # This goes into config.h
+  set(G2O_SHARED_LIBS True)
+endif()
+
 set(G2O_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-# Set the output directory for the build executables and libraries
-set(G2O_RUNTIME_OUTPUT_DIRECTORY ${G2O_SOURCE_DIR}/bin CACHE PATH "Target for the binaries")
-set(G2O_LIBRARY_OUTPUT_DIRECTORY ${G2O_SOURCE_DIR}/lib CACHE PATH "Target for the libraries")
-if(WIN32 AND G2O_LIB_TYPE MATCHES SHARED)
-  set(G2O_LIBRARY_OUTPUT_DIRECTORY ${G2O_SOURCE_DIR}/bin CACHE PATH "Target for the libraries")
-endif()
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${G2O_LIBRARY_OUTPUT_DIRECTORY})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${G2O_LIBRARY_OUTPUT_DIRECTORY})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${G2O_RUNTIME_OUTPUT_DIRECTORY})
 
+# Set the output directory for the build executables and libraries
+#set(G2O_RUNTIME_OUTPUT_DIRECTORY ${G2O_SOURCE_DIR}/bin CACHE PATH "Target for the binaries")
+#set(G2O_LIBRARY_OUTPUT_DIRECTORY ${G2O_SOURCE_DIR}/lib CACHE PATH "Target for the libraries")
+#if(WIN32 AND G2O_LIB_TYPE MATCHES SHARED)
+#  set(G2O_LIBRARY_OUTPUT_DIRECTORY ${G2O_SOURCE_DIR}/bin CACHE PATH "Target for the libraries")
+#endif()
+#set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${G2O_LIBRARY_OUTPUT_DIRECTORY})
+#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${G2O_LIBRARY_OUTPUT_DIRECTORY})
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${G2O_RUNTIME_OUTPUT_DIRECTORY})
 
 # Compiler options
 set(G2O_C_FLAGS)
@@ -191,10 +196,10 @@ set(EIGEN3_INCLUDE_DIR ${G2O_EIGEN3_INCLUDE}) # take hint
 find_package(Eigen3 3.1.0 REQUIRED)
 if(EIGEN3_FOUND)
   set(G2O_EIGEN3_INCLUDE ${EIGEN3_INCLUDE_DIR} CACHE PATH "Directory of Eigen3")
-else(EIGEN3_FOUND)
+else()
   set(G2O_EIGEN3_INCLUDE "" CACHE PATH "Directory of Eigen3")
-endif(EIGEN3_FOUND)
-target_link_libraries(${G2O_TARGET} PRIVATE Eigen3::Eigen)
+endif()
+target_link_libraries(${G2O_TARGET} PUBLIC Eigen3::Eigen)
 #include_directories(${G2O_EIGEN3_INCLUDE}) # not needed in modern cmake
 
 # There seems to be an issue with MSVC8
