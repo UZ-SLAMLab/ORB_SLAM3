@@ -58,7 +58,7 @@ set(ORB_SLAM3_LIB_TYPE SHARED)
 IF(WIN32)
   # uncomment only one of the lines below:
   # because there is no DLL API in the code,
-  # we either have to build STATIC libraries, 
+  # we either have to build STATIC libraries,
   set(ORB_SLAM3_LIB_TYPE STATIC)
   # or we have to export all symbols from all SHARED libraries
   #set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -140,6 +140,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE DBoW2)
 add_subdirectory(Thirdparty/g2o)
 target_link_libraries(${PROJECT_NAME} PRIVATE g2o)
 
+
 find_package(OpenCV 4.0 QUIET)
 if(NOT OpenCV_FOUND)
   find_package(OpenCV 3.0 QUIET)
@@ -148,25 +149,36 @@ if(NOT OpenCV_FOUND)
   endif()
 endif()
 message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
+message(STATUS "OpenCV_LIBS: ${OpenCV_LIBS}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenCV_LIBS})
 
 find_package(Eigen3 3.1.0 REQUIRED)
 #target_include_directories(${PROJECT_NAME} PRIVATE ${EIGEN3_INCLUDE_DIR})
+message(STATUS "EIGEN3_INCLUDE_DIR: ${EIGEN3_INCLUDE_DIR}")
+message(STATUS "Eigen3_VERSION: ${Eigen3_VERSION}")
 target_link_libraries(${PROJECT_NAME} PUBLIC Eigen3::Eigen)
 
 find_package(Pangolin REQUIRED)
 #target_include_directories(${PROJECT_NAME} PRIVATE ${Pangolin_INCLUDE_DIRS})
+message(STATUS "Pangolin_LIBRARIES: ${Pangolin_LIBRARIES}")
+message(STATUS "Pangolin_VERSION: ${Pangolin_VERSION}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${Pangolin_LIBRARIES})
 
 find_package(realsense2)
 if(realsense2_FOUND)
-  message(STATUS "realsense2 VERSION: ${realsense2_VERSION}")
+  message(STATUS "realsense2_VERSION: ${realsense2_VERSION}")
   target_link_libraries(${PROJECT_NAME} PRIVATE ${realsense2_LIBRARY})
 endif()
 
 find_package(Boost REQUIRED COMPONENTS serialization)
 message(STATUS "Boost_LIBRARIES: ${Boost_LIBRARIES}")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+  find_package(Backward)
+  message(STATUS "BACKWARD_LIBRARIES: ${BACKWARD_LIBRARIES}")
+  target_link_libraries(${PROJECT_NAME} PUBLIC Backward::Backward)
+endif()
 
 # TODO: OpenSSL is used only in System.cc #include <openssl/md5.h>, but then MD5 is never used.
 #set(OPENSSL_USE_STATIC_LIBS TRUE)
@@ -242,4 +254,3 @@ target_link_libraries(stereo_inertial_euroc PRIVATE ${PROJECT_NAME})
 add_executable(stereo_inertial_tum_vi
   Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
 target_link_libraries(stereo_inertial_tum_vi PRIVATE ${PROJECT_NAME})
-
