@@ -1,10 +1,12 @@
 @echo off
 
-:: NOTE: dependencies are assumed to be installed to this folder:
-set ORBSLAM3_DEPENDENCIES_INSTALL_DIR=""
+:: NOTE: dependencies are assumed to be installed to this folder.
+:: Change according to your paths.
+set ORBSLAM3_DEPENDENCIES_INSTALL_DIR="C:\dev\slamtest\install"
+@echo "ORBSLAM3_DEPENDENCIES_INSTALL_DIR: %ORBSLAM3_DEPENDENCIES_INSTALL_DIR%"
 
 set CMAKE_EXECUTABLE="C:\Program Files\CMake\bin\cmake.exe"
-set GENERATOR_NAME="Visual Studio 16 2019" 
+set GENERATOR_NAME="Visual Studio 16 2019"
 set GENERATOR_PLATFORM="x64"
 
 
