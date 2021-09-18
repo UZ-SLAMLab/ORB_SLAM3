@@ -54,7 +54,7 @@ class Atlas
         //ar.template register_type<KannalaBrandt8>();
 
         //Save/Load all objects
-        ar & mspMaps;
+        //ar & mspMaps;
         ar & mvpBackupMaps;
         //ar & mvpCameras;
         ar & mvpBackupCamPin;
