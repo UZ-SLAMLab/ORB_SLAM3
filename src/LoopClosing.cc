@@ -1570,6 +1570,54 @@ void LoopClosing::MergeLocal()
 
 }
 
+void LoopClosing::printReprojectionError(set<KeyFrame*> &spLocalWindowKFs, KeyFrame* mpCurrentKF, string &name)
+{
+    string path_imgs = "./test_Reproj/";
+    for(KeyFrame* pKFi : spLocalWindowKFs)
+    {
+        #ifdef OPENCV4
+        cv::Mat img_i = cv::imread(pKFi->mNameFile, cv::IMREAD_UNCHANGED);
+        cv::cvtColor(img_i, img_i, cv::COLOR_BGR2GRAY);
+        #else
+        cv::Mat img_i = cv::imread(pKFi->mNameFile, CV_LOAD_IMAGE_UNCHANGED);
+        cv::cvtColor(img_i, img_i, CV_GRAY2BGR);
+        #endif
+
+        vector<MapPoint*> vpMPs = pKFi->GetMapPointMatches();
+        int num_points = 0;
+        for(int j=0; j<vpMPs.size(); ++j)
+        {
+            MapPoint* pMPij = vpMPs[j];
+            if(!pMPij || pMPij->isBad())
+            {
+                continue;
+            }
+
+            cv::KeyPoint point_img = pKFi->mvKeysUn[j];
+            cv::Point2f reproj_p;
+            float u, v;
+            bool bIsInImage = pKFi->ProjectPointUnDistort(pMPij, reproj_p, u, v);
+            if(bIsInImage){
+                //cout << "Reproj in the image" << endl;
+                cv::circle(img_i, point_img.pt, 1/*point_img.octave*/, cv::Scalar(0, 255, 0));
+                cv::line(img_i, point_img.pt, reproj_p, cv::Scalar(0, 0, 255));
+                num_points++;
+            }
+            else
+            {
+                //cout << "Reproj out of the image" << endl;
+                cv::circle(img_i, point_img.pt, point_img.octave, cv::Scalar(0, 0, 255));
+            }
+
+        }
+        //cout << "Image painted" << endl;
+        string filename_img = path_imgs +  "KF" + to_string(mpCurrentKF->mnId) + "_" + to_string(pKFi->mnId) +  name + "points" + to_string(num_points) + ".png";
+        cv::imwrite(filename_img, img_i);
+    }
+
+}
+
+
 void LoopClosing::MergeLocal2()
 {
     cout << "Merge detected!!!!" << endl;
