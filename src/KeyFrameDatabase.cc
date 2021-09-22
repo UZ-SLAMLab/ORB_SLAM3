@@ -807,6 +807,11 @@ vector<KeyFrame*> KeyFrameDatabase::DetectRelocalizationCandidates(Frame *F, Map
             if(pKF2->mnRelocQuery!=F->mnId)
                 continue;
 
+            if(pKF2->mnRelocWords<=minCommonWords){ // this if statement was from pull request 292
+                float si = mpVoc->score(F->mBowVec,pKF2->mBowVec);
+                pKF2->mRelocScore=si;
+            }
+
             accScore+=pKF2->mRelocScore;
             if(pKF2->mRelocScore>bestScore)
             {
