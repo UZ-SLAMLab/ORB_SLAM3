@@ -28,6 +28,8 @@ Examples/ROS/ORB_SLAM3/Stereo_Inertial
 Examples/ROS/ORB_SLAM3/CMakeLists.txt.user
 Examples/ROS/ORB_SLAM3/build/
 
+Examples/OAK-D/oakd
+
 KeyFrameTrajectory.txt
 CameraTrajectory.txt
 kf_*.txt
@@ -41,6 +43,8 @@ Vocabulary/ORBvoc.txt
 build/
 
 lib/
+
+Datasets/
 
 cmake_modules/
 cmake-build-debug/
