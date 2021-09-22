@@ -52,6 +52,13 @@ MESSAGE(${OpenCV_VERSION})
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 find_package(realsense2)
+find_package( depthai REQUIRED PATHS "~/martinrea_setup/depthai-core/build" )
+
+set( DEPTHAI_TARGET_OPENCV )
+set( JSON_USE_IMPLICIT_CONVERSIONS 1 )
+set( __PC__ )
+set( XLINK_USE_MX_ID_NAME ON )
+
 
 include_directories(
 ${PROJECT_SOURCE_DIR}
@@ -124,6 +131,7 @@ add_subdirectory(Thirdparty/g2o)
 
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
+depthai::opencv
 ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
@@ -199,3 +207,9 @@ add_executable(stereo_inertial_tum_vi
 Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
 target_link_libraries(stereo_inertial_tum_vi ${PROJECT_NAME})
 
+# OAK-D example
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/OAK-D)
+
+add_executable(oakd
+Examples/OAK-D/oakd.cc)
+target_link_libraries(oakd ${PROJECT_NAME})
