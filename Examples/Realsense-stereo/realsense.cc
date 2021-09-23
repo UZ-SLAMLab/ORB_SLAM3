@@ -45,9 +45,9 @@ int main(int argc, char * argv[]){
     }
     std::cout << "Realsense/ORB_SLAM3 Experiment" << std::endl;
 
-	int width = 1280;
-	int height = 720;
-	int fps = 30;
+	int width = 640;
+	int height = 480;
+	int fps = 90;
 	rs2::config config;
     // This Y8 format is rectified
     // https://github.com/IntelRealSense/librealsense/issues/3294
@@ -118,15 +118,15 @@ int main(int argc, char * argv[]){
             std::cout << "no pose update" << std::endl;
         }
 
-		cv::imshow("img_l", rectif_left_frame);
-		cv::imshow("img_r", rectif_right_frame);
-		char c = cv::waitKey(1);
-		if (c == 's')
-		{
+		// cv::imshow("img_l", rectif_left_frame);
+		// cv::imshow("img_r", rectif_right_frame);
+		// char c = cv::waitKey(1);
+		// if (c == 's')
+		// {
 
-		}
-		else if (c == 'q')
-			break;
+		// }
+		// else if (c == 'q')
+		// 	break;
 	}
 
     SLAM.Shutdown();

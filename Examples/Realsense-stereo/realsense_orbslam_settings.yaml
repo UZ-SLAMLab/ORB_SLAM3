@@ -7,10 +7,10 @@ Camera.type: "PinHole"
 
 # Camera calibration and distortion parameters (OpenCV) 
 # Copied from the EEPROM data dump in depthai_demo.py.
-Camera.fx: 642.530090332031
-Camera.fy: 642.530090332031
-Camera.cx: 642.837707519531
-Camera.cy: 362.980987548828
+Camera.fx: 385.51806640625
+Camera.fy: 385.51806640625
+Camera.cx: 321.70263671875
+Camera.cy: 241.788589477539
 
 Camera.k1: 0.0
 Camera.k2: 0.0
@@ -19,11 +19,11 @@ Camera.p2: 0.0
 
 Camera.bFishEye: 0
 
-Camera.width: 1280
-Camera.height: 720
+Camera.width: 640
+Camera.height: 480
 
 # Camera frames per second 
-Camera.fps: 30.0
+Camera.fps: 90.0
 
 # stereo baseline times fx
 Camera.bf: 49.844
@@ -93,7 +93,7 @@ RIGHT.P:  !!opencv-matrix
 #--------------------------------------------------------------------------------------------
 
 # ORB Extractor: Number of features per image
-ORBextractor.nFeatures: 1200
+ORBextractor.nFeatures: 1000
 
 # ORB Extractor: Scale factor between levels in the scale pyramid 	
 ORBextractor.scaleFactor: 1.2
