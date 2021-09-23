@@ -215,9 +215,16 @@ add_executable(oakd
 Examples/OAK-D/oakd.cc)
 target_link_libraries(oakd ${PROJECT_NAME})
 
-# Realsense example
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/realsense)
+# Realsense-stereo example
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Realsense-stereo)
 
-add_executable(realsense
-Examples/realsense/realsense.cc)
-target_link_libraries(realsense ${PROJECT_NAME})
+add_executable(realsense_stereo
+Examples/Realsense-stereo/realsense.cc)
+target_link_libraries(realsense_stereo ${PROJECT_NAME})
+
+# Realsense-rgbd example
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Realsense-rgbd)
+
+add_executable(realsense_rgbd
+Examples/Realsense-rgbd/realsense.cc)
+target_link_libraries(realsense_rgbd ${PROJECT_NAME})

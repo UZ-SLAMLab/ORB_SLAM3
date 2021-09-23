@@ -29,7 +29,8 @@ Examples/ROS/ORB_SLAM3/CMakeLists.txt.user
 Examples/ROS/ORB_SLAM3/build/
 
 Examples/OAK-D/oakd
-Examples/realsense/realsense
+Examples/Realsense-stereo/realsense_stereo
+Examples/Realsense-rgbd/realsense_rgbd
 
 KeyFrameTrajectory.txt
 CameraTrajectory.txt
