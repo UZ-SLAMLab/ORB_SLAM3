@@ -63,20 +63,20 @@ int main(int argc, char **argv)
     std::vector<std::string> queueNames;
 
     // Define sources and outputs
-    auto camRgb = pipeline.create<dai::node::ColorCamera>();
+    // auto camRgb = pipeline.create<dai::node::ColorCamera>();
     auto mono_left = pipeline.create<dai::node::MonoCamera>();
     auto mono_right = pipeline.create<dai::node::MonoCamera>();
     auto stereo = pipeline.create<dai::node::StereoDepth>();
 
     auto xout_rectif_left = pipeline.create<dai::node::XLinkOut>();
     auto xout_rectif_right = pipeline.create<dai::node::XLinkOut>();
-    auto xout_disp = pipeline.create<dai::node::XLinkOut>();
-    auto rgbOut = pipeline.create<dai::node::XLinkOut>();
+    // auto xout_disp = pipeline.create<dai::node::XLinkOut>();
+    // auto rgbOut = pipeline.create<dai::node::XLinkOut>();
 
     xout_rectif_left->setStreamName("rectified_left");
     xout_rectif_right->setStreamName("rectified_right");
-    xout_disp->setStreamName("disparity");
-    rgbOut->setStreamName("rgb");
+    // xout_disp->setStreamName("disparity");
+    // rgbOut->setStreamName("rgb");
 
 
     // Properties
@@ -86,9 +86,9 @@ int main(int argc, char **argv)
     mono_right->setBoardSocket(dai::CameraBoardSocket::RIGHT);
     mono_right->setResolution(dai::MonoCameraProperties::SensorResolution::THE_720_P);
     mono_right->setFps(20.0);
-    camRgb->setBoardSocket(dai::CameraBoardSocket::RGB);
-    camRgb->setResolution(dai::ColorCameraProperties::SensorResolution::THE_1080_P);
-    camRgb->setFps(fps);
+    // camRgb->setBoardSocket(dai::CameraBoardSocket::RGB);
+    // camRgb->setResolution(dai::ColorCameraProperties::SensorResolution::THE_1080_P);
+    // camRgb->setFps(fps);
     // if (downscaleColor) camRgb->setIspScale(2, 3);
     // // For now, RGB needs fixed focus to properly align with depth.
     // // This value was used during calibration
@@ -115,12 +115,12 @@ int main(int argc, char **argv)
     // stereo->setDepthAlign(dai::CameraBoardSocket::RGB);
 
     // Linking
-    camRgb->isp.link(rgbOut->input);
+    // camRgb->isp.link(rgbOut->input);
     mono_left->out.link(stereo->left);
     mono_right->out.link(stereo->right);
     stereo->rectifiedLeft.link(xout_rectif_left->input);
     stereo->rectifiedRight.link(xout_rectif_right->input);
-    stereo->disparity.link(xout_disp->input);
+    // stereo->disparity.link(xout_disp->input);
 
     // Connect to device and start pipeline
     dai::Device device(pipeline);
@@ -128,8 +128,8 @@ int main(int argc, char **argv)
     // Sets queues size and behavior
     auto rectif_left_queue = device.getOutputQueue("rectified_left", 8, false);
     auto rectif_right_queue = device.getOutputQueue("rectified_right", 8, false);
-    auto disp_queue = device.getOutputQueue("disparity", 8, false);
-    auto rgb_queue = device.getOutputQueue("rgb", 8, false);
+    // auto disp_queue = device.getOutputQueue("disparity", 8, false);
+    // auto rgb_queue = device.getOutputQueue("rgb", 8, false);
 
     auto wls_filter = cv::ximgproc::createDisparityWLSFilterGeneric(false);
     wls_filter->setLambda(WLS_LAMBDA);
@@ -157,8 +157,8 @@ int main(int argc, char **argv)
     while(true){
         cv::Mat rectif_left_frame = rectif_left_queue->get<dai::ImgFrame>()->getCvFrame();
         cv::Mat rectif_right_frame = rectif_left_queue->get<dai::ImgFrame>()->getCvFrame();
-        cv::Mat disp_map_frame = disp_queue->get<dai::ImgFrame>()->getCvFrame();
-        cv::Mat rgb_frame = rgb_queue->get<dai::ImgFrame>()->getCvFrame();
+        // cv::Mat disp_map_frame = disp_queue->get<dai::ImgFrame>()->getCvFrame();
+        // cv::Mat rgb_frame = rgb_queue->get<dai::ImgFrame>()->getCvFrame();
         
         auto elapsed_time = std::chrono::steady_clock::now() - slam_epoch;
         double frame_timestamp_s = elapsed_time.count() / 1000000000.0;
@@ -195,25 +195,25 @@ int main(int argc, char **argv)
             std::cout << "no pose update" << std::endl;
         }
 
-        // The raw disparity map is flipped, since we flipped the rectified
-        // images, so we must flip it as well.
-        cv::flip(disp_map_frame, disp_map_frame, 1);
+        // // The raw disparity map is flipped, since we flipped the rectified
+        // // images, so we must flip it as well.
+        // cv::flip(disp_map_frame, disp_map_frame, 1);
 
-        // Filter the disparity map
-        cv::Mat filtered_disp_map;
-        wls_filter->filter(disp_map_frame, rectif_right_frame, filtered_disp_map);
+        // // Filter the disparity map
+        // cv::Mat filtered_disp_map;
+        // wls_filter->filter(disp_map_frame, rectif_right_frame, filtered_disp_map);
 
-        // Apply a colormap to the filtered disparity map, but don't normalise
-        // it. Normalising the map will mean that the color doesn't correspond
-        // directly with disparity.
-        cv::Mat colour_disp;
-        cv::applyColorMap(filtered_disp_map, colour_disp, cv::COLORMAP_JET);
-        cv::imshow("disparity", colour_disp);
+        // // Apply a colormap to the filtered disparity map, but don't normalise
+        // // it. Normalising the map will mean that the color doesn't correspond
+        // // directly with disparity.
+        // cv::Mat colour_disp;
+        // cv::applyColorMap(filtered_disp_map, colour_disp, cv::COLORMAP_JET);
+        // cv::imshow("disparity", colour_disp);
 
-        // See if q pressed, if so quit
-        if (cv::waitKey(1) == 'q') {
-            break;
-        }
+        // // See if q pressed, if so quit
+        // if (cv::waitKey(1) == 'q') {
+        //     break;
+        // }
     }
 
     // Stop all threads

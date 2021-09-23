@@ -134,6 +134,7 @@ ${OpenCV_LIBS}
 depthai::opencv
 ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
+${realsense2_LIBRARY}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 -lboost_serialization
@@ -213,3 +214,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/OAK-D)
 add_executable(oakd
 Examples/OAK-D/oakd.cc)
 target_link_libraries(oakd ${PROJECT_NAME})
+
+# Realsense example
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/realsense)
+
+add_executable(realsense
+Examples/realsense/realsense.cc)
+target_link_libraries(realsense ${PROJECT_NAME})
