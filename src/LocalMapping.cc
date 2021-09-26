@@ -996,7 +996,7 @@ void LocalMapping::KeyFrameCulling()
     const bool bInitImu = mpAtlas->isImuInitialized();
     int count=0;
 
-    // Compoute last KF from optimizable window:
+    // Compute last KF from optimizable window:
     unsigned int last_ID;
     if (mbInertial)
     {
