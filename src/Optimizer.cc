@@ -5688,6 +5688,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pMainKF,vector<KeyFrame*> vpAdju
             continue;
 
         pKFi->mnBALocalForKF = pMainKF->mnId;
+        pKFi->mnBALocalForMerge = pMainKF->mnId;
 
         g2o::VertexSE3Expmap * vSE3 = new g2o::VertexSE3Expmap();
         vSE3->setEstimate(Converter::toSE3Quat(pKFi->GetPose()));
