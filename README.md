@@ -1,3 +1,14 @@
+## Modifications from the original
+- Implement pull requests
+    - OpenCV4
+    - A few of the pull requests for bugs
+    - *Note:* there are a number of pull requests that were implemented in the original but the pull requests were never closed.
+- Added examples:
+    - Untested Intel Realsense D435 RGBD demo
+    - Tested Intel Realsense D435 Stereo demo
+    - Tested OAK-D Stereo demo
+    - *Note:* these examples were tested on the Jetson AGX Xavier Developer Kit with libraries built from source as well as from apt. These examples connect to a camera connected to the computer and runs ORB-SLAM3
+
 # ORB-SLAM3
 
 ### V0.4: Beta version, 21 April 2021
