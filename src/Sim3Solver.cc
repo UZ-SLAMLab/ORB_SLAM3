@@ -1,7 +1,7 @@
 /**
 * This file is part of ORB-SLAM3
 *
-* Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 *
 * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -58,10 +58,10 @@ Sim3Solver::Sim3Solver(KeyFrame *pKF1, KeyFrame *pKF2, const vector<MapPoint *> 
     mvX3Dc1.reserve(mN1);
     mvX3Dc2.reserve(mN1);
 
-    cv::Mat Rcw1 = pKF1->GetRotation();
-    cv::Mat tcw1 = pKF1->GetTranslation();
-    cv::Mat Rcw2 = pKF2->GetRotation();
-    cv::Mat tcw2 = pKF2->GetTranslation();
+    Eigen::Matrix3f Rcw1 = pKF1->GetRotation();
+    Eigen::Vector3f tcw1 = pKF1->GetTranslation();
+    Eigen::Matrix3f Rcw2 = pKF2->GetRotation();
+    Eigen::Vector3f tcw2 = pKF2->GetTranslation();
 
     mvAllIndices.reserve(mN1);
 
@@ -103,19 +103,16 @@ Sim3Solver::Sim3Solver(KeyFrame *pKF1, KeyFrame *pKF2, const vector<MapPoint *> 
             mvpMapPoints2.push_back(pMP2);
             mvnIndices1.push_back(i1);
 
-            cv::Mat X3D1w = pMP1->GetWorldPos();
+            Eigen::Vector3f X3D1w = pMP1->GetWorldPos();
             mvX3Dc1.push_back(Rcw1*X3D1w+tcw1);
 
-            cv::Mat X3D2w = pMP2->GetWorldPos();
+            Eigen::Vector3f X3D2w = pMP2->GetWorldPos();
             mvX3Dc2.push_back(Rcw2*X3D2w+tcw2);
 
             mvAllIndices.push_back(idx);
             idx++;
         }
     }
-
-    mK1 = pKF1->mK;
-    mK2 = pKF2->mK;
 
     FromCameraToImage(mvX3Dc1,mvP1im1,pCamera1);
     FromCameraToImage(mvX3Dc2,mvP2im2,pCamera2);
@@ -149,7 +146,7 @@ void Sim3Solver::SetRansacParameters(double probability, int minInliers, int max
     mnIterations = 0;
 }
 
-cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers)
+Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers)
 {
     bNoMore = false;
     vbInliers = vector<bool>(mN1,false);
@@ -158,13 +155,13 @@ cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInli
     if(N<mRansacMinInliers)
     {
         bNoMore = true;
-        return cv::Mat();
+        return Eigen::Matrix4f::Identity();
     }
 
     vector<size_t> vAvailableIndices;
 
-    cv::Mat P3Dc1i(3,3,CV_32F);
-    cv::Mat P3Dc2i(3,3,CV_32F);
+    Eigen::Matrix3f P3Dc1i;
+    Eigen::Matrix3f P3Dc2i;
 
     int nCurrentIterations = 0;
     while(mnIterations<mRansacMaxIts && nCurrentIterations<nIterations)
@@ -181,8 +178,8 @@ cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInli
 
             int idx = vAvailableIndices[randi];
 
-            mvX3Dc1[idx].copyTo(P3Dc1i.col(i));
-            mvX3Dc2[idx].copyTo(P3Dc2i.col(i));
+            P3Dc1i.col(i) = mvX3Dc1[idx];
+            P3Dc2i.col(i) = mvX3Dc2[idx];
 
             vAvailableIndices[randi] = vAvailableIndices.back();
             vAvailableIndices.pop_back();
@@ -196,9 +193,9 @@ cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInli
         {
             mvbBestInliers = mvbInliersi;
             mnBestInliers = mnInliersi;
-            mBestT12 = mT12i.clone();
-            mBestRotation = mR12i.clone();
-            mBestTranslation = mt12i.clone();
+            mBestT12 = mT12i;
+            mBestRotation = mR12i;
+            mBestTranslation = mt12i;
             mBestScale = ms12i;
 
             if(mnInliersi>mRansacMinInliers)
@@ -215,10 +212,10 @@ cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInli
     if(mnIterations>=mRansacMaxIts)
         bNoMore=true;
 
-    return cv::Mat();
+    return Eigen::Matrix4f::Identity();
 }
 
-cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers, bool &bConverge)
+Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers, bool &bConverge)
 {
     bNoMore = false;
     bConverge = false;
@@ -228,17 +225,17 @@ cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInli
     if(N<mRansacMinInliers)
     {
         bNoMore = true;
-        return cv::Mat();
+        return Eigen::Matrix4f::Identity();
     }
 
     vector<size_t> vAvailableIndices;
 
-    cv::Mat P3Dc1i(3,3,CV_32F);
-    cv::Mat P3Dc2i(3,3,CV_32F);
+    Eigen::Matrix3f P3Dc1i;
+    Eigen::Matrix3f P3Dc2i;
 
     int nCurrentIterations = 0;
 
-    cv::Mat bestSim3;
+    Eigen::Matrix4f bestSim3;
 
     while(mnIterations<mRansacMaxIts && nCurrentIterations<nIterations)
     {
@@ -254,8 +251,8 @@ cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInli
 
             int idx = vAvailableIndices[randi];
 
-            mvX3Dc1[idx].copyTo(P3Dc1i.col(i));
-            mvX3Dc2[idx].copyTo(P3Dc2i.col(i));
+            P3Dc1i.col(i) = mvX3Dc1[idx];
+            P3Dc2i.col(i) = mvX3Dc2[idx];
 
             vAvailableIndices[randi] = vAvailableIndices.back();
             vAvailableIndices.pop_back();
@@ -269,9 +266,9 @@ cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInli
         {
             mvbBestInliers = mvbInliersi;
             mnBestInliers = mnInliersi;
-            mBestT12 = mT12i.clone();
-            mBestRotation = mR12i.clone();
-            mBestTranslation = mt12i.clone();
+            mBestT12 = mT12i;
+            mBestRotation = mR12i;
+            mBestTranslation = mt12i;
             mBestScale = ms12i;
 
             if(mnInliersi>mRansacMinInliers)
@@ -296,104 +293,94 @@ cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInli
     return bestSim3;
 }
 
-cv::Mat Sim3Solver::find(vector<bool> &vbInliers12, int &nInliers)
+Eigen::Matrix4f Sim3Solver::find(vector<bool> &vbInliers12, int &nInliers)
 {
     bool bFlag;
     return iterate(mRansacMaxIts,bFlag,vbInliers12,nInliers);
 }
 
-void Sim3Solver::ComputeCentroid(cv::Mat &P, cv::Mat &Pr, cv::Mat &C)
+void Sim3Solver::ComputeCentroid(Eigen::Matrix3f &P, Eigen::Matrix3f &Pr, Eigen::Vector3f &C)
 {
-    cv::reduce(P,C,1,cv::REDUCE_SUM);
-    C = C/P.cols;
-
-    for(int i=0; i<P.cols; i++)
-    {
-        Pr.col(i)=P.col(i)-C;
-    }
+    C = P.rowwise().sum();
+    C = C / P.cols();
+    for(int i=0; i<P.cols(); i++)
+    Pr.col(i) = P.col(i) - C;
 }
 
-void Sim3Solver::ComputeSim3(cv::Mat &P1, cv::Mat &P2)
+
+void Sim3Solver::ComputeSim3(Eigen::Matrix3f &P1, Eigen::Matrix3f &P2)
 {
     // Custom implementation of:
     // Horn 1987, Closed-form solution of absolute orientataion using unit quaternions
 
     // Step 1: Centroid and relative coordinates
 
-    cv::Mat Pr1(P1.size(),P1.type()); // Relative coordinates to centroid (set 1)
-    cv::Mat Pr2(P2.size(),P2.type()); // Relative coordinates to centroid (set 2)
-    cv::Mat O1(3,1,Pr1.type()); // Centroid of P1
-    cv::Mat O2(3,1,Pr2.type()); // Centroid of P2
+    Eigen::Matrix3f Pr1; // Relative coordinates to centroid (set 1)
+    Eigen::Matrix3f Pr2; // Relative coordinates to centroid (set 2)
+    Eigen::Vector3f O1; // Centroid of P1
+    Eigen::Vector3f O2; // Centroid of P2
 
     ComputeCentroid(P1,Pr1,O1);
     ComputeCentroid(P2,Pr2,O2);
 
     // Step 2: Compute M matrix
 
-    cv::Mat M = Pr2*Pr1.t();
+    Eigen::Matrix3f M = Pr2 * Pr1.transpose();
 
     // Step 3: Compute N matrix
-
     double N11, N12, N13, N14, N22, N23, N24, N33, N34, N44;
 
-    cv::Mat N(4,4,P1.type());
+    Eigen::Matrix4f N;
 
-    N11 = M.at<float>(0,0)+M.at<float>(1,1)+M.at<float>(2,2);
-    N12 = M.at<float>(1,2)-M.at<float>(2,1);
-    N13 = M.at<float>(2,0)-M.at<float>(0,2);
-    N14 = M.at<float>(0,1)-M.at<float>(1,0);
-    N22 = M.at<float>(0,0)-M.at<float>(1,1)-M.at<float>(2,2);
-    N23 = M.at<float>(0,1)+M.at<float>(1,0);
-    N24 = M.at<float>(2,0)+M.at<float>(0,2);
-    N33 = -M.at<float>(0,0)+M.at<float>(1,1)-M.at<float>(2,2);
-    N34 = M.at<float>(1,2)+M.at<float>(2,1);
-    N44 = -M.at<float>(0,0)-M.at<float>(1,1)+M.at<float>(2,2);
+    N11 = M(0,0)+M(1,1)+M(2,2);
+    N12 = M(1,2)-M(2,1);
+    N13 = M(2,0)-M(0,2);
+    N14 = M(0,1)-M(1,0);
+    N22 = M(0,0)-M(1,1)-M(2,2);
+    N23 = M(0,1)+M(1,0);
+    N24 = M(2,0)+M(0,2);
+    N33 = -M(0,0)+M(1,1)-M(2,2);
+    N34 = M(1,2)+M(2,1);
+    N44 = -M(0,0)-M(1,1)+M(2,2);
 
-    N = (cv::Mat_<float>(4,4) << N11, N12, N13, N14,
-                                 N12, N22, N23, N24,
-                                 N13, N23, N33, N34,
-                                 N14, N24, N34, N44);
+    N << N11, N12, N13, N14,
+         N12, N22, N23, N24,
+         N13, N23, N33, N34,
+         N14, N24, N34, N44;
 
 
     // Step 4: Eigenvector of the highest eigenvalue
+    Eigen::EigenSolver<Eigen::Matrix4f> eigSolver;
+    eigSolver.compute(N);
 
-    cv::Mat eval, evec;
+    Eigen::Vector4f eval = eigSolver.eigenvalues().real();
+    Eigen::Matrix4f evec = eigSolver.eigenvectors().real(); //evec[0] is the quaternion of the desired rotation
 
-    cv::eigen(N,eval,evec); //evec[0] is the quaternion of the desired rotation
+    int maxIndex; // should be zero
+    eval.maxCoeff(&maxIndex);
 
-    cv::Mat vec(1,3,evec.type());
-    (evec.row(0).colRange(1,4)).copyTo(vec); //extract imaginary part of the quaternion (sin*axis)
+    Eigen::Vector3f vec = evec.block<3,1>(1,maxIndex); //extract imaginary part of the quaternion (sin*axis)
 
     // Rotation angle. sin is the norm of the imaginary part, cos is the real part
-    double ang=atan2(norm(vec),evec.at<float>(0,0));
+    double ang=atan2(vec.norm(),evec(0,maxIndex));
 
-    vec = 2*ang*vec/norm(vec); //Angle-axis representation. quaternion angle is the half
-
-    mR12i.create(3,3,P1.type());
-
-    cv::Rodrigues(vec,mR12i); // computes the rotation matrix from angle-axis
+    vec = 2*ang*vec/vec.norm(); //Angle-axis representation. quaternion angle is the half
+    mR12i = Sophus::SO3f::exp(vec).matrix();
 
     // Step 5: Rotate set 2
-
-    cv::Mat P3 = mR12i*Pr2;
+    Eigen::Matrix3f P3 = mR12i*Pr2;
 
     // Step 6: Scale
 
     if(!mbFixScale)
     {
-        double nom = Pr1.dot(P3);
-        cv::Mat aux_P3(P3.size(),P3.type());
-        aux_P3=P3;
-        cv::pow(P3,2,aux_P3);
-        double den = 0;
-
-        for(int i=0; i<aux_P3.rows; i++)
-        {
-            for(int j=0; j<aux_P3.cols; j++)
-            {
-                den+=aux_P3.at<float>(i,j);
-            }
-        }
+        double cvnom = Converter::toCvMat(Pr1).dot(Converter::toCvMat(P3));
+        double nom = (Pr1.array() * P3.array()).sum();
+        if (abs(nom-cvnom)>1e-3)
+            std::cout << "sim3 solver: " << abs(nom-cvnom) << std::endl << nom << std::endl;
+        Eigen::Array<float,3,3> aux_P3;
+        aux_P3 = P3.array() * P3.array();
+        double den = aux_P3.sum();
 
         ms12i = nom/den;
     }
@@ -401,35 +388,33 @@ void Sim3Solver::ComputeSim3(cv::Mat &P1, cv::Mat &P2)
         ms12i = 1.0f;
 
     // Step 7: Translation
-
-    mt12i.create(1,3,P1.type());
-    mt12i = O1 - ms12i*mR12i*O2;
+    mt12i = O1 - ms12i * mR12i * O2;
 
     // Step 8: Transformation
 
     // Step 8.1 T12
-    mT12i = cv::Mat::eye(4,4,P1.type());
+    mT12i.setIdentity();
 
-    cv::Mat sR = ms12i*mR12i;
+    Eigen::Matrix3f sR = ms12i*mR12i;
+    mT12i.block<3,3>(0,0) = sR;
+    mT12i.block<3,1>(0,3) = mt12i;
 
-    sR.copyTo(mT12i.rowRange(0,3).colRange(0,3));
-    mt12i.copyTo(mT12i.rowRange(0,3).col(3));
 
     // Step 8.2 T21
+    mT21i.setIdentity();
+    Eigen::Matrix3f sRinv = (1.0/ms12i)*mR12i.transpose();
 
-    mT21i = cv::Mat::eye(4,4,P1.type());
+    // sRinv.copyTo(mT21i.rowRange(0,3).colRange(0,3));
+    mT21i.block<3,3>(0,0) = sRinv;
 
-    cv::Mat sRinv = (1.0/ms12i)*mR12i.t();
-
-    sRinv.copyTo(mT21i.rowRange(0,3).colRange(0,3));
-    cv::Mat tinv = -sRinv*mt12i;
-    tinv.copyTo(mT21i.rowRange(0,3).col(3));
+    Eigen::Vector3f tinv = -sRinv * mt12i;
+    mT21i.block<3,1>(0,3) = tinv;
 }
 
 
 void Sim3Solver::CheckInliers()
 {
-    vector<cv::Mat> vP1im2, vP2im1;
+    vector<Eigen::Vector2f> vP1im2, vP2im1;
     Project(mvX3Dc2,vP2im1,mT12i,pCamera1);
     Project(mvX3Dc1,vP1im2,mT21i,pCamera2);
 
@@ -437,8 +422,8 @@ void Sim3Solver::CheckInliers()
 
     for(size_t i=0; i<mvP1im1.size(); i++)
     {
-        cv::Mat dist1 = mvP1im1[i]-vP2im1[i];
-        cv::Mat dist2 = vP1im2[i]-mvP2im2[i];
+        Eigen::Vector2f dist1 = mvP1im1[i] - vP2im1[i];
+        Eigen::Vector2f dist2 = vP1im2[i] - mvP2im2[i];
 
         const float err1 = dist1.dot(dist1);
         const float err2 = dist2.dot(dist2);
@@ -453,15 +438,19 @@ void Sim3Solver::CheckInliers()
     }
 }
 
-
-cv::Mat Sim3Solver::GetEstimatedRotation()
+Eigen::Matrix4f Sim3Solver::GetEstimatedTransformation()
 {
-    return mBestRotation.clone();
+    return mBestT12;
 }
 
-cv::Mat Sim3Solver::GetEstimatedTranslation()
+Eigen::Matrix3f Sim3Solver::GetEstimatedRotation()
 {
-    return mBestTranslation.clone();
+    return mBestRotation;
+}
+
+Eigen::Vector3f Sim3Solver::GetEstimatedTranslation()
+{
+    return mBestTranslation;
 }
 
 float Sim3Solver::GetEstimatedScale()
@@ -469,39 +458,31 @@ float Sim3Solver::GetEstimatedScale()
     return mBestScale;
 }
 
-void Sim3Solver::Project(const vector<cv::Mat> &vP3Dw, vector<cv::Mat> &vP2D, cv::Mat Tcw, GeometricCamera* pCamera)
+void Sim3Solver::Project(const vector<Eigen::Vector3f> &vP3Dw, vector<Eigen::Vector2f> &vP2D, Eigen::Matrix4f Tcw, GeometricCamera* pCamera)
 {
-    cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
-    cv::Mat tcw = Tcw.rowRange(0,3).col(3);
+    Eigen::Matrix3f Rcw = Tcw.block<3,3>(0,0);
+    Eigen::Vector3f tcw = Tcw.block<3,1>(0,3);
 
     vP2D.clear();
     vP2D.reserve(vP3Dw.size());
 
     for(size_t i=0, iend=vP3Dw.size(); i<iend; i++)
     {
-        cv::Mat P3Dc = Rcw*vP3Dw[i]+tcw;
-        const float invz = 1/(P3Dc.at<float>(2));
-        const float x = P3Dc.at<float>(0);
-        const float y = P3Dc.at<float>(1);
-        const float z = P3Dc.at<float>(2);
-
-        vP2D.push_back(pCamera->projectMat(cv::Point3f(x,y,z)));
+        Eigen::Vector3f P3Dc = Rcw*vP3Dw[i]+tcw;
+        Eigen::Vector2f pt2D = pCamera->project(P3Dc);
+        vP2D.push_back(pt2D);
     }
 }
 
-void Sim3Solver::FromCameraToImage(const vector<cv::Mat> &vP3Dc, vector<cv::Mat> &vP2D, GeometricCamera* pCamera)
+void Sim3Solver::FromCameraToImage(const vector<Eigen::Vector3f> &vP3Dc, vector<Eigen::Vector2f> &vP2D, GeometricCamera* pCamera)
 {
     vP2D.clear();
     vP2D.reserve(vP3Dc.size());
 
     for(size_t i=0, iend=vP3Dc.size(); i<iend; i++)
     {
-        const float invz = 1/(vP3Dc[i].at<float>(2));
-        const float x = vP3Dc[i].at<float>(0);
-        const float y = vP3Dc[i].at<float>(1);
-        const float z = vP3Dc[i].at<float>(2);
-
-        vP2D.push_back(pCamera->projectMat(cv::Point3f(x,y,z)));
+        Eigen::Vector2f pt2D = pCamera->project(vP3Dc[i]);
+        vP2D.push_back(pt2D);
     }
 }
 

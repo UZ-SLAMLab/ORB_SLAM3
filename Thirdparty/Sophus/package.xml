@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>sophus</name>
+  <version>1.1.0</version>
+  <description>
+   C++ implementation of Lie Groups using Eigen.
+  </description>
+  <url type="repository">https://github.com/strasdat/sophus</url>
+  <url type="bugtracker">https://github.com/strasdat/sophus/issues</url>
+  <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
+  <author>Hauke Strasdat</author>
+  <license>MIT</license>
+
+  <buildtool_depend>cmake</buildtool_depend>
+
+  <build_depend>eigen</build_depend>
+  <build_export_depend>eigen</build_export_depend>
+
+  <export>
+    <build_type>cmake</build_type>
+  </export>
+</package>

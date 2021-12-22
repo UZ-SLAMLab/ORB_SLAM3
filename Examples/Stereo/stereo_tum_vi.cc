@@ -1,7 +1,7 @@
 /**
 * This file is part of ORB-SLAM3
 *
-* Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 *
 * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -15,7 +15,6 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
 
 #include<iostream>
 #include<algorithm>
@@ -90,14 +89,18 @@ int main(int argc, char **argv)
     cout << endl << "-------" << endl;
     cout.precision(17);
 
-
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::STEREO,true);
+    float imageScale = SLAM.GetImageScale();
 
     cout << endl << "-------" << endl;
     cout.precision(17);
 
     cv::Mat imLeft, imRight;
+    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
+
+    double t_resize = 0.f;
+    double t_track = 0.f;
 
     int proccIm = 0;
     for (seq = 0; seq<num_seq; seq++)
@@ -110,6 +113,34 @@ int main(int argc, char **argv)
             // Read image from file
             imLeft = cv::imread(vstrImageLeftFilenames[seq][ni],cv::IMREAD_GRAYSCALE);
             imRight = cv::imread(vstrImageRightFilenames[seq][ni],cv::IMREAD_GRAYSCALE);
+
+            if(imageScale != 1.f)
+            {
+#ifdef REGISTER_TIMES
+    #ifdef COMPILEDWITHC11
+                std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
+    #else
+                std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
+    #endif
+#endif
+                int width = imLeft.cols * imageScale;
+                int height = imLeft.rows * imageScale;
+                cv::resize(imLeft, imLeft, cv::Size(width, height));
+                cv::resize(imRight, imRight, cv::Size(width, height));
+#ifdef REGISTER_TIMES
+    #ifdef COMPILEDWITHC11
+                std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
+    #else
+                std::chrono::monotonic_clock::time_point t_End_Resize = std::chrono::monotonic_clock::now();
+    #endif
+                t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
+                SLAM.InsertResizeTime(t_resize);
+#endif
+            }
+
+            // clahe
+            clahe->apply(imLeft,imLeft);
+            clahe->apply(imRight,imRight);
 
             double tframe = vTimestampsCam[seq][ni];
 
@@ -135,8 +166,14 @@ int main(int argc, char **argv)
             std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
     #endif
 
+#ifdef REGISTER_TIMES
+            t_track = t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t2 - t1).count();
+            SLAM.InsertTrackTime(t_track);
+#endif
+
             double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
             ttrack_tot += ttrack;
+            // std::cout << "ttrack: " << ttrack << std::endl;
 
             vTimesTrack[ni]=ttrack;
 
@@ -148,7 +185,7 @@ int main(int argc, char **argv)
                 T = tframe-vTimestampsCam[seq][ni-1];
 
             if(ttrack<T)
-                usleep((T-ttrack)*1e6);
+                usleep((T-ttrack)*1e6); // 1e6
         }
         if(seq < num_seq - 1)
         {
@@ -161,6 +198,8 @@ int main(int argc, char **argv)
 
     // Stop all threads
     SLAM.Shutdown();
+
+    // Tracking time statistics
 
     // Save camera trajectory
     std::chrono::system_clock::time_point scNow = std::chrono::system_clock::now();
@@ -194,7 +233,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void LoadImages(const string &strPathLeft, const string &strPathRight, const string &strPathTimes,
+/*void LoadImages(const string &strPathLeft, const string &strPathRight, const string &strPathTimes,
                 vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps)
 {
     ifstream fTimes;
@@ -217,6 +256,39 @@ void LoadImages(const string &strPathLeft, const string &strPathRight, const str
             vstrImageRight.push_back(strPathRight + "/" + ss.str() + ".png");
             double t;
             ss >> t;
+            vTimeStamps.push_back(t/1e9);
+        }
+    }
+}*/
+
+void LoadImages(const string &strPathLeft, const string &strPathRight, const string &strPathTimes,
+                vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps)
+{
+    ifstream fTimes;
+    cout << strPathLeft << endl;
+    cout << strPathRight << endl;
+    cout << strPathTimes << endl;
+    fTimes.open(strPathTimes.c_str());
+    vTimeStamps.reserve(5000);
+    vstrImageLeft.reserve(5000);
+    vstrImageRight.reserve(5000);
+    while(!fTimes.eof())
+    {
+        string s;
+        getline(fTimes,s);
+
+        if(!s.empty())
+        {
+            if (s[0] == '#')
+                continue;
+
+            int pos = s.find(' ');
+            string item = s.substr(0, pos);
+
+            vstrImageLeft.push_back(strPathLeft + "/" + item + ".png");
+            vstrImageRight.push_back(strPathRight + "/" + item + ".png");
+
+            double t = stod(item);
             vTimeStamps.push_back(t/1e9);
         }
     }

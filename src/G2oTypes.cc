@@ -1,7 +1,7 @@
 /**
 * This file is part of ORB-SLAM3
 *
-* Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 *
 * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -25,8 +25,8 @@ namespace ORB_SLAM3
 ImuCamPose::ImuCamPose(KeyFrame *pKF):its(0)
 {
     // Load IMU pose
-    twb = Converter::toVector3d(pKF->GetImuPosition());
-    Rwb = Converter::toMatrix3d(pKF->GetImuRotation());
+    twb = pKF->GetImuPosition().cast<double>();
+    Rwb = pKF->GetImuRotation().cast<double>();
 
     // Load camera poses
     int num_cams;
@@ -44,24 +44,24 @@ ImuCamPose::ImuCamPose(KeyFrame *pKF):its(0)
     pCamera.resize(num_cams);
 
     // Left camera
-    tcw[0] = Converter::toVector3d(pKF->GetTranslation());
-    Rcw[0] = Converter::toMatrix3d(pKF->GetRotation());
-    tcb[0] = Converter::toVector3d(pKF->mImuCalib.Tcb.rowRange(0,3).col(3));
-    Rcb[0] = Converter::toMatrix3d(pKF->mImuCalib.Tcb.rowRange(0,3).colRange(0,3));
+    tcw[0] = pKF->GetTranslation().cast<double>();
+    Rcw[0] = pKF->GetRotation().cast<double>();
+    tcb[0] = pKF->mImuCalib.mTcb.translation().cast<double>();
+    Rcb[0] = pKF->mImuCalib.mTcb.rotationMatrix().cast<double>();
     Rbc[0] = Rcb[0].transpose();
-    tbc[0] = Converter::toVector3d(pKF->mImuCalib.Tbc.rowRange(0,3).col(3));
+    tbc[0] = pKF->mImuCalib.mTbc.translation().cast<double>();
     pCamera[0] = pKF->mpCamera;
     bf = pKF->mbf;
 
     if(num_cams>1)
     {
-        Eigen::Matrix4d Trl = Converter::toMatrix4d(pKF->mTrl);
-        Rcw[1] = Trl.block<3,3>(0,0)*Rcw[0];
-        tcw[1] = Trl.block<3,3>(0,0)*tcw[0]+Trl.block<3,1>(0,3);
-        tcb[1] = Trl.block<3,3>(0,0)*tcb[0]+Trl.block<3,1>(0,3);
-        Rcb[1] = Trl.block<3,3>(0,0)*Rcb[0];
+        Eigen::Matrix4d Trl = pKF->GetRelativePoseTrl().matrix().cast<double>();
+        Rcw[1] = Trl.block<3,3>(0,0) * Rcw[0];
+        tcw[1] = Trl.block<3,3>(0,0) * tcw[0] + Trl.block<3,1>(0,3);
+        tcb[1] = Trl.block<3,3>(0,0) * tcb[0] + Trl.block<3,1>(0,3);
+        Rcb[1] = Trl.block<3,3>(0,0) * Rcb[0];
         Rbc[1] = Rcb[1].transpose();
-        tbc[1] = -Rbc[1]*tcb[1];
+        tbc[1] = -Rbc[1] * tcb[1];
         pCamera[1] = pKF->mpCamera2;
     }
 
@@ -73,8 +73,8 @@ ImuCamPose::ImuCamPose(KeyFrame *pKF):its(0)
 ImuCamPose::ImuCamPose(Frame *pF):its(0)
 {
     // Load IMU pose
-    twb = Converter::toVector3d(pF->GetImuPosition());
-    Rwb = Converter::toMatrix3d(pF->GetImuRotation());
+    twb = pF->GetImuPosition().cast<double>();
+    Rwb = pF->GetImuRotation().cast<double>();
 
     // Load camera poses
     int num_cams;
@@ -92,24 +92,24 @@ ImuCamPose::ImuCamPose(Frame *pF):its(0)
     pCamera.resize(num_cams);
 
     // Left camera
-    tcw[0] = Converter::toVector3d(pF->mTcw.rowRange(0,3).col(3));
-    Rcw[0] = Converter::toMatrix3d(pF->mTcw.rowRange(0,3).colRange(0,3));
-    tcb[0] = Converter::toVector3d(pF->mImuCalib.Tcb.rowRange(0,3).col(3));
-    Rcb[0] = Converter::toMatrix3d(pF->mImuCalib.Tcb.rowRange(0,3).colRange(0,3));
+    tcw[0] = pF->GetPose().translation().cast<double>();
+    Rcw[0] = pF->GetPose().rotationMatrix().cast<double>();
+    tcb[0] = pF->mImuCalib.mTcb.translation().cast<double>();
+    Rcb[0] = pF->mImuCalib.mTcb.rotationMatrix().cast<double>();
     Rbc[0] = Rcb[0].transpose();
-    tbc[0] = Converter::toVector3d(pF->mImuCalib.Tbc.rowRange(0,3).col(3));
+    tbc[0] = pF->mImuCalib.mTbc.translation().cast<double>();
     pCamera[0] = pF->mpCamera;
     bf = pF->mbf;
 
     if(num_cams>1)
     {
-        Eigen::Matrix4d Trl = Converter::toMatrix4d(pF->mTrl);
-        Rcw[1] = Trl.block<3,3>(0,0)*Rcw[0];
-        tcw[1] = Trl.block<3,3>(0,0)*tcw[0]+Trl.block<3,1>(0,3);
-        tcb[1] = Trl.block<3,3>(0,0)*tcb[0]+Trl.block<3,1>(0,3);
-        Rcb[1] = Trl.block<3,3>(0,0)*Rcb[0];
+        Eigen::Matrix4d Trl = pF->GetRelativePoseTrl().matrix().cast<double>();
+        Rcw[1] = Trl.block<3,3>(0,0) * Rcw[0];
+        tcw[1] = Trl.block<3,3>(0,0) * tcw[0] + Trl.block<3,1>(0,3);
+        tcb[1] = Trl.block<3,3>(0,0) * tcb[0] + Trl.block<3,1>(0,3);
+        Rcb[1] = Trl.block<3,3>(0,0) * Rcb[0];
         Rbc[1] = Rcb[1].transpose();
-        tbc[1] = -Rbc[1]*tcb[1];
+        tbc[1] = -Rbc[1] * tcb[1];
         pCamera[1] = pF->mpCamera2;
     }
 
@@ -129,14 +129,14 @@ ImuCamPose::ImuCamPose(Eigen::Matrix3d &_Rwc, Eigen::Vector3d &_twc, KeyFrame* p
     tbc.resize(1);
     pCamera.resize(1);
 
-    tcb[0] = Converter::toVector3d(pKF->mImuCalib.Tcb.rowRange(0,3).col(3));
-    Rcb[0] = Converter::toMatrix3d(pKF->mImuCalib.Tcb.rowRange(0,3).colRange(0,3));
+    tcb[0] = pKF->mImuCalib.mTcb.translation().cast<double>();
+    Rcb[0] = pKF->mImuCalib.mTcb.rotationMatrix().cast<double>();
     Rbc[0] = Rcb[0].transpose();
-    tbc[0] = Converter::toVector3d(pKF->mImuCalib.Tbc.rowRange(0,3).col(3));
-    twb = _Rwc*tcb[0]+_twc;
-    Rwb = _Rwc*Rcb[0];
+    tbc[0] = pKF->mImuCalib.mTbc.translation().cast<double>();
+    twb = _Rwc * tcb[0] + _twc;
+    Rwb = _Rwc * Rcb[0];
     Rcw[0] = _Rwc.transpose();
-    tcw[0] = -Rcw[0]*_twc;
+    tcw[0] = -Rcw[0] * _twc;
     pCamera[0] = pKF->mpCamera;
     bf = pKF->mbf;
 
@@ -169,14 +169,14 @@ void ImuCamPose::SetParam(const std::vector<Eigen::Matrix3d> &_Rcw, const std::v
 
 Eigen::Vector2d ImuCamPose::Project(const Eigen::Vector3d &Xw, int cam_idx) const
 {
-    Eigen::Vector3d Xc = Rcw[cam_idx]*Xw+tcw[cam_idx];
+    Eigen::Vector3d Xc = Rcw[cam_idx] * Xw + tcw[cam_idx];
 
     return pCamera[cam_idx]->project(Xc);
 }
 
 Eigen::Vector3d ImuCamPose::ProjectStereo(const Eigen::Vector3d &Xw, int cam_idx) const
 {
-    Eigen::Vector3d Pc = Rcw[cam_idx]*Xw+tcw[cam_idx];
+    Eigen::Vector3d Pc = Rcw[cam_idx] * Xw + tcw[cam_idx];
     Eigen::Vector3d pc;
     double invZ = 1/Pc(2);
     pc.head(2) = pCamera[cam_idx]->project(Pc);
@@ -186,7 +186,7 @@ Eigen::Vector3d ImuCamPose::ProjectStereo(const Eigen::Vector3d &Xw, int cam_idx
 
 bool ImuCamPose::isDepthPositive(const Eigen::Vector3d &Xw, int cam_idx) const
 {
-    return (Rcw[cam_idx].row(2)*Xw+tcw[cam_idx](2))>0.0;
+    return (Rcw[cam_idx].row(2) * Xw + tcw[cam_idx](2)) > 0.0;
 }
 
 void ImuCamPose::Update(const double *pu)
@@ -196,8 +196,8 @@ void ImuCamPose::Update(const double *pu)
     ut << pu[3], pu[4], pu[5];
 
     // Update body pose
-    twb += Rwb*ut;
-    Rwb = Rwb*ExpSO3(ur);
+    twb += Rwb * ut;
+    Rwb = Rwb * ExpSO3(ur);
 
     // Normalize rotation after 5 updates
     its++;
@@ -209,12 +209,12 @@ void ImuCamPose::Update(const double *pu)
 
     // Update camera poses
     const Eigen::Matrix3d Rbw = Rwb.transpose();
-    const Eigen::Vector3d tbw = -Rbw*twb;
+    const Eigen::Vector3d tbw = -Rbw * twb;
 
     for(int i=0; i<pCamera.size(); i++)
     {
-        Rcw[i] = Rcb[i]*Rbw;
-        tcw[i] = Rcb[i]*tbw+tcb[i];
+        Rcw[i] = Rcb[i] * Rbw;
+        tcw[i] = Rcb[i] * tbw + tcb[i];
     }
 
 }
@@ -227,8 +227,8 @@ void ImuCamPose::UpdateW(const double *pu)
 
 
     const Eigen::Matrix3d dR = ExpSO3(ur);
-    DR = dR*DR;
-    Rwb = DR*Rwb0;
+    DR = dR * DR;
+    Rwb = DR * Rwb0;
     // Update body pose
     twb += ut;
 
@@ -236,22 +236,22 @@ void ImuCamPose::UpdateW(const double *pu)
     its++;
     if(its>=5)
     {
-        DR(0,2)=0.0;
-        DR(1,2)=0.0;
-        DR(2,0)=0.0;
-        DR(2,1)=0.0;
+        DR(0,2) = 0.0;
+        DR(1,2) = 0.0;
+        DR(2,0) = 0.0;
+        DR(2,1) = 0.0;
         NormalizeRotation(DR);
-        its=0;
+        its = 0;
     }
 
     // Update camera pose
     const Eigen::Matrix3d Rbw = Rwb.transpose();
-    const Eigen::Vector3d tbw = -Rbw*twb;
+    const Eigen::Vector3d tbw = -Rbw * twb;
 
     for(int i=0; i<pCamera.size(); i++)
     {
-        Rcw[i] = Rcb[i]*Rbw;
-        tcw[i] = Rcb[i]*tbw+tcb[i];
+        Rcw[i] = Rcb[i] * Rbw;
+        tcw[i] = Rcb[i] * tbw+tcb[i];
     }
 }
 
@@ -455,17 +455,17 @@ void EdgeStereoOnlyPose::linearizeOplus()
 
 VertexVelocity::VertexVelocity(KeyFrame* pKF)
 {
-    setEstimate(Converter::toVector3d(pKF->GetVelocity()));
+    setEstimate(pKF->GetVelocity().cast<double>());
 }
 
 VertexVelocity::VertexVelocity(Frame* pF)
 {
-    setEstimate(Converter::toVector3d(pF->mVw));
+    setEstimate(pF->GetVelocity().cast<double>());
 }
 
 VertexGyroBias::VertexGyroBias(KeyFrame *pKF)
 {
-    setEstimate(Converter::toVector3d(pKF->GetGyroBias()));
+    setEstimate(pKF->GetGyroBias().cast<double>());
 }
 
 VertexGyroBias::VertexGyroBias(Frame *pF)
@@ -477,7 +477,7 @@ VertexGyroBias::VertexGyroBias(Frame *pF)
 
 VertexAccBias::VertexAccBias(KeyFrame *pKF)
 {
-    setEstimate(Converter::toVector3d(pKF->GetAccBias()));
+    setEstimate(pKF->GetAccBias().cast<double>());
 }
 
 VertexAccBias::VertexAccBias(Frame *pF)
@@ -489,24 +489,21 @@ VertexAccBias::VertexAccBias(Frame *pF)
 
 
 
-EdgeInertial::EdgeInertial(IMU::Preintegrated *pInt):JRg(Converter::toMatrix3d(pInt->JRg)),
-    JVg(Converter::toMatrix3d(pInt->JVg)), JPg(Converter::toMatrix3d(pInt->JPg)), JVa(Converter::toMatrix3d(pInt->JVa)),
-    JPa(Converter::toMatrix3d(pInt->JPa)), mpInt(pInt), dt(pInt->dT)
+EdgeInertial::EdgeInertial(IMU::Preintegrated *pInt):JRg(pInt->JRg.cast<double>()),
+    JVg(pInt->JVg.cast<double>()), JPg(pInt->JPg.cast<double>()), JVa(pInt->JVa.cast<double>()),
+    JPa(pInt->JPa.cast<double>()), mpInt(pInt), dt(pInt->dT)
 {
     // This edge links 6 vertices
     resize(6);
     g << 0, 0, -IMU::GRAVITY_VALUE;
-    cv::Mat cvInfo = pInt->C.rowRange(0,9).colRange(0,9).inv(cv::DECOMP_SVD);
-    Matrix9d Info;
-    for(int r=0;r<9;r++)
-        for(int c=0;c<9;c++)
-            Info(r,c)=cvInfo.at<float>(r,c);
+
+    Matrix9d Info = pInt->C.block<9,9>(0,0).cast<double>().inverse();
     Info = (Info+Info.transpose())/2;
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,9,9> > es(Info);
-     Eigen::Matrix<double,9,1> eigs = es.eigenvalues();
-     for(int i=0;i<9;i++)
-         if(eigs[i]<1e-12)
-             eigs[i]=0;
+    Eigen::Matrix<double,9,1> eigs = es.eigenvalues();
+    for(int i=0;i<9;i++)
+        if(eigs[i]<1e-12)
+            eigs[i]=0;
     Info = es.eigenvectors()*eigs.asDiagonal()*es.eigenvectors().transpose();
     setInformation(Info);
 }
@@ -524,9 +521,9 @@ void EdgeInertial::computeError()
     const VertexPose* VP2 = static_cast<const VertexPose*>(_vertices[4]);
     const VertexVelocity* VV2 = static_cast<const VertexVelocity*>(_vertices[5]);
     const IMU::Bias b1(VA1->estimate()[0],VA1->estimate()[1],VA1->estimate()[2],VG1->estimate()[0],VG1->estimate()[1],VG1->estimate()[2]);
-    const Eigen::Matrix3d dR = Converter::toMatrix3d(mpInt->GetDeltaRotation(b1));
-    const Eigen::Vector3d dV = Converter::toVector3d(mpInt->GetDeltaVelocity(b1));
-    const Eigen::Vector3d dP = Converter::toVector3d(mpInt->GetDeltaPosition(b1));
+    const Eigen::Matrix3d dR = mpInt->GetDeltaRotation(b1).cast<double>();
+    const Eigen::Vector3d dV = mpInt->GetDeltaVelocity(b1).cast<double>();
+    const Eigen::Vector3d dP = mpInt->GetDeltaPosition(b1).cast<double>();
 
     const Eigen::Vector3d er = LogSO3(dR.transpose()*VP1->estimate().Rwb.transpose()*VP2->estimate().Rwb);
     const Eigen::Vector3d ev = VP1->estimate().Rwb.transpose()*(VV2->estimate() - VV1->estimate() - g*dt) - dV;
@@ -553,7 +550,7 @@ void EdgeInertial::linearizeOplus()
     const Eigen::Matrix3d Rbw1 = Rwb1.transpose();
     const Eigen::Matrix3d Rwb2 = VP2->estimate().Rwb;
 
-    const Eigen::Matrix3d dR = Converter::toMatrix3d(mpInt->GetDeltaRotation(b1));
+    const Eigen::Matrix3d dR = mpInt->GetDeltaRotation(b1).cast<double>();
     const Eigen::Matrix3d eR = dR.transpose()*Rbw1*Rwb2;
     const Eigen::Vector3d er = LogSO3(eR);
     const Eigen::Matrix3d invJr = InverseRightJacobianSO3(er);
@@ -562,8 +559,8 @@ void EdgeInertial::linearizeOplus()
     _jacobianOplus[0].setZero();
      // rotation
     _jacobianOplus[0].block<3,3>(0,0) = -invJr*Rwb2.transpose()*Rwb1; // OK
-    _jacobianOplus[0].block<3,3>(3,0) = Skew(Rbw1*(VV2->estimate() - VV1->estimate() - g*dt)); // OK
-    _jacobianOplus[0].block<3,3>(6,0) = Skew(Rbw1*(VP2->estimate().twb - VP1->estimate().twb
+    _jacobianOplus[0].block<3,3>(3,0) = Sophus::SO3d::hat(Rbw1*(VV2->estimate() - VV1->estimate() - g*dt)); // OK
+    _jacobianOplus[0].block<3,3>(6,0) = Sophus::SO3d::hat(Rbw1*(VP2->estimate().twb - VP1->estimate().twb
                                                    - VV1->estimate()*dt - 0.5*g*dt*dt)); // OK
     // translation
     _jacobianOplus[0].block<3,3>(6,3) = -Eigen::Matrix3d::Identity(); // OK
@@ -596,24 +593,21 @@ void EdgeInertial::linearizeOplus()
     _jacobianOplus[5].block<3,3>(3,0) = Rbw1; // OK
 }
 
-EdgeInertialGS::EdgeInertialGS(IMU::Preintegrated *pInt):JRg(Converter::toMatrix3d(pInt->JRg)),
-    JVg(Converter::toMatrix3d(pInt->JVg)), JPg(Converter::toMatrix3d(pInt->JPg)), JVa(Converter::toMatrix3d(pInt->JVa)),
-    JPa(Converter::toMatrix3d(pInt->JPa)), mpInt(pInt), dt(pInt->dT)
+EdgeInertialGS::EdgeInertialGS(IMU::Preintegrated *pInt):JRg(pInt->JRg.cast<double>()),
+    JVg(pInt->JVg.cast<double>()), JPg(pInt->JPg.cast<double>()), JVa(pInt->JVa.cast<double>()),
+    JPa(pInt->JPa.cast<double>()), mpInt(pInt), dt(pInt->dT)
 {
     // This edge links 8 vertices
     resize(8);
     gI << 0, 0, -IMU::GRAVITY_VALUE;
-    cv::Mat cvInfo = pInt->C.rowRange(0,9).colRange(0,9).inv(cv::DECOMP_SVD);
-    Matrix9d Info;
-    for(int r=0;r<9;r++)
-        for(int c=0;c<9;c++)
-            Info(r,c)=cvInfo.at<float>(r,c);
+
+    Matrix9d Info = pInt->C.block<9,9>(0,0).cast<double>().inverse();
     Info = (Info+Info.transpose())/2;
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,9,9> > es(Info);
-     Eigen::Matrix<double,9,1> eigs = es.eigenvalues();
-     for(int i=0;i<9;i++)
-         if(eigs[i]<1e-12)
-             eigs[i]=0;
+    Eigen::Matrix<double,9,1> eigs = es.eigenvalues();
+    for(int i=0;i<9;i++)
+        if(eigs[i]<1e-12)
+            eigs[i]=0;
     Info = es.eigenvectors()*eigs.asDiagonal()*es.eigenvectors().transpose();
     setInformation(Info);
 }
@@ -634,9 +628,9 @@ void EdgeInertialGS::computeError()
     const IMU::Bias b(VA->estimate()[0],VA->estimate()[1],VA->estimate()[2],VG->estimate()[0],VG->estimate()[1],VG->estimate()[2]);
     g = VGDir->estimate().Rwg*gI;
     const double s = VS->estimate();
-    const Eigen::Matrix3d dR = Converter::toMatrix3d(mpInt->GetDeltaRotation(b));
-    const Eigen::Vector3d dV = Converter::toVector3d(mpInt->GetDeltaVelocity(b));
-    const Eigen::Vector3d dP = Converter::toVector3d(mpInt->GetDeltaPosition(b));
+    const Eigen::Matrix3d dR = mpInt->GetDeltaRotation(b).cast<double>();
+    const Eigen::Vector3d dV = mpInt->GetDeltaVelocity(b).cast<double>();
+    const Eigen::Vector3d dP = mpInt->GetDeltaPosition(b).cast<double>();
 
     const Eigen::Vector3d er = LogSO3(dR.transpose()*VP1->estimate().Rwb.transpose()*VP2->estimate().Rwb);
     const Eigen::Vector3d ev = VP1->estimate().Rwb.transpose()*(s*(VV2->estimate() - VV1->estimate()) - g*dt) - dV;
@@ -670,7 +664,7 @@ void EdgeInertialGS::linearizeOplus()
     Gm(1,0) = IMU::GRAVITY_VALUE;
     const double s = VS->estimate();
     const Eigen::MatrixXd dGdTheta = Rwg*Gm;
-    const Eigen::Matrix3d dR = Converter::toMatrix3d(mpInt->GetDeltaRotation(b));
+    const Eigen::Matrix3d dR = mpInt->GetDeltaRotation(b).cast<double>();
     const Eigen::Matrix3d eR = dR.transpose()*Rbw1*Rwb2;
     const Eigen::Vector3d er = LogSO3(eR);
     const Eigen::Matrix3d invJr = InverseRightJacobianSO3(er);
@@ -679,11 +673,11 @@ void EdgeInertialGS::linearizeOplus()
     _jacobianOplus[0].setZero();
      // rotation
     _jacobianOplus[0].block<3,3>(0,0) = -invJr*Rwb2.transpose()*Rwb1;
-    _jacobianOplus[0].block<3,3>(3,0) = Skew(Rbw1*(s*(VV2->estimate() - VV1->estimate()) - g*dt));
-    _jacobianOplus[0].block<3,3>(6,0) = Skew(Rbw1*(s*(VP2->estimate().twb - VP1->estimate().twb
+    _jacobianOplus[0].block<3,3>(3,0) = Sophus::SO3d::hat(Rbw1*(s*(VV2->estimate() - VV1->estimate()) - g*dt));
+    _jacobianOplus[0].block<3,3>(6,0) = Sophus::SO3d::hat(Rbw1*(s*(VP2->estimate().twb - VP1->estimate().twb
                                                    - VV1->estimate()*dt) - 0.5*g*dt*dt));
     // translation
-    _jacobianOplus[0].block<3,3>(6,3) = -s*Eigen::Matrix3d::Identity();
+    _jacobianOplus[0].block<3,3>(6,3) = Eigen::DiagonalMatrix<double,3>(-s,-s,-s);
 
     // Jacobians wrt Velocity 1
     _jacobianOplus[1].setZero();
@@ -794,12 +788,12 @@ Eigen::Matrix3d ExpSO3(const double x, const double y, const double z)
     if(d<1e-5)
     {
         Eigen::Matrix3d res = Eigen::Matrix3d::Identity() + W +0.5*W*W;
-        return Converter::toMatrix3d(IMU::NormalizeRotation(Converter::toCvMat(res)));
+        return NormalizeRotation(res);
     }
     else
     {
         Eigen::Matrix3d res =Eigen::Matrix3d::Identity() + W*sin(d)/d + W*W*(1.0-cos(d))/d2;
-        return Converter::toMatrix3d(IMU::NormalizeRotation(Converter::toCvMat(res)));
+        return NormalizeRotation(res);
     }
 }
 
@@ -866,9 +860,4 @@ Eigen::Matrix3d Skew(const Eigen::Vector3d &w)
     return W;
 }
 
-Eigen::Matrix3d NormalizeRotation(const Eigen::Matrix3d &R)
-{
-    Eigen::JacobiSVD<Eigen::Matrix3d> svd(R,Eigen::ComputeFullU | Eigen::ComputeFullV);
-    return svd.matrixU()*svd.matrixV();
-}
 }

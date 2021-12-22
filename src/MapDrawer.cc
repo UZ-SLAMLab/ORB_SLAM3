@@ -1,7 +1,7 @@
 /**
 * This file is part of ORB-SLAM3
 *
-* Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 *
 * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -16,7 +16,6 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "MapDrawer.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
@@ -27,24 +26,37 @@ namespace ORB_SLAM3
 {
 
 
-MapDrawer::MapDrawer(Atlas* pAtlas, const string &strSettingPath):mpAtlas(pAtlas)
+MapDrawer::MapDrawer(Atlas* pAtlas, const string &strSettingPath, Settings* settings):mpAtlas(pAtlas)
 {
-    cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
+    if(settings){
+        newParameterLoader(settings);
+    }
+    else{
+        cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
+        bool is_correct = ParseViewerParamFile(fSettings);
 
-    bool is_correct = ParseViewerParamFile(fSettings);
-
-    if(!is_correct)
-    {
-        std::cerr << "**ERROR in the config file, the format is not correct**" << std::endl;
-        try
+        if(!is_correct)
         {
-            throw -1;
-        }
-        catch(exception &e)
-        {
+            std::cerr << "**ERROR in the config file, the format is not correct**" << std::endl;
+            try
+            {
+                throw -1;
+            }
+            catch(exception &e)
+            {
 
+            }
         }
     }
+}
+
+void MapDrawer::newParameterLoader(Settings *settings) {
+    mKeyFrameSize = settings->keyFrameSize();
+    mKeyFrameLineWidth = settings->keyFrameLineWidth();
+    mGraphLineWidth = settings->graphLineWidth();
+    mPointSize = settings->pointSize();
+    mCameraSize = settings->cameraSize();
+    mCameraLineWidth  = settings->cameraLineWidth();
 }
 
 bool MapDrawer::ParseViewerParamFile(cv::FileStorage &fSettings)
@@ -122,8 +134,12 @@ bool MapDrawer::ParseViewerParamFile(cv::FileStorage &fSettings)
 
 void MapDrawer::DrawMapPoints()
 {
-    const vector<MapPoint*> &vpMPs = mpAtlas->GetAllMapPoints();
-    const vector<MapPoint*> &vpRefMPs = mpAtlas->GetReferenceMapPoints();
+    Map* pActiveMap = mpAtlas->GetCurrentMap();
+    if(!pActiveMap)
+        return;
+
+    const vector<MapPoint*> &vpMPs = pActiveMap->GetAllMapPoints();
+    const vector<MapPoint*> &vpRefMPs = pActiveMap->GetReferenceMapPoints();
 
     set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
 
@@ -138,8 +154,8 @@ void MapDrawer::DrawMapPoints()
     {
         if(vpMPs[i]->isBad() || spRefMPs.count(vpMPs[i]))
             continue;
-        cv::Mat pos = vpMPs[i]->GetWorldPos();
-        glVertex3f(pos.at<float>(0),pos.at<float>(1),pos.at<float>(2));
+        Eigen::Matrix<float,3,1> pos = vpMPs[i]->GetWorldPos();
+        glVertex3f(pos(0),pos(1),pos(2));
     }
     glEnd();
 
@@ -151,33 +167,41 @@ void MapDrawer::DrawMapPoints()
     {
         if((*sit)->isBad())
             continue;
-        cv::Mat pos = (*sit)->GetWorldPos();
-        glVertex3f(pos.at<float>(0),pos.at<float>(1),pos.at<float>(2));
+        Eigen::Matrix<float,3,1> pos = (*sit)->GetWorldPos();
+        glVertex3f(pos(0),pos(1),pos(2));
 
     }
 
     glEnd();
 }
 
-void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const bool bDrawInertialGraph)
+void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const bool bDrawInertialGraph, const bool bDrawOptLba)
 {
     const float &w = mKeyFrameSize;
     const float h = w*0.75;
     const float z = w*0.6;
 
-    const vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
+    Map* pActiveMap = mpAtlas->GetCurrentMap();
+    // DEBUG LBA
+    std::set<long unsigned int> sOptKFs = pActiveMap->msOptKFs;
+    std::set<long unsigned int> sFixedKFs = pActiveMap->msFixedKFs;
+
+    if(!pActiveMap)
+        return;
+
+    const vector<KeyFrame*> vpKFs = pActiveMap->GetAllKeyFrames();
 
     if(bDrawKF)
     {
         for(size_t i=0; i<vpKFs.size(); i++)
         {
             KeyFrame* pKF = vpKFs[i];
-            cv::Mat Twc = pKF->GetPoseInverse().t();
+            Eigen::Matrix4f Twc = pKF->GetPoseInverse().matrix();
             unsigned int index_color = pKF->mnOriginMapId;
 
             glPushMatrix();
 
-            glMultMatrixf(Twc.ptr<GLfloat>(0));
+            glMultMatrixf((GLfloat*)Twc.data());
 
             if(!pKF->GetParent()) // It is the first KF in the map
             {
@@ -187,8 +211,26 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
             }
             else
             {
+                //cout << "Child KF: " << vpKFs[i]->mnId << endl;
                 glLineWidth(mKeyFrameLineWidth);
-                glColor3f(mfFrameColors[index_color][0],mfFrameColors[index_color][1],mfFrameColors[index_color][2]);
+                if (bDrawOptLba) {
+                    if(sOptKFs.find(pKF->mnId) != sOptKFs.end())
+                    {
+                        glColor3f(0.0f,1.0f,0.0f); // Green -> Opt KFs
+                    }
+                    else if(sFixedKFs.find(pKF->mnId) != sFixedKFs.end())
+                    {
+                        glColor3f(1.0f,0.0f,0.0f); // Red -> Fixed KFs
+                    }
+                    else
+                    {
+                        glColor3f(0.0f,0.0f,1.0f); // Basic color
+                    }
+                }
+                else
+                {
+                    glColor3f(0.0f,0.0f,1.0f); // Basic color
+                }
                 glBegin(GL_LINES);
             }
 
@@ -226,20 +268,21 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
         glColor4f(0.0f,1.0f,0.0f,0.6f);
         glBegin(GL_LINES);
 
+        // cout << "-----------------Draw graph-----------------" << endl;
         for(size_t i=0; i<vpKFs.size(); i++)
         {
             // Covisibility Graph
             const vector<KeyFrame*> vCovKFs = vpKFs[i]->GetCovisiblesByWeight(100);
-            cv::Mat Ow = vpKFs[i]->GetCameraCenter();
+            Eigen::Vector3f Ow = vpKFs[i]->GetCameraCenter();
             if(!vCovKFs.empty())
             {
                 for(vector<KeyFrame*>::const_iterator vit=vCovKFs.begin(), vend=vCovKFs.end(); vit!=vend; vit++)
                 {
                     if((*vit)->mnId<vpKFs[i]->mnId)
                         continue;
-                    cv::Mat Ow2 = (*vit)->GetCameraCenter();
-                    glVertex3f(Ow.at<float>(0),Ow.at<float>(1),Ow.at<float>(2));
-                    glVertex3f(Ow2.at<float>(0),Ow2.at<float>(1),Ow2.at<float>(2));
+                    Eigen::Vector3f Ow2 = (*vit)->GetCameraCenter();
+                    glVertex3f(Ow(0),Ow(1),Ow(2));
+                    glVertex3f(Ow2(0),Ow2(1),Ow2(2));
                 }
             }
 
@@ -247,9 +290,9 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
             KeyFrame* pParent = vpKFs[i]->GetParent();
             if(pParent)
             {
-                cv::Mat Owp = pParent->GetCameraCenter();
-                glVertex3f(Ow.at<float>(0),Ow.at<float>(1),Ow.at<float>(2));
-                glVertex3f(Owp.at<float>(0),Owp.at<float>(1),Owp.at<float>(2));
+                Eigen::Vector3f Owp = pParent->GetCameraCenter();
+                glVertex3f(Ow(0),Ow(1),Ow(2));
+                glVertex3f(Owp(0),Owp(1),Owp(2));
             }
 
             // Loops
@@ -258,16 +301,16 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
             {
                 if((*sit)->mnId<vpKFs[i]->mnId)
                     continue;
-                cv::Mat Owl = (*sit)->GetCameraCenter();
-                glVertex3f(Ow.at<float>(0),Ow.at<float>(1),Ow.at<float>(2));
-                glVertex3f(Owl.at<float>(0),Owl.at<float>(1),Owl.at<float>(2));
+                Eigen::Vector3f Owl = (*sit)->GetCameraCenter();
+                glVertex3f(Ow(0),Ow(1),Ow(2));
+                glVertex3f(Owl(0),Owl(1),Owl(2));
             }
         }
 
         glEnd();
     }
 
-    if(bDrawInertialGraph && mpAtlas->isImuInitialized())
+    if(bDrawInertialGraph && pActiveMap->isImuInitialized())
     {
         glLineWidth(mGraphLineWidth);
         glColor4f(1.0f,0.0f,0.0f,0.6f);
@@ -277,13 +320,13 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
         for(size_t i=0; i<vpKFs.size(); i++)
         {
             KeyFrame* pKFi = vpKFs[i];
-            cv::Mat Ow = pKFi->GetCameraCenter();
+            Eigen::Vector3f Ow = pKFi->GetCameraCenter();
             KeyFrame* pNext = pKFi->mNextKF;
             if(pNext)
             {
-                cv::Mat Owp = pNext->GetCameraCenter();
-                glVertex3f(Ow.at<float>(0),Ow.at<float>(1),Ow.at<float>(2));
-                glVertex3f(Owp.at<float>(0),Owp.at<float>(1),Owp.at<float>(2));
+                Eigen::Vector3f Owp = pNext->GetCameraCenter();
+                glVertex3f(Ow(0),Ow(1),Ow(2));
+                glVertex3f(Owp(0),Owp(1),Owp(2));
             }
         }
 
@@ -296,7 +339,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
     {
         for(Map* pMap : vpMaps)
         {
-            if(pMap == mpAtlas->GetCurrentMap())
+            if(pMap == pActiveMap)
                 continue;
 
             vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
@@ -304,12 +347,12 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
             for(size_t i=0; i<vpKFs.size(); i++)
             {
                 KeyFrame* pKF = vpKFs[i];
-                cv::Mat Twc = pKF->GetPoseInverse().t();
+                Eigen::Matrix4f Twc = pKF->GetPoseInverse().matrix();
                 unsigned int index_color = pKF->mnOriginMapId;
 
                 glPushMatrix();
 
-                glMultMatrixf(Twc.ptr<GLfloat>(0));
+                glMultMatrixf((GLfloat*)Twc.data());
 
                 if(!vpKFs[i]->GetParent()) // It is the first KF in the map
                 {
@@ -395,118 +438,30 @@ void MapDrawer::DrawCurrentCamera(pangolin::OpenGlMatrix &Twc)
 }
 
 
-void MapDrawer::SetCurrentCameraPose(const cv::Mat &Tcw)
+void MapDrawer::SetCurrentCameraPose(const Sophus::SE3f &Tcw)
 {
     unique_lock<mutex> lock(mMutexCamera);
-    mCameraPose = Tcw.clone();
+    mCameraPose = Tcw.inverse();
 }
 
 void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M, pangolin::OpenGlMatrix &MOw)
 {
-    if(!mCameraPose.empty())
+    Eigen::Matrix4f Twc;
     {
-        cv::Mat Rwc(3,3,CV_32F);
-        cv::Mat twc(3,1,CV_32F);
-        {
-            unique_lock<mutex> lock(mMutexCamera);
-            Rwc = mCameraPose.rowRange(0,3).colRange(0,3).t();
-            twc = -Rwc*mCameraPose.rowRange(0,3).col(3);
-        }
-
-        M.m[0] = Rwc.at<float>(0,0);
-        M.m[1] = Rwc.at<float>(1,0);
-        M.m[2] = Rwc.at<float>(2,0);
-        M.m[3]  = 0.0;
-
-        M.m[4] = Rwc.at<float>(0,1);
-        M.m[5] = Rwc.at<float>(1,1);
-        M.m[6] = Rwc.at<float>(2,1);
-        M.m[7]  = 0.0;
-
-        M.m[8] = Rwc.at<float>(0,2);
-        M.m[9] = Rwc.at<float>(1,2);
-        M.m[10] = Rwc.at<float>(2,2);
-        M.m[11]  = 0.0;
-
-        M.m[12] = twc.at<float>(0);
-        M.m[13] = twc.at<float>(1);
-        M.m[14] = twc.at<float>(2);
-        M.m[15]  = 1.0;
-
-        MOw.SetIdentity();
-        MOw.m[12] = twc.at<float>(0);
-        MOw.m[13] = twc.at<float>(1);
-        MOw.m[14] = twc.at<float>(2);
+        unique_lock<mutex> lock(mMutexCamera);
+        Twc = mCameraPose.matrix();
     }
-    else
-    {
-        M.SetIdentity();
-        MOw.SetIdentity();
+
+    for (int i = 0; i<4; i++) {
+        M.m[4*i] = Twc(0,i);
+        M.m[4*i+1] = Twc(1,i);
+        M.m[4*i+2] = Twc(2,i);
+        M.m[4*i+3] = Twc(3,i);
     }
+
+    MOw.SetIdentity();
+    MOw.m[12] = Twc(0,3);
+    MOw.m[13] = Twc(1,3);
+    MOw.m[14] = Twc(2,3);
 }
-
-void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M, pangolin::OpenGlMatrix &MOw, pangolin::OpenGlMatrix &MTwwp)
-{
-    if(!mCameraPose.empty())
-    {
-        cv::Mat Rwc(3,3,CV_32F);
-        cv::Mat twc(3,1,CV_32F);
-        cv::Mat Rwwp(3,3,CV_32F);
-        {
-            unique_lock<mutex> lock(mMutexCamera);
-            Rwc = mCameraPose.rowRange(0,3).colRange(0,3).t();
-            twc = -Rwc*mCameraPose.rowRange(0,3).col(3);
-        }
-
-        M.m[0] = Rwc.at<float>(0,0);
-        M.m[1] = Rwc.at<float>(1,0);
-        M.m[2] = Rwc.at<float>(2,0);
-        M.m[3]  = 0.0;
-
-        M.m[4] = Rwc.at<float>(0,1);
-        M.m[5] = Rwc.at<float>(1,1);
-        M.m[6] = Rwc.at<float>(2,1);
-        M.m[7]  = 0.0;
-
-        M.m[8] = Rwc.at<float>(0,2);
-        M.m[9] = Rwc.at<float>(1,2);
-        M.m[10] = Rwc.at<float>(2,2);
-        M.m[11]  = 0.0;
-
-        M.m[12] = twc.at<float>(0);
-        M.m[13] = twc.at<float>(1);
-        M.m[14] = twc.at<float>(2);
-        M.m[15]  = 1.0;
-
-        MOw.SetIdentity();
-        MOw.m[12] = twc.at<float>(0);
-        MOw.m[13] = twc.at<float>(1);
-        MOw.m[14] = twc.at<float>(2);
-
-        MTwwp.SetIdentity();
-        MTwwp.m[0] = Rwwp.at<float>(0,0);
-        MTwwp.m[1] = Rwwp.at<float>(1,0);
-        MTwwp.m[2] = Rwwp.at<float>(2,0);
-
-        MTwwp.m[4] = Rwwp.at<float>(0,1);
-        MTwwp.m[5] = Rwwp.at<float>(1,1);
-        MTwwp.m[6] = Rwwp.at<float>(2,1);
-
-        MTwwp.m[8] = Rwwp.at<float>(0,2);
-        MTwwp.m[9] = Rwwp.at<float>(1,2);
-        MTwwp.m[10] = Rwwp.at<float>(2,2);
-
-        MTwwp.m[12] = twc.at<float>(0);
-        MTwwp.m[13] = twc.at<float>(1);
-        MTwwp.m[14] = twc.at<float>(2);
-    }
-    else
-    {
-        M.SetIdentity();
-        MOw.SetIdentity();
-        MTwwp.SetIdentity();
-    }
-
-}
-
 } //namespace ORB_SLAM
