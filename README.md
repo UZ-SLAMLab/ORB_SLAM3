@@ -37,7 +37,7 @@ ORB-SLAM3 is released under [GPLv3 license](https://github.com/UZ-SLAMLab/ORB_SL
 For a closed-source version of ORB-SLAM3 for commercial purposes, please contact the authors: orbslam (at) unizar (dot) es.
 
 If you use ORB-SLAM3 in an academic work, please cite:
-  
+
     @article{ORBSLAM3_TRO,
       title={{ORB-SLAM3}: An Accurate Open-Source Library for Visual, Visual-Inertial 
                and Multi-Map {SLAM}},
@@ -165,14 +165,14 @@ and add at the end the following line. Replace PATH by the folder where you clon
   ```
   export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:PATH/ORB_SLAM3/Examples/ROS
   ```
-  
+
 2. Execute `build_ros.sh` script:
 
   ```
   chmod +x build_ros.sh
   ./build_ros.sh
   ```
-  
+
 ### Running Monocular Node
 For a monocular input from topic `/camera/image_raw` run node ORB_SLAM3/Mono. You will need to provide the vocabulary file and a settings file. See the monocular examples above.
 
@@ -200,7 +200,7 @@ For a stereo input from topics `/camera/left/image_raw` and `/camera/right/image
   ```
   rosrun ORB_SLAM3 Stereo_Inertial PATH_TO_VOCABULARY PATH_TO_SETTINGS_FILE ONLINE_RECTIFICATION [EQUALIZATION]	
   ```
-  
+
 ### Running RGB_D Node
 For an RGB-D input from topics `/camera/rgb/image_raw` and `/camera/depth_registered/image_raw`, run node ORB_SLAM3/RGBD. You will need to provide the vocabulary file and a settings file. See the RGB-D example above.
 
@@ -212,15 +212,15 @@ For an RGB-D input from topics `/camera/rgb/image_raw` and `/camera/depth_regist
   ```
   roscore
   ```
-  
+
   ```
   rosrun ORB_SLAM3 Stereo_Inertial Vocabulary/ORBvoc.txt Examples/Stereo-Inertial/EuRoC.yaml true
   ```
-  
+
   ```
   rosbag play --pause V1_02_medium.bag /cam0/image_raw:=/camera/left/image_raw /cam1/image_raw:=/camera/right/image_raw /imu0:=/imu
   ```
-  
+
 Once ORB-SLAM3 has loaded the vocabulary, press space in the rosbag tab.
 
 **Remark:** For rosbags from TUM-VI dataset, some play issue may appear due to chunk size. One possible solution is to rebag them with the default chunk size, for example:
@@ -228,8 +228,35 @@ Once ORB-SLAM3 has loaded the vocabulary, press space in the rosbag tab.
   rosrun rosbag fastrebag.py dataset-room1_512_16.bag dataset-room1_512_16_small_chunks.bag
   ```
 
-# 8. Running time analysis
+# 8. Airsim Examples
+
+### Building the nodes for stereo 
+
+Tested with ROS Melodic and ubuntu 18.04.
+
+For a stereo input from topic `/camera/left/image_raw` and `/camera/right/image_raw` run node ORB_SLAM3/Stereo. You will need to `remap` the topic of stereo camera from airsim to ORB-SLAM3 in the file of `/AirSim/ros/src/airsim_ros_pkgs/launch/airsim_node.launch`, for example:
+
+```
+<node name="airsim_node" pkg="airsim_ros_pkgs" type="airsim_node" output="$(arg output)">
+	...
+    <remap from="/airsim_node/[drone_i]drone_i/front_left_custom/Scene" to="/camera/left/image_raw" />
+    <remap from="/airsim_node/[drone_i]/front_right_custom/Scene" to="/camera/right/image_raw" />
+</node>
+```
+
+[drone_i] : The name of drone is user-defined.
+
+After, start airsim and ORB-SLAM3 in turn. Take ORB-SLAM3 for example:
+
+```
+rosrun ORB_SLAM3 Stereo PATH_TO_VOCABULARY PATH_TO_SETTINGS_FILE ONLINE_RECTIFICATION
+```
+
+where, PATH_TO_SETTINGS_FILE is the file path of `airsim_stereo.yaml`.
+
+# 9. Running time analysis
+
 A flag in `include\Config.h` activates time measurements. It is necessary to uncomment the line `#define REGISTER_TIMES` to obtain the time stats of one execution which is shown at the terminal and stored in a text file(`ExecTimeMean.txt`).
 
-# 9. Calibration
+# 10. Calibration
 You can find a tutorial for visual-inertial calibration and a detailed description of the contents of valid configuration files at  `Calibration_Tutorial.pdf`
