@@ -151,7 +151,31 @@ Execute the following script to process sequences and compute the RMS ATE:
 ./tum_vi_eval_examples
 ```
 
-# 7. ROS Examples
+# 7. Running ORB-SLAM inside Docker container
+Examples using Intel Realsense cameras can be runned inside a Docker container. The image has ORB-SLAM 3 and all dependencies installed in its */dpds* directory. 
+
+## Basic mode
+1. This will pull the image from [Docker hub](https://hub.docker.com/r/lmwafer/orb-slam-3-ready/tags) and run a container (needs a GPU for Pangolin) (container removed after exit)
+```bash
+docker run --privileged --name orb-3-container --rm -p 8087:8087 -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 -v /tmp/.X11-unix:/tmp/.X11-unix -v /dev:/dev:ro --gpus all -it lmwafer/orb-slam-3-ready:1.0-ubuntu18.04
+```
+2. Inside the container run this to reach 'ORB_SLAM3' directory
+```bash
+cd /dpds/ORB_SLAM3/
+```
+You can run every example presented above with Realsense cameras. Everything in the image is already built !
+## Advanced mode
+The image used is based on three image layers : [Ubuntu 18.04](https://hub.docker.com/_/ubuntu?tab=tags&page=1&name=18.04), [realsense-ready](https://hub.docker.com/r/lmwafer/realsense-ready) and [orb-slam-3-ready](https://hub.docker.com/r/lmwafer/orb-slam-3-ready). You may want a better control on what's inside them. To this matter *Docker* directory contains : 
+
+- *Dockerfile* for both realsense and orb images. Note that **orb-slam-3-ready** lays on top of **realsense-ready**. Modify that by changing `FORM` instruction in *Dockerfile-orb*. Don't forget general usage dependencies that came along realsense-ready image !
+
+- *docker-compose.yml* to start both containers separately. Files are almost identical, this is for Kubernetes-like deployement
+
+- *README.md* documentation file
+
+- *Makefile* to provide usual commands
+
+# 8. ROS Examples
 
 ### Building the nodes for mono, mono-inertial, stereo, stereo-inertial and RGB-D
 Tested with ROS Melodic and ubuntu 18.04.
