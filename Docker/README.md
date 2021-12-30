@@ -95,7 +95,7 @@ Stop running *realsense-container* (and removes it, add a *rw* volume in *docker
 make down-realsense
 ```
 
-Build realsense-ready image (uses **realsense-container/Dockerfile**)
+Build *realsense-ready* image (uses **realsense-container/Dockerfile**)
 ```bash
 make build-realsense
 ```
