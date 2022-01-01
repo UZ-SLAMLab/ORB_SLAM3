@@ -115,14 +115,16 @@ include/Settings.h)
 
 add_subdirectory(Thirdparty/g2o)
 
+set(LIBRARY_PATH /usr/local/lib)
+
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
 ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
-${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
--lboost_serialization
--lcrypto
+${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.dylib
+${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.dylib
+${LIBRARY_PATH}/libboost_serialization.dylib
+${LIBRARY_PATH}/libcrypto.dylib
 )
 
 # If RealSense SDK is found the library is added and its examples compiled
@@ -246,6 +248,12 @@ target_link_libraries(stereo_inertial_euroc ${PROJECT_NAME})
 add_executable(stereo_inertial_tum_vi
         Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
 target_link_libraries(stereo_inertial_tum_vi ${PROJECT_NAME})
+
+# Build tools
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/tools)
+add_executable(bin_vocabulary
+tools/bin_vocabulary.cc)
+target_link_libraries(bin_vocabulary ${PROJECT_NAME})
 
 if(realsense2_FOUND)
     add_executable(stereo_inertial_realsense_t265

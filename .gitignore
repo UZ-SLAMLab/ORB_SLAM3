@@ -71,6 +71,7 @@ lib/
 
 cmake_modules/
 cmake-build-debug/
+cmake-build-release/
 
 ExecMean.txt
 SessionInfo.txt
@@ -86,6 +87,7 @@ Table_TUMVI_rooms/
 *.pyc
 *.osa
 .idea/
+.DS_Store
 my_settings.txt
 
 borrar/*

@@ -33,6 +33,11 @@
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 
+bool has_suffix(const std::string &str, const std::string &suffix) {
+  std::size_t index = str.find(suffix, str.size() - suffix.size());
+  return (index != std::string::npos);
+}
+
 namespace ORB_SLAM3
 {
 
@@ -115,7 +120,20 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
 
         mpVocabulary = new ORBVocabulary();
-        bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+
+        // Load the file with an earlier session
+        clock_t start = clock();
+
+        bool bVocLoad = false; // chose loading method based on file extension
+        if (has_suffix(strVocFile, ".txt"))
+            bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+        else
+            bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
+
+        clock_t timeElapsed = clock() - start;
+        unsigned msElapsed = timeElapsed / (CLOCKS_PER_SEC / 1000);
+        cout << "Binary file read in " << msElapsed << " ms" << endl;
+
         if(!bVocLoad)
         {
             cerr << "Wrong path to vocabulary. " << endl;
@@ -137,7 +155,13 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
 
         mpVocabulary = new ORBVocabulary();
-        bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+
+        bool bVocLoad = false; // chose loading method based on file extension
+        if (has_suffix(strVocFile, ".txt"))
+            bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+        else
+            bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
+
         if(!bVocLoad)
         {
             cerr << "Wrong path to vocabulary. " << endl;
