@@ -39,6 +39,7 @@ cmake -D CMAKE_BUILD_TYPE=Release -D WITH_CUDA=OFF -D CMAKE_INSTALL_PREFIX=/usr/
 make -j 3
 sudo make install
 ```
+> If you want to install to conda environment, use `CMAKE_INSTALL_PREFIX=$CONDA_PREFIX` instead.
 ---
 
 ### Install Pangolin
@@ -53,6 +54,7 @@ cmake .. -D CMAKE_BUILD_TYPE=Release
 make -j 3 
 sudo make install
 ```
+> If you want to install to conda environment, add `CMAKE_INSTALL_PREFIX=$CONDA_PREFIX` instead.
 ---
 
 ### ORB-SLAM 3
