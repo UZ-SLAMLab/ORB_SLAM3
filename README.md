@@ -239,7 +239,7 @@ For a stereo input from topic `/camera/left/image_raw` and `/camera/right/image_
 ```
 <node name="airsim_node" pkg="airsim_ros_pkgs" type="airsim_node" output="$(arg output)">
 	...
-    <remap from="/airsim_node/[drone_i]drone_i/front_left_custom/Scene" to="/camera/left/image_raw" />
+    <remap from="/airsim_node/[drone_i]/front_left_custom/Scene" to="/camera/left/image_raw" />
     <remap from="/airsim_node/[drone_i]/front_right_custom/Scene" to="/camera/right/image_raw" />
 </node>
 ```
