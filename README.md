@@ -1,3 +1,5 @@
+#VIAM NOTES
+when downloading on a linux computer with rtk(not a pi) I had to remove brew from my PATH to get some dependencies to work. In addition I had to remove ncurses and libtiff from brew. added them back afterwards but there is 100% a more correct way to do this. Also need to change which version of some packages(like openCV) is being used in CMakeLists.txt
 # ORB-SLAM3
 
 ### V1.0, December 22th, 2021
