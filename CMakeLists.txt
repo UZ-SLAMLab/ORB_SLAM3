@@ -139,6 +139,11 @@ endif()
 # Build examples
 
 # RGB-D examples
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
+add_executable(rgbd_realsense_test
+        initialAttempt/rgbd_realsense_L515.cc)
+target_link_libraries(rgbd_realsense_test ${PROJECT_NAME})
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
 
 add_executable(rgbd_tum
