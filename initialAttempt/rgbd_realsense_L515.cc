@@ -333,18 +333,15 @@ int main(int argc, char **argv) {
             if(count_im_buffer>1)
                 cout << count_im_buffer -1 << " dropped frs\n";
             count_im_buffer = 0;
-std::cout << "Yo" << std::endl;
             timestamp = timestamp_image;
             im = imCV.clone();
             depth = depthCV.clone();
 
             image_ready = false;
         }
-std::cout << "Yo Yo" << std::endl;
         // Perform alignment here
         auto processed = align.process(fs);
         
-std::cout << "Yo Yo Yo" << std::endl;
         // Trying to get both other and aligned depth frames
         rs2::video_frame color_frame = processed.first(align_to);
         rs2::depth_frame depth_frame = processed.get_depth_frame();
