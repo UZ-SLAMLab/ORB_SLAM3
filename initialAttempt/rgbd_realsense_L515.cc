@@ -42,7 +42,6 @@ bool b_continue_session;
 void exit_loop_handler(int s){
     cout << "Finishing session" << endl;
     b_continue_session = false;
-
 }
 
 rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams);
@@ -156,7 +155,7 @@ int main(int argc, char **argv) {
             if (index == 2){
                 // RGB camera
                 sensor.set_option(RS2_OPTION_EXPOSURE,80.f);
-
+                
             }
 
             if (index == 3){
@@ -305,9 +304,9 @@ int main(int argc, char **argv) {
 
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD, true, 0, file_name);
+    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD, false, 0, file_name);
     float imageScale = SLAM.GetImageScale();
-
+    
     double timestamp;
     cv::Mat im, depth;
 
@@ -315,7 +314,7 @@ int main(int argc, char **argv) {
     double t_track = 0.f;
     rs2::frameset fs;
 
-    while (!SLAM.isShutDown())
+    while (!SLAM.isShutDown() && b_continue_session)
     {
         {
             std::unique_lock<std::mutex> lk(imu_mutex);
@@ -402,6 +401,13 @@ int main(int argc, char **argv) {
 
     }
     cout << "System shutdown!\n";
+    if(!b_continue_session){
+        SLAM.Shutdown();
+        SLAM.SaveTrajectoryEuRoC(file_name);
+        SLAM.SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
+    }
+    cout << "Yo Shutting" << endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 }
 
 rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams)
