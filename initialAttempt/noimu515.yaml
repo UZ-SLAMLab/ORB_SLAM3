@@ -36,27 +36,6 @@ Stereo.b: 0.0745
 # Depth map values factor
 RGBD.DepthMapFactor: 1000.0
 
-# Transformation from body-frame (imu) to left camera
-IMU.T_b_c1: !!opencv-matrix
-   rows: 4
-   cols: 4
-   dt: f
-   data: [0.999903, -0.0138036, -0.00208099, -0.0202141,
-         0.0137985, 0.999902, -0.00243498, 0.00505961,
-         0.0021144, 0.00240603, 0.999995, 0.0114047,
-         0.0, 0.0, 0.0, 1.0]
-
-
-# Do not insert KFs when recently lost
-IMU.InsertKFsWhenLost: 0
-
-# IMU noise (Use those from VINS-mono)
-IMU.NoiseGyro: 1e-2 # 3 # 2.44e-4 #1e-3 # rad/s^0.5
-IMU.NoiseAcc: 1e-1 #2 # 1.47e-3 #1e-2 # m/s^1.5
-IMU.GyroWalk: 1e-6 # rad/s^1.5
-IMU.AccWalk: 1e-4 # m/s^2.5
-IMU.Frequency: 200.0
-
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
 #--------------------------------------------------------------------------------------------
@@ -89,6 +68,3 @@ Viewer.ViewpointX: 0.0
 Viewer.ViewpointY: -0.7
 Viewer.ViewpointZ: -3.5
 Viewer.ViewpointF: 500.0
-
-System.SaveAtlasToFile: "initialAttempt/testSaveMap4"
-System.LoadAtlasFromFile: "initialAttempt/testSaveMap3"

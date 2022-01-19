@@ -144,6 +144,10 @@ add_executable(rgbd_realsense_test
         initialAttempt/rgbd_realsense_L515.cc)
 target_link_libraries(rgbd_realsense_test ${PROJECT_NAME})
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
+add_executable(no_imu_test
+        initialAttempt/rgbd_noimu.cc)
+target_link_libraries(no_imu_test ${PROJECT_NAME})
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
 
 # add_executable(rgbd_tum
