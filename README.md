@@ -1,5 +1,37 @@
-#VIAM NOTES
+# VIAM NOTES
 when downloading on a linux computer with rtk(not a pi) I had to remove brew from my PATH to get some dependencies to work. In addition I had to remove ncurses and libtiff from brew. added them back afterwards but there is 100% a more correct way to do this. Also need to change which version of some packages(like openCV) is being used in CMakeLists.txt
+
+* setup Pangolin(includes eigen)
+git clone --recursive https://github.com/stevenlovegrove/Pangolin.git
+cd Pangolin 
+./scripts/install_prerequisites.sh recommended
+
+mkdir build && cd build
+cmake ..
+make -j4 
+sudo make install
+
+* setup openCV
+sudo apt install libopencv-dev
+
+* Eigen3
+sudo apt install libeigen3-dev
+
+* (semi optional) Python3 - use for some post processing with ground truth data(like vicon)
+sudo apt install libpython3.7-dev
+sudo apt install python3-pip
+pip3 install --upgrade pip
+pip3 install numpy
+pip3 install matplotlib
+
+* OTHER STUFF 
+sudo apt install libssl-dev 
+sudo apt-get install libboost-all-dev
+* ORB-SLAM3 
+grab from here https://github.com/JohnN193/ORB_SLAM3
+make changes to CMakeLists.txt if needed (change openCV version was the one i ran into)
+sometimes crashes on the initial build on pis, as far as i can tell during the sophus build. 
+in build.sh you may want to tweak the make -j flags 
 # ORB-SLAM3
 
 ### V1.0, December 22th, 2021
@@ -74,7 +106,7 @@ We use modified versions of the [DBoW2](https://github.com/dorian3d/DBoW2) libra
 Required to calculate the alignment of the trajectory with the ground truth. **Required Numpy module**.
 
 * (win) http://www.python.org/downloads/windows
-* (deb) `sudo apt install libpython2.7-dev`
+* (deb) `sudo apt install libpython3.7-dev`
 * (mac) preinstalled with osx
 
 ## ROS (optional)
