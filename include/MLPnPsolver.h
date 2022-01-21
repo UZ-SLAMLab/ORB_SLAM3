@@ -1,7 +1,7 @@
 /**
 * This file is part of ORB-SLAM3
 *
-* Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 *
 * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -58,6 +58,8 @@
 namespace ORB_SLAM3{
     class MLPnPsolver {
     public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         MLPnPsolver(const Frame &F, const vector<MapPoint*> &vpMapPointMatches);
 
         ~MLPnPsolver();
@@ -65,7 +67,9 @@ namespace ORB_SLAM3{
         void SetRansacParameters(double probability = 0.99, int minInliers = 8, int maxIterations = 300, int minSet = 6, float epsilon = 0.4,
                                  float th2 = 5.991);
 
-        cv::Mat iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers);
+        //Find metod is necessary?
+
+        bool iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers, Eigen::Matrix4f &Tout);
 
         //Type definitions needed by the original code
 
@@ -200,7 +204,7 @@ namespace ORB_SLAM3{
         // Current Estimation
         double mRi[3][3];
         double mti[3];
-        cv::Mat mTcwi;
+        Eigen::Matrix4f mTcwi;
         vector<bool> mvbInliersi;
         int mnInliersi;
 
@@ -208,10 +212,10 @@ namespace ORB_SLAM3{
         int mnIterations;
         vector<bool> mvbBestInliers;
         int mnBestInliers;
-        cv::Mat mBestTcw;
+        Eigen::Matrix4f mBestTcw;
 
         // Refined
-        cv::Mat mRefinedTcw;
+        Eigen::Matrix4f mRefinedTcw;
         vector<bool> mvbRefinedInliers;
         int mnRefinedInliers;
 
@@ -243,7 +247,6 @@ namespace ORB_SLAM3{
         vector<float> mvMaxError;
 
         GeometricCamera* mpCamera;
-
     };
 
 }

@@ -1,0 +1,26 @@
+branches:
+  only:
+    - master
+
+os: Visual Studio 2015
+
+clone_folder: c:\projects\sophus
+
+platform: x64
+configuration: Release
+
+build:
+  project: c:\projects\sophus\build\Sophus.sln
+
+install:
+  - ps: wget https://gitlab.com/libeigen/eigen/-/archive/3.3.4/eigen-3.3.4.zip -outfile eigen3.zip
+  - cmd: 7z x eigen3.zip -o"C:\projects" -y > nul
+
+before_build:
+  - cd c:\projects\sophus
+  - mkdir build
+  - cd build
+  - cmake -G "Visual Studio 14 2015 Win64" -D EIGEN3_INCLUDE_DIR=C:\projects\eigen-3.3.4 ..
+
+after_build:
+  - ctest

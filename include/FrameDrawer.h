@@ -1,7 +1,7 @@
 /**
 * This file is part of ORB-SLAM3
 *
-* Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 *
 * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -40,14 +40,15 @@ class Viewer;
 class FrameDrawer
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     FrameDrawer(Atlas* pAtlas);
 
     // Update info from the last processed frame.
     void Update(Tracking *pTracker);
 
     // Draw last processed frame.
-    cv::Mat DrawFrame(bool bOldFeatures=true);
-    cv::Mat DrawRightFrame();
+    cv::Mat DrawFrame(float imageScale=1.f);
+    cv::Mat DrawRightFrame(float imageScale=1.f);
 
     bool both;
 
@@ -65,6 +66,8 @@ protected:
     vector<cv::KeyPoint> mvIniKeys;
     vector<int> mvIniMatches;
     int mState;
+    std::vector<float> mvCurrentDepth;
+    float mThDepth;
 
     Atlas* mpAtlas;
 

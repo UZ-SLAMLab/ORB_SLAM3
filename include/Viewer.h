@@ -1,7 +1,7 @@
 /**
 * This file is part of ORB-SLAM3
 *
-* Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 *
 * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -24,6 +24,7 @@
 #include "MapDrawer.h"
 #include "Tracking.h"
 #include "System.h"
+#include "Settings.h"
 
 #include <mutex>
 
@@ -34,11 +35,15 @@ class Tracking;
 class FrameDrawer;
 class MapDrawer;
 class System;
+class Settings;
 
 class Viewer
 {
 public:
-    Viewer(System* pSystem, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Tracking *pTracking, const string &strSettingPath);
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    Viewer(System* pSystem, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Tracking *pTracking, const string &strSettingPath, Settings* settings);
+
+    void newParameterLoader(Settings* settings);
 
     // Main thread function. Draw points, keyframes, the current camera pose and the last processed
     // frame. Drawing is refreshed according to the camera fps. We use Pangolin.
@@ -56,7 +61,7 @@ public:
 
     void Release();
 
-    void SetTrackingPause();
+    //void SetTrackingPause();
 
     bool both;
 private:
@@ -73,6 +78,7 @@ private:
     // 1/fps in ms
     double mT;
     float mImageWidth, mImageHeight;
+    float mImageViewerScale;
 
     float mViewpointX, mViewpointY, mViewpointZ, mViewpointF;
 

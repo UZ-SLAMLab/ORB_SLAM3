@@ -1,7 +1,7 @@
 /**
 * This file is part of ORB-SLAM3
 *
-* Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 *
 * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -21,19 +21,22 @@
 
 
 #include <assert.h>
-#include <vector>
-#include <opencv2/core/core.hpp>
-
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/vector.hpp>
 
 #include "GeometricCamera.h"
 
 #include "TwoViewReconstruction.h"
 
 namespace ORB_SLAM3 {
-    class KannalaBrandt8 final : public GeometricCamera {
+    class KannalaBrandt8 : public GeometricCamera {
+
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar & boost::serialization::base_object<GeometricCamera>(*this);
+        ar & const_cast<float&>(precision);
+    }
 
     public:
         KannalaBrandt8() : precision(1e-6) {
@@ -60,44 +63,41 @@ namespace ORB_SLAM3 {
         }
 
         cv::Point2f project(const cv::Point3f &p3D);
-        cv::Point2f project(const cv::Matx31f &m3D);
-        cv::Point2f project(const cv::Mat& m3D);
         Eigen::Vector2d project(const Eigen::Vector3d & v3D);
-        cv::Mat projectMat(const cv::Point3f& p3D);
+        Eigen::Vector2f project(const Eigen::Vector3f & v3D);
+        Eigen::Vector2f projectMat(const cv::Point3f& p3D);
 
         float uncertainty2(const Eigen::Matrix<double,2,1> &p2D);
 
+        Eigen::Vector3f unprojectEig(const cv::Point2f &p2D);
         cv::Point3f unproject(const cv::Point2f &p2D);
-        cv::Mat unprojectMat(const cv::Point2f &p2D);
-        cv::Matx31f unprojectMat_(const cv::Point2f &p2D);
 
-        cv::Mat projectJac(const cv::Point3f &p3D);
         Eigen::Matrix<double,2,3> projectJac(const Eigen::Vector3d& v3D);
 
-        cv::Mat unprojectJac(const cv::Point2f &p2D);
 
         bool ReconstructWithTwoViews(const std::vector<cv::KeyPoint>& vKeys1, const std::vector<cv::KeyPoint>& vKeys2, const std::vector<int> &vMatches12,
-                                     cv::Mat &R21, cv::Mat &t21, std::vector<cv::Point3f> &vP3D, std::vector<bool> &vbTriangulated);
+                                     Sophus::SE3f &T21, std::vector<cv::Point3f> &vP3D, std::vector<bool> &vbTriangulated);
 
         cv::Mat toK();
-        cv::Matx33f toK_();
+        Eigen::Matrix3f toK_();
 
-        bool epipolarConstrain(GeometricCamera* pCamera2, const cv::KeyPoint& kp1, const cv::KeyPoint& kp2, const cv::Mat& R12, const cv::Mat& t12, const float sigmaLevel, const float unc);
-        bool epipolarConstrain_(GeometricCamera* pCamera2, const cv::KeyPoint& kp1, const cv::KeyPoint& kp2, const cv::Matx33f& R12, const cv::Matx31f& t12, const float sigmaLevel, const float unc);
+        bool epipolarConstrain(GeometricCamera* pCamera2, const cv::KeyPoint& kp1, const cv::KeyPoint& kp2, const Eigen::Matrix3f& R12, const Eigen::Vector3f& t12, const float sigmaLevel, const float unc);
 
-
-        float TriangulateMatches(GeometricCamera* pCamera2, const cv::KeyPoint& kp1, const cv::KeyPoint& kp2, const cv::Mat& R12, const cv::Mat& t12, const float sigmaLevel, const float unc, cv::Mat& p3D);
-        float TriangulateMatches_(GeometricCamera* pCamera2, const cv::KeyPoint& kp1, const cv::KeyPoint& kp2, const cv::Matx33f& R12, const cv::Matx31f& t12, const float sigmaLevel, const float unc, cv::Matx31f& p3D);
+        float TriangulateMatches(GeometricCamera* pCamera2, const cv::KeyPoint& kp1, const cv::KeyPoint& kp2,  const Eigen::Matrix3f& R12, const Eigen::Vector3f& t12, const float sigmaLevel, const float unc, Eigen::Vector3f& p3D);
 
         std::vector<int> mvLappingArea;
 
         bool matchAndtriangulate(const cv::KeyPoint& kp1, const cv::KeyPoint& kp2, GeometricCamera* pOther,
-                                                 cv::Mat& Tcw1, cv::Mat& Tcw2,
-                                                 const float sigmaLevel1, const float sigmaLevel2,
-                                                 cv::Mat& x3Dtriangulated);
+                                 Sophus::SE3f& Tcw1, Sophus::SE3f& Tcw2,
+                                 const float sigmaLevel1, const float sigmaLevel2,
+                                 Eigen::Vector3f& x3Dtriangulated);
 
         friend std::ostream& operator<<(std::ostream& os, const KannalaBrandt8& kb);
         friend std::istream& operator>>(std::istream& is, KannalaBrandt8& kb);
+
+        float GetPrecision(){ return precision;}
+
+        bool IsEqual(GeometricCamera* pCam);
     private:
         const float precision;
 
@@ -106,11 +106,10 @@ namespace ORB_SLAM3 {
 
         TwoViewReconstruction* tvr;
 
-        void Triangulate(const cv::Point2f &p1, const cv::Point2f &p2, const cv::Mat &Tcw1, const cv::Mat &Tcw2,cv::Mat &x3D);
-        void Triangulate_(const cv::Point2f &p1, const cv::Point2f &p2, const cv::Matx44f &Tcw1, const cv::Matx44f &Tcw2,cv::Matx31f &x3D);
+        void Triangulate(const cv::Point2f &p1, const cv::Point2f &p2, const Eigen::Matrix<float,3,4> &Tcw1,
+                         const Eigen::Matrix<float,3,4> &Tcw2, Eigen::Vector3f &x3D);
     };
 }
 
-//BOOST_CLASS_EXPORT_KEY(ORBSLAM2::KannalaBrandt8)
 
 #endif //CAMERAMODELS_KANNALABRANDT8_H

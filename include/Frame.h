@@ -1,7 +1,7 @@
 /**
 * This file is part of ORB-SLAM3
 *
-* Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 *
 * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -25,12 +25,19 @@
 #include "Thirdparty/DBoW2/DBoW2/BowVector.h"
 #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
 
+#include "Thirdparty/Sophus/sophus/geometry.hpp"
+
 #include "ImuTypes.h"
 #include "ORBVocabulary.h"
-#include "Config.h"
+
+#include "Converter.h"
+#include "Settings.h"
 
 #include <mutex>
 #include <opencv2/opencv.hpp>
+
+#include "Eigen/Core"
+#include "sophus/se3.hpp"
 
 namespace ORB_SLAM3
 {
@@ -60,6 +67,9 @@ public:
     // Constructor for Monocular cameras.
     Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, GeometricCamera* pCamera, cv::Mat &distCoef, const float &bf, const float &thDepth, Frame* pPrevF = static_cast<Frame*>(NULL), const IMU::Calib &ImuCalib = IMU::Calib());
 
+    // Destructor
+    // ~Frame();
+
     // Extract ORB on the image. 0 for left image and 1 for right image.
     void ExtractORB(int flag, const cv::Mat &im, const int x0, const int x1);
 
@@ -67,32 +77,24 @@ public:
     void ComputeBoW();
 
     // Set the camera pose. (Imu pose is not modified!)
-    void SetPose(cv::Mat Tcw);
-    void GetPose(cv::Mat &Tcw);
+    void SetPose(const Sophus::SE3<float> &Tcw);
 
     // Set IMU velocity
-    void SetVelocity(const cv::Mat &Vwb);
+    void SetVelocity(Eigen::Vector3f Vw);
+
+    Eigen::Vector3f GetVelocity() const;
 
     // Set IMU pose and velocity (implicitly changes camera pose)
-    void SetImuPoseVelocity(const cv::Mat &Rwb, const cv::Mat &twb, const cv::Mat &Vwb);
+    void SetImuPoseVelocity(const Eigen::Matrix3f &Rwb, const Eigen::Vector3f &twb, const Eigen::Vector3f &Vwb);
 
+    Eigen::Matrix<float,3,1> GetImuPosition() const;
+    Eigen::Matrix<float,3,3> GetImuRotation();
+    Sophus::SE3<float> GetImuPose();
 
-    // Computes rotation, translation and camera center matrices from the camera pose.
-    void UpdatePoseMatrices();
-
-    // Returns the camera center.
-    inline cv::Mat GetCameraCenter(){
-        return mOw.clone();
-    }
-
-    // Returns inverse of rotation
-    inline cv::Mat GetRotationInverse(){
-        return mRwc.clone();
-    }
-
-    cv::Mat GetImuPosition();
-    cv::Mat GetImuRotation();
-    cv::Mat GetImuPose();
+    Sophus::SE3f GetRelativePoseTrl();
+    Sophus::SE3f GetRelativePoseTlr();
+    Eigen::Matrix3f GetRelativePoseTlr_rotation();
+    Eigen::Vector3f GetRelativePoseTlr_translation();
 
     void SetNewBias(const IMU::Bias &b);
 
@@ -102,7 +104,7 @@ public:
 
     bool ProjectPointDistort(MapPoint* pMP, cv::Point2f &kp, float &u, float &v);
 
-    cv::Mat inRefCoordinates(cv::Mat pCw);
+    Eigen::Vector3f inRefCoordinates(Eigen::Vector3f pCw);
 
     // Compute the cell of a keypoint (return false if outside the grid)
     bool PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY);
@@ -117,16 +119,76 @@ public:
     void ComputeStereoFromRGBD(const cv::Mat &imDepth);
 
     // Backprojects a keypoint (if stereo/depth info available) into 3D world coordinates.
-    cv::Mat UnprojectStereo(const int &i);
+    bool UnprojectStereo(const int &i, Eigen::Vector3f &x3D);
 
     ConstraintPoseImu* mpcpi;
 
     bool imuIsPreintegrated();
     void setIntegrated();
 
-    cv::Mat mRwc;
-    cv::Mat mOw;
+    bool isSet() const;
+
+    // Computes rotation, translation and camera center matrices from the camera pose.
+    void UpdatePoseMatrices();
+
+    // Returns the camera center.
+    inline Eigen::Vector3f GetCameraCenter(){
+        return mOw;
+    }
+
+    // Returns inverse of rotation
+    inline Eigen::Matrix3f GetRotationInverse(){
+        return mRwc;
+    }
+
+    inline Sophus::SE3<float> GetPose() const {
+        //TODO: can the Frame pose be accsessed from several threads? should this be protected somehow?
+        return mTcw;
+    }
+
+    inline Eigen::Matrix3f GetRwc() const {
+        return mRwc;
+    }
+
+    inline Eigen::Vector3f GetOw() const {
+        return mOw;
+    }
+
+    inline bool HasPose() const {
+        return mbHasPose;
+    }
+
+    inline bool HasVelocity() const {
+        return mbHasVelocity;
+    }
+
+
+
+private:
+    //Sophus/Eigen migration
+    Sophus::SE3<float> mTcw;
+    Eigen::Matrix<float,3,3> mRwc;
+    Eigen::Matrix<float,3,1> mOw;
+    Eigen::Matrix<float,3,3> mRcw;
+    Eigen::Matrix<float,3,1> mtcw;
+    bool mbHasPose;
+
+    //Rcw_ not necessary as Sophus has a method for extracting the rotation matrix: Tcw_.rotationMatrix()
+    //tcw_ not necessary as Sophus has a method for extracting the translation vector: Tcw_.translation()
+    //Twc_ not necessary as Sophus has a method for easily computing the inverse pose: Tcw_.inverse()
+
+    Sophus::SE3<float> mTlr, mTrl;
+    Eigen::Matrix<float,3,3> mRlr;
+    Eigen::Vector3f mtlr;
+
+
+    // IMU linear velocity
+    Eigen::Vector3f mVw;
+    bool mbHasVelocity;
+
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     // Vocabulary used for relocalization.
     ORBVocabulary* mpORBvocabulary;
 
@@ -138,6 +200,7 @@ public:
 
     // Calibration matrix and OpenCV distortion parameters.
     cv::Mat mK;
+    Eigen::Matrix3f mK_;
     static float fx;
     static float fy;
     static float cx;
@@ -188,14 +251,6 @@ public:
     static float mfGridElementHeightInv;
     std::vector<std::size_t> mGrid[FRAME_GRID_COLS][FRAME_GRID_ROWS];
 
-
-    // Camera pose.
-    cv::Mat mTcw;
-
-    // IMU linear velocity
-    cv::Mat mVw;
-
-    cv::Mat mPredRwb, mPredtwb, mPredVwb;
     IMU::Bias mPredBias;
 
     // IMU bias
@@ -261,14 +316,7 @@ private:
     // Assign keypoints to the grid for speed up feature matching (called in the constructor).
     void AssignFeaturesToGrid();
 
-    // Rotation, translation and camera center
-    cv::Mat mRcw;
-    cv::Mat mtcw;
-    //==mtwc
-
-    cv::Matx31f mOwx;
-    cv::Matx33f mRcwx;
-    cv::Matx31f mtcwx;
+    bool mbIsSet;
 
     bool mbImuPreintegrated;
 
@@ -290,22 +338,19 @@ public:
 
     //Triangulated stereo observations using as reference the left camera. These are
     //computed during ComputeStereoFishEyeMatches
-    std::vector<cv::Mat> mvStereo3Dpoints;
+    std::vector<Eigen::Vector3f> mvStereo3Dpoints;
 
     //Grid for the right image
     std::vector<std::size_t> mGridRight[FRAME_GRID_COLS][FRAME_GRID_ROWS];
 
-    cv::Mat mTlr, mRlr, mtlr, mTrl;
-    cv::Matx34f mTrlx, mTlrx;
-
-    Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera* pCamera, GeometricCamera* pCamera2, cv::Mat& Tlr,Frame* pPrevF = static_cast<Frame*>(NULL), const IMU::Calib &ImuCalib = IMU::Calib());
+    Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera* pCamera, GeometricCamera* pCamera2, Sophus::SE3f& Tlr,Frame* pPrevF = static_cast<Frame*>(NULL), const IMU::Calib &ImuCalib = IMU::Calib());
 
     //Stereo fisheye
     void ComputeStereoFishEyeMatches();
 
     bool isInFrustumChecks(MapPoint* pMP, float viewingCosLimit, bool bRight = false);
 
-    cv::Mat UnprojectStereoFishEye(const int &i);
+    Eigen::Vector3f UnprojectStereoFishEye(const int &i);
 
     cv::Mat imgLeft, imgRight;
 
@@ -320,6 +365,8 @@ public:
         }
         cout << "Point distribution in Frame: left-> " << left << " --- right-> " << right << endl;
     }
+
+    Sophus::SE3<double> T_test;
 };
 
 }// namespace ORB_SLAM

@@ -1,7 +1,7 @@
 /**
 * This file is part of ORB-SLAM3
 *
-* Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 *
 * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -25,33 +25,59 @@
 namespace ORB_SLAM3
 {
 
-Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Tracking *pTracking, const string &strSettingPath):
+Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Tracking *pTracking, const string &strSettingPath, Settings* settings):
     both(false), mpSystem(pSystem), mpFrameDrawer(pFrameDrawer),mpMapDrawer(pMapDrawer), mpTracker(pTracking),
     mbFinishRequested(false), mbFinished(true), mbStopped(true), mbStopRequested(false)
 {
-    cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
+    if(settings){
+        newParameterLoader(settings);
+    }
+    else{
 
-    bool is_correct = ParseViewerParamFile(fSettings);
+        cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
 
-    if(!is_correct)
-    {
-        std::cerr << "**ERROR in the config file, the format is not correct**" << std::endl;
-        try
+        bool is_correct = ParseViewerParamFile(fSettings);
+
+        if(!is_correct)
         {
-            throw -1;
-        }
-        catch(exception &e)
-        {
+            std::cerr << "**ERROR in the config file, the format is not correct**" << std::endl;
+            try
+            {
+                throw -1;
+            }
+            catch(exception &e)
+            {
 
+            }
         }
     }
 
     mbStopTrack = false;
 }
 
+void Viewer::newParameterLoader(Settings *settings) {
+    mImageViewerScale = 1.f;
+
+    float fps = settings->fps();
+    if(fps<1)
+        fps=30;
+    mT = 1e3/fps;
+
+    cv::Size imSize = settings->newImSize();
+    mImageHeight = imSize.height;
+    mImageWidth = imSize.width;
+
+    mImageViewerScale = settings->imageViewerScale();
+    mViewpointX = settings->viewPointX();
+    mViewpointY = settings->viewPointY();
+    mViewpointZ = settings->viewPointZ();
+    mViewpointF = settings->viewPointF();
+}
+
 bool Viewer::ParseViewerParamFile(cv::FileStorage &fSettings)
 {
     bool b_miss_params = false;
+    mImageViewerScale = 1.f;
 
     float fps = fSettings["Camera.fps"];
     if(fps<1)
@@ -78,6 +104,12 @@ bool Viewer::ParseViewerParamFile(cv::FileStorage &fSettings)
     {
         std::cerr << "*Camera.height parameter doesn't exist or is not a real number*" << std::endl;
         b_miss_params = true;
+    }
+
+    node = fSettings["Viewer.imageViewScale"];
+    if(!node.empty())
+    {
+        mImageViewerScale = node.real();
     }
 
     node = fSettings["Viewer.ViewpointX"];
@@ -142,16 +174,21 @@ void Viewer::Run()
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     pangolin::CreatePanel("menu").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
-    pangolin::Var<bool> menuFollowCamera("menu.Follow Camera",true,true);
+    pangolin::Var<bool> menuFollowCamera("menu.Follow Camera",false,true);
     pangolin::Var<bool> menuCamView("menu.Camera View",false,false);
     pangolin::Var<bool> menuTopView("menu.Top View",false,false);
+    // pangolin::Var<bool> menuSideView("menu.Side View",false,false);
     pangolin::Var<bool> menuShowPoints("menu.Show Points",true,true);
     pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames",true,true);
     pangolin::Var<bool> menuShowGraph("menu.Show Graph",false,true);
     pangolin::Var<bool> menuShowInertialGraph("menu.Show Inertial Graph",true,true);
     pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode",false,true);
     pangolin::Var<bool> menuReset("menu.Reset",false,false);
+    pangolin::Var<bool> menuStop("menu.Stop",false,false);
+    pangolin::Var<bool> menuStepByStep("menu.Step By Step",false,true);  // false, true
+    pangolin::Var<bool> menuStep("menu.Step",false,false);
 
+    pangolin::Var<bool> menuShowOptLba("menu.Show LBA opt", false, true);
     // Define Camera Render Object (for view / scene browsing)
     pangolin::OpenGlRenderState s_cam(
                 pangolin::ProjectionMatrix(1024,768,mViewpointF,mViewpointF,512,389,0.1,1000),
@@ -167,8 +204,6 @@ void Viewer::Run()
     Twc.SetIdentity();
     pangolin::OpenGlMatrix Ow; // Oriented with g in the z axis
     Ow.SetIdentity();
-    pangolin::OpenGlMatrix Twwp; // Oriented with g in the z axis, but y and x from camera
-    Twwp.SetIdentity();
     cv::namedWindow("ORB-SLAM3: Current Frame");
 
     bool bFollow = true;
@@ -181,14 +216,18 @@ void Viewer::Run()
         menuShowGraph = true;
     }
 
+    float trackedImageScale = mpTracker->GetImageScale();
+
+    cout << "Starting the Viewer" << endl;
     while(1)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        mpMapDrawer->GetCurrentOpenGLCameraMatrix(Twc,Ow,Twwp);
+        mpMapDrawer->GetCurrentOpenGLCameraMatrix(Twc,Ow);
 
         if(mbStopTrack)
         {
+            menuStepByStep = true;
             mbStopTrack = false;
         }
 
@@ -249,25 +288,51 @@ void Viewer::Run()
             bLocalizationMode = false;
         }
 
+        if(menuStepByStep && !bStepByStep)
+        {
+            //cout << "Viewer: step by step" << endl;
+            mpTracker->SetStepByStep(true);
+            bStepByStep = true;
+        }
+        else if(!menuStepByStep && bStepByStep)
+        {
+            mpTracker->SetStepByStep(false);
+            bStepByStep = false;
+        }
+
+        if(menuStep)
+        {
+            mpTracker->mbStep = true;
+            menuStep = false;
+        }
+
+
         d_cam.Activate(s_cam);
         glClearColor(1.0f,1.0f,1.0f,1.0f);
         mpMapDrawer->DrawCurrentCamera(Twc);
-        if(menuShowKeyFrames || menuShowGraph || menuShowInertialGraph)
-            mpMapDrawer->DrawKeyFrames(menuShowKeyFrames,menuShowGraph, menuShowInertialGraph);
+        if(menuShowKeyFrames || menuShowGraph || menuShowInertialGraph || menuShowOptLba)
+            mpMapDrawer->DrawKeyFrames(menuShowKeyFrames,menuShowGraph, menuShowInertialGraph, menuShowOptLba);
         if(menuShowPoints)
             mpMapDrawer->DrawMapPoints();
 
         pangolin::FinishFrame();
 
         cv::Mat toShow;
-        cv::Mat im = mpFrameDrawer->DrawFrame(true);
+        cv::Mat im = mpFrameDrawer->DrawFrame(trackedImageScale);
 
         if(both){
-            cv::Mat imRight = mpFrameDrawer->DrawRightFrame();
+            cv::Mat imRight = mpFrameDrawer->DrawRightFrame(trackedImageScale);
             cv::hconcat(im,imRight,toShow);
         }
         else{
             toShow = im;
+        }
+
+        if(mImageViewerScale != 1.f)
+        {
+            int width = toShow.cols * mImageViewerScale;
+            int height = toShow.rows * mImageViewerScale;
+            cv::resize(toShow, toShow, cv::Size(width, height));
         }
 
         cv::imshow("ORB-SLAM3: Current Frame",toShow);
@@ -287,6 +352,20 @@ void Viewer::Run()
             menuFollowCamera = true;
             mpSystem->ResetActiveMap();
             menuReset = false;
+        }
+
+        if(menuStop)
+        {
+            if(bLocalizationMode)
+                mpSystem->DeactivateLocalizationMode();
+
+            // Stop all threads
+            mpSystem->Shutdown();
+
+            // Save camera trajectory
+            mpSystem->SaveTrajectoryEuRoC("CameraTrajectory.txt");
+            mpSystem->SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
+            menuStop = false;
         }
 
         if(Stop())
@@ -365,9 +444,9 @@ void Viewer::Release()
     mbStopped = false;
 }
 
-void Viewer::SetTrackingPause()
+/*void Viewer::SetTrackingPause()
 {
     mbStopTrack = true;
-}
+}*/
 
 }

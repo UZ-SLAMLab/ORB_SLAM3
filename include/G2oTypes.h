@@ -1,7 +1,7 @@
 /**
 * This file is part of ORB-SLAM3
 *
-* Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
 *
 * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -15,7 +15,6 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
 
 #ifndef G2OTYPES_H
 #define G2OTYPES_H
@@ -65,7 +64,11 @@ Eigen::Matrix3d RightJacobianSO3(const double x, const double y, const double z)
 Eigen::Matrix3d Skew(const Eigen::Vector3d &w);
 Eigen::Matrix3d InverseRightJacobianSO3(const double x, const double y, const double z);
 
-Eigen::Matrix3d NormalizeRotation(const Eigen::Matrix3d &R);
+template<typename T = double>
+Eigen::Matrix<T,3,3> NormalizeRotation(const Eigen::Matrix<T,3,3> &R) {
+    Eigen::JacobiSVD<Eigen::Matrix<T,3,3>> svd(R,Eigen::ComputeFullU | Eigen::ComputeFullV);
+    return svd.matrixU() * svd.matrixV().transpose();
+}
 
 
 class ImuCamPose
@@ -389,7 +392,7 @@ class EdgeMonoOnlyPose : public g2o::BaseUnaryEdge<2,Eigen::Vector2d,VertexPose>
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    EdgeMonoOnlyPose(const cv::Mat &Xw_, int cam_idx_=0):Xw(Converter::toVector3d(Xw_)),
+    EdgeMonoOnlyPose(const Eigen::Vector3f &Xw_, int cam_idx_=0):Xw(Xw_.cast<double>()),
         cam_idx(cam_idx_){}
 
     virtual bool read(std::istream& is){return false;}
@@ -465,8 +468,8 @@ class EdgeStereoOnlyPose : public g2o::BaseUnaryEdge<3,Eigen::Vector3d,VertexPos
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    EdgeStereoOnlyPose(const cv::Mat &Xw_, int cam_idx_=0):
-        Xw(Converter::toVector3d(Xw_)), cam_idx(cam_idx_){}
+    EdgeStereoOnlyPose(const Eigen::Vector3f &Xw_, int cam_idx_=0):
+        Xw(Xw_.cast<double>()), cam_idx(cam_idx_){}
 
     virtual bool read(std::istream& is){return false;}
     virtual bool write(std::ostream& os) const{return false;}
@@ -717,25 +720,6 @@ public:
                 eigs[i]=0;
         H = es.eigenvectors()*eigs.asDiagonal()*es.eigenvectors().transpose();
     }
-    ConstraintPoseImu(const cv::Mat &Rwb_, const cv::Mat &twb_, const cv::Mat &vwb_,
-                       const IMU::Bias &b, const cv::Mat &H_)
-    {
-        Rwb = Converter::toMatrix3d(Rwb_);
-        twb = Converter::toVector3d(twb_);
-        vwb = Converter::toVector3d(vwb_);
-        bg << b.bwx, b.bwy, b.bwz;
-        ba << b.bax, b.bay, b.baz;
-        for(int i=0;i<15;i++)
-            for(int j=0;j<15;j++)
-                H(i,j)=H_.at<float>(i,j);
-        H = (H+H)/2;
-        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,15,15> > es(H);
-        Eigen::Matrix<double,15,1> eigs = es.eigenvalues();
-        for(int i=0;i<15;i++)
-            if(eigs[i]<1e-12)
-                eigs[i]=0;
-        H = es.eigenvectors()*eigs.asDiagonal()*es.eigenvectors().transpose();
-    }
 
     Eigen::Matrix3d Rwb;
     Eigen::Vector3d twb;
@@ -786,7 +770,7 @@ class EdgePriorAcc : public g2o::BaseUnaryEdge<3,Eigen::Vector3d,VertexAccBias>
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    EdgePriorAcc(const cv::Mat &bprior_):bprior(Converter::toVector3d(bprior_)){}
+    EdgePriorAcc(const Eigen::Vector3f &bprior_):bprior(bprior_.cast<double>()){}
 
     virtual bool read(std::istream& is){return false;}
     virtual bool write(std::ostream& os) const{return false;}
@@ -810,7 +794,7 @@ class EdgePriorGyro : public g2o::BaseUnaryEdge<3,Eigen::Vector3d,VertexGyroBias
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    EdgePriorGyro(const cv::Mat &bprior_):bprior(Converter::toVector3d(bprior_)){}
+    EdgePriorGyro(const Eigen::Vector3f &bprior_):bprior(bprior_.cast<double>()){}
 
     virtual bool read(std::istream& is){return false;}
     virtual bool write(std::ostream& os) const{return false;}

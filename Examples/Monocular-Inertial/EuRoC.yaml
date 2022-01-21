@@ -3,31 +3,36 @@
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
+File.version: "1.0"
+
 Camera.type: "PinHole"
 
 # Camera calibration and distortion parameters (OpenCV) 
-Camera.fx: 458.654
-Camera.fy: 457.296
-Camera.cx: 367.215
-Camera.cy: 248.375
+Camera1.fx: 458.654
+Camera1.fy: 457.296
+Camera1.cx: 367.215
+Camera1.cy: 248.375
 
-Camera.k1: -0.28340811
-Camera.k2: 0.07395907
-Camera.p1: 0.00019359
-Camera.p2: 1.76187114e-05
+Camera1.k1: -0.28340811
+Camera1.k2: 0.07395907
+Camera1.p1: 0.00019359
+Camera1.p2: 1.76187114e-05
 
 # Camera resolution
 Camera.width: 752
 Camera.height: 480
 
+Camera.newWidth: 600
+Camera.newHeight: 350
+
 # Camera frames per second 
-Camera.fps: 20.0
+Camera.fps: 20
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
 
 # Transformation from camera to body-frame (imu)
-Tbc: !!opencv-matrix
+IMU.T_b_c1: !!opencv-matrix
    rows: 4
    cols: 4
    dt: f
@@ -37,11 +42,11 @@ Tbc: !!opencv-matrix
          0.0, 0.0, 0.0, 1.0]
 
 # IMU noise
-IMU.NoiseGyro: 1.7e-4 #1.6968e-04 
+IMU.NoiseGyro: 1.7e-4 #1.6968e-04
 IMU.NoiseAcc: 2.0000e-3 #2.0e-3
 IMU.GyroWalk: 1.9393e-05 
 IMU.AccWalk: 3.0000e-03 # 3e-03
-IMU.Frequency: 200
+IMU.Frequency: 200.0
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
@@ -67,13 +72,13 @@ ORBextractor.minThFAST: 7
 # Viewer Parameters
 #--------------------------------------------------------------------------------------------
 Viewer.KeyFrameSize: 0.05
-Viewer.KeyFrameLineWidth: 1
+Viewer.KeyFrameLineWidth: 1.0
 Viewer.GraphLineWidth: 0.9
-Viewer.PointSize:2
+Viewer.PointSize: 2.0
 Viewer.CameraSize: 0.08
-Viewer.CameraLineWidth: 3
-Viewer.ViewpointX: 0
+Viewer.CameraLineWidth: 3.0
+Viewer.ViewpointX: 0.0
 Viewer.ViewpointY: -0.7
 Viewer.ViewpointZ: -3.5 # -1.8
-Viewer.ViewpointF: 500
+Viewer.ViewpointF: 500.0
 
