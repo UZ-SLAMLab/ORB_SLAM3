@@ -33,7 +33,7 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-find_package(OpenCV 3.2)
+find_package(OpenCV 4.5.1)
    if(NOT OpenCV_FOUND)
       message(FATAL_ERROR "OpenCV > 3.2 not found.")
    endif()
@@ -142,15 +142,15 @@ endif()
 # Build examples
 
 # RGB-D examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
-add_executable(rgbd_realsense_test
-        initialAttempt/rgbd_realsense_L515.cc)
-target_link_libraries(rgbd_realsense_test ${PROJECT_NAME})
+# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
+# add_executable(rgbd_realsense_test
+#         initialAttempt/rgbd_realsense_L515.cc)
+# target_link_libraries(rgbd_realsense_test ${PROJECT_NAME})
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
-add_executable(no_imu_test
-        initialAttempt/rgbd_noimu.cc)
-target_link_libraries(no_imu_test ${PROJECT_NAME})
+# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
+# add_executable(no_imu_test
+#         initialAttempt/rgbd_noimu.cc)
+# target_link_libraries(no_imu_test ${PROJECT_NAME})
 
 find_package(PkgConfig REQUIRED)
 
