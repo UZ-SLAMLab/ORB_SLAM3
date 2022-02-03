@@ -167,12 +167,12 @@ cv::Mat im,depth, rawData;
     while (!SLAM.isShutDown() && b_continue_session)
     {
       
-      cout << "yo loop start" << endl;
+      // cout << "yo loop start" << endl;
       timeBegin = std::chrono::steady_clock::now();
       ClientContext context2;
       grpc::ChannelArguments ch_args;
       ch_args.SetMaxReceiveMessageSize(-1);
-      const std::shared_ptr<Channel> channel2 = grpc::CreateCustomChannel("127.0.0.1:8080", grpc::InsecureChannelCredentials(),ch_args);
+      const std::shared_ptr<Channel> channel2 = grpc::CreateCustomChannel(argv[1], grpc::InsecureChannelCredentials(),ch_args);
       const std::unique_ptr<CameraService::Stub> client2 = CameraService::NewStub(channel2);
       
       CameraServiceGetFrameRequest requestGet;
@@ -187,7 +187,7 @@ cv::Mat im,depth, rawData;
       frameWidth = (int) responseGet.width_px();
       frameHeight = (int) responseGet.height_px();
 
-      cout << frameWidth << frameHeight << endl;
+      // cout << frameWidth << frameHeight << endl;
 
       timeGRPC = std::chrono::steady_clock::now();
       grpcDuration = std::chrono::duration_cast<std::chrono::duration<double> >(timeGRPC - timeBegin).count();
@@ -227,17 +227,28 @@ cv::Mat im,depth, rawData;
         im = cv::imdecode(rawData,cv::IMREAD_COLOR);
 
         depth = cv::Mat(cv::Size(frameWidth, frameHeight), CV_16U, depthFrame, cv::Mat::AUTO_STEP);
+        if(depth.empty())
+          {
+              cerr << endl << "Failed to load depth " << endl;
+
+          }
+        if(im.empty())
+          {
+              cerr << endl << "Failed to load image " << endl;
+              // return 1;
+          }
         // im = cv::Mat(cv::Size(width_img, height_img), CV_8UC3, (void*)(color_frame.get_data()), cv::Mat::AUTO_STEP);
         // depth = cv::Mat(cv::Size(width_img, height_img), CV_16U, (void*)(depth_frame.get_data()), cv::Mat::AUTO_STEP);
         if(imageScale != 1.f)
             {
+              cout << "yo" << endl;
                 int width = im.cols * imageScale;
                 int height = im.rows * imageScale;
                 cv::resize(im, im, cv::Size(width, height));
                 cv::resize(depth, depth, cv::Size(width, height));
             }
 
-cout << "yo got frames" << endl;
+// cout << "yo got frames" << endl;
         // Pass the image to the SLAM system
         
         timeNow = std::chrono::steady_clock::now();
@@ -250,16 +261,11 @@ cout << "yo got frames" << endl;
     cout << "System shutdown!\n";
     if(!b_continue_session){
         SLAM.Shutdown();
-        cout << "yo" << endl;
         SLAM.SaveTrajectoryEuRoC(file_name);
-        cout << "yo yo" << endl;
         SLAM.SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
     }
-    cout << "Yo Shutting" << endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
+    cout << "Yo Shutting Down" << endl;
     
-
 
     return 0;
 }
