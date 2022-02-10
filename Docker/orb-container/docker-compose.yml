@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+  realsense-ready:
+    container_name: orb-3-container
+    image: lmwafer/orb-slam-3-ready:1.0-ubuntu18.04
+    restart: always
+    privileged: true
+    ports:
+      - "8087:8087"                       # Inherited from realsense-ready
+    environment:
+      - DISPLAY=$DISPLAY                  # Inherited from realsense-ready
+      - QT_X11_NO_MITSHM=1                # Inherited from realsense-ready
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix     # For orb-ready only, give access to X11
+      - /dev:/dev:ro
+    stdin_open: true                      # For orb-ready only, equivalent to "docker run -i"
+    tty: true                             # For orb-ready only, equivalent to "docker run -t"
+
+    deploy:                               # For orb-ready only, in response to what(): Pangolin X11: Failed to create an OpenGL context
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['0']             # This ID may change on different machines : `lshw -c display` for more info
+            capabilities: [gpu]
