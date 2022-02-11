@@ -548,6 +548,7 @@ void System::Shutdown()
     if(!mStrSaveAtlasToFile.empty())
     {
         Verbose::PrintMess("Atlas saving to file " + mStrSaveAtlasToFile, Verbose::VERBOSITY_NORMAL);
+        SaveAtlas(FileType::BINARY_FILE);
         SaveAtlas(FileType::TEXT_FILE);
     }
 
@@ -1410,6 +1411,8 @@ void System::SaveAtlas(int type){
 
         string pathSaveFileName = "./";
         pathSaveFileName = pathSaveFileName.append(mStrSaveAtlasToFile);
+        if(type == TEXT_FILE)
+        pathSaveFileName = pathSaveFileName.append("TXT");
         pathSaveFileName = pathSaveFileName.append(".osa");
 
         string strVocabularyChecksum = CalculateCheckSum(mStrVocabularyFilePath,TEXT_FILE);

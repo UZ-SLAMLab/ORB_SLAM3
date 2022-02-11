@@ -23,7 +23,8 @@ Camera1.p2: 0.0
 # Camera resolution
 Camera.width: 1024
 Camera.height: 768
-
+# Camera.width: 640
+# Camera.height: 480
 # Camera frames per second 
 Camera.fps: 30
 
@@ -90,4 +91,5 @@ Viewer.ViewpointY: -0.7
 Viewer.ViewpointZ: -3.5
 Viewer.ViewpointF: 500.0
 
-System.SaveAtlasToFile: "initialAttempt/testSaveMapText"
+System.SaveAtlasToFile: "benchAtlas"
+# System.LoadAtlasFromFile: "initialAttempt/testSaveMapText2"

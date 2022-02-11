@@ -71,12 +71,16 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    string file_name;
+    string file_name,file_nameTraj,file_nameKey;
     bool bFileName = false;
 
     if (argc == 4) {
         file_name = string(argv[argc - 1]);
+        file_nameTraj = file_name;
+        file_nameKey = file_name;
         bFileName = true;
+        file_nameTraj = file_nameTraj.append(".txt");
+        file_nameKey = file_nameKey.append("Keyframe.txt");
     }
 
     struct sigaction sigIntHandler;
@@ -89,29 +93,35 @@ int main(int argc, char **argv)
     b_continue_session = true;
 
     double offset = 0; // ms
-   
-  //   ClientContext context2;
-  // grpc::ChannelArguments ch_args;
-  // ch_args.SetMaxReceiveMessageSize(-1);
-  // const std::shared_ptr<Channel> channel2 = grpc::CreateCustomChannel("127.0.0.1:8080", grpc::InsecureChannelCredentials(),ch_args);
-  // const std::unique_ptr<CameraService::Stub> client2 = CameraService::NewStub(channel2);
+
+////// DEBUG GRPC HERE ////////////
+
+// ClientContext context2;
+// grpc::ChannelArguments ch_args;
+// ch_args.SetMaxReceiveMessageSize(-1);
+// const std::shared_ptr<Channel> channel2 = grpc::CreateCustomChannel(argv[1], grpc::InsecureChannelCredentials(),ch_args);
+// const std::unique_ptr<CameraService::Stub> client2 = CameraService::NewStub(channel2);
+
+// CameraServiceGetFrameRequest requestGet;
+// CameraServiceGetFrameResponse responseGet;
+// requestGet.set_mime_type("image/both");
+// requestGet.set_name("grandma.realsense");
+// const Status gStatus2 = client2->GetFrame(&context2,requestGet,&responseGet);  //render_frame(&context2, request2, &response2);
+// if (!gStatus2.ok()) {
+//   std::cout << "Status rpc failed." << gStatus2.error_code() <<  std::endl;
+// return 1;
+// }
   
-  // CameraServiceGetFrameRequest requestGet;
-  // CameraServiceGetFrameResponse responseGet;
-  // requestGet.set_mime_type("image/both");
-  // requestGet.set_name("front-raw");
-  // const Status gStatus2 = client2->GetFrame(&context2,requestGet,&responseGet);  //render_frame(&context2, request2, &response2);
-  // if (!gStatus2.ok()) {
-  //   std::cout << "Status rpc failed." << gStatus2.error_code() <<  std::endl;
-  //   return 1;
-  // }
-  
-// unsigned char buffer[responseGet.frame().length()];
-// char const *buffer = responseGet.frame().c_str();
 // int nSize = responseGet.frame().length();
 // std::vector<char> bytes(responseGet.frame().begin(), responseGet.frame().end());
 // char *buffer = &bytes[0];
-
+// int  frameWidth = (int) responseGet.width_px();
+// int  frameHeight = (int) responseGet.height_px();
+// long width;
+// long height;
+// memcpy(&width, buffer , 8);
+// memcpy(&height, buffer+8 , 8);
+// std::cout << width << " " << height << std::endl;
 // int depthFrame[frameWidth][frameHeight];
 // int location = 16;
 // short j;
@@ -122,10 +132,10 @@ int main(int argc, char **argv)
 //     location=location+2;
 //   }
 // }
+//     cout << depthFrame[frameWidth/2][frameHeight/2] << endl;  
+//     return 0;
 
-//     cout << depthFrame[frameWidth/2][frameHeight/2] << endl;
-    
-    
+
 std::string::size_type n;
 // n = responseGet.frame().find("\x89PNG\r\n\x1a\n",location);
 // cout << n << endl;
@@ -151,7 +161,7 @@ cv::Mat im,depth, rawData;
     int frameWidth,frameHeight, nSize, location;
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM("./Vocabulary/ORBvoc.txt",argv[2],ORB_SLAM3::System::RGBD, false, 0, file_name);
+    ORB_SLAM3::System SLAM("./Vocabulary/ORBvoc.txt",argv[2],ORB_SLAM3::System::RGBD, false, 0, file_nameTraj);
 
     float imageScale = SLAM.GetImageScale();
     
@@ -178,11 +188,12 @@ cv::Mat im,depth, rawData;
       CameraServiceGetFrameRequest requestGet;
       CameraServiceGetFrameResponse responseGet;
       requestGet.set_mime_type("image/both");
-      requestGet.set_name("front-raw");
+      requestGet.set_name("grandma.realsense");
       const Status gStatus2 = client2->GetFrame(&context2,requestGet,&responseGet);  //render_frame(&context2, request2, &response2);
       if (!gStatus2.ok()) {
         std::cout << "Status rpc failed." << gStatus2.error_code() <<  std::endl;
-      return 1;
+      b_continue_session = false;
+      break;
       }
       frameWidth = (int) responseGet.width_px();
       frameHeight = (int) responseGet.height_px();
@@ -198,12 +209,12 @@ cv::Mat im,depth, rawData;
 
       int depthFrame[frameWidth][frameHeight];
       location = 16;
-      short j;
+      long j;
       for (int x=0;x < frameWidth;x++){
         for (int y=0;y < frameHeight;y++){
-          memcpy(&j, buffer+location , 2);
-          depthFrame[x][y] = j;
-          location=location+2;
+          memcpy(&j, buffer+location , 8);
+          depthFrame[x][y] = (int) j;
+          location=location+8;
         }
       }
 
@@ -252,7 +263,7 @@ cv::Mat im,depth, rawData;
         // Pass the image to the SLAM system
         
         timeNow = std::chrono::steady_clock::now();
-        timestamp = std::chrono::duration_cast<std::chrono::duration<double> >(timeNow - timeStart).count();
+        timestamp = std::chrono::duration_cast<std::chrono::duration<double> >(timeBegin - timeStart).count();
         SLAM.TrackRGBD(im, depth, timestamp); //, vImuMeas); depthCV
         timeSLAM = std::chrono::steady_clock::now();
         slamDuration = std::chrono::duration_cast<std::chrono::duration<double> >(timeSLAM - timeNow).count();
@@ -261,8 +272,8 @@ cv::Mat im,depth, rawData;
     cout << "System shutdown!\n";
     if(!b_continue_session){
         SLAM.Shutdown();
-        SLAM.SaveTrajectoryEuRoC(file_name);
-        SLAM.SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
+        SLAM.SaveTrajectoryEuRoC(file_nameTraj);
+        SLAM.SaveKeyFrameTrajectoryEuRoC(file_nameKey);
     }
     cout << "Yo Shutting Down" << endl;
     

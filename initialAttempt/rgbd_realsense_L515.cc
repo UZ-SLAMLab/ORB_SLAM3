@@ -106,12 +106,16 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    string file_name;
+    string file_name,file_nameTraj,file_nameKey;
     bool bFileName = false;
 
     if (argc == 4) {
         file_name = string(argv[argc - 1]);
+        file_nameTraj = file_name;
+        file_nameKey = file_name;
         bFileName = true;
+        file_nameTraj = file_nameTraj.append(".txt");
+        file_nameKey = file_nameKey.append("Keyframe.txt");
     }
 
     struct sigaction sigIntHandler;
@@ -304,7 +308,7 @@ int main(int argc, char **argv) {
 
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD, true, 0, file_name);
+    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD, false, 0, file_name);
     float imageScale = SLAM.GetImageScale();
     
     double timestamp;
@@ -403,11 +407,10 @@ int main(int argc, char **argv) {
     cout << "System shutdown!\n";
     if(!b_continue_session){
         SLAM.Shutdown();
-        SLAM.SaveTrajectoryEuRoC(file_name);
-        SLAM.SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
+        SLAM.SaveTrajectoryEuRoC(file_nameTraj);
+        SLAM.SaveKeyFrameTrajectoryEuRoC(file_nameKey);
     }
     cout << "Yo Shutting" << endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 }
 
 rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams)
