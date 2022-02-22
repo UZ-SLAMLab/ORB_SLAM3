@@ -308,7 +308,7 @@ int main(int argc, char **argv) {
 
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD, true, 0, file_name);
+    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD, false, 0, file_name);
     float imageScale = SLAM.GetImageScale();
     
     double timestamp;
@@ -421,6 +421,15 @@ int main(int argc, char **argv) {
     }
     cout << "System shutdown!\n";
     if(!b_continue_session){
+        std::vector<ORB_SLAM3::MapPoint*> mapStuff = SLAM.GetAtlas()->GetCurrentMap()->GetAllMapPoints();
+        // Map* GetCurrentMap();
+        // mapStuff = SLAM.GetTrackedMapPoints();
+        cout << mapStuff.size() << endl;
+        std::cout << "# x,y,z" << std::endl;
+	for (auto p : mapStuff) {
+		Eigen::Matrix<double, 3, 1> v = ORB_SLAM2::Converter::toVector3d(p->GetWorldPos());
+		std::cout << v.x() << "," << v.y() << "," << v.z() << std::endl;
+	}
         SLAM.Shutdown();
         SLAM.SaveTrajectoryEuRoC(file_nameTraj);
         SLAM.SaveKeyFrameTrajectoryEuRoC(file_nameKey);
