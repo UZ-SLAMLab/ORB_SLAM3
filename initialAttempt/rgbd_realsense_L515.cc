@@ -28,7 +28,7 @@
 #include <condition_variable>
 
 #include <opencv2/core/core.hpp>
-
+#include <boost/archive/text_oarchive.hpp>
 #include <librealsense2/rs.hpp>
 #include "librealsense2/rsutil.h"
 
@@ -424,12 +424,36 @@ int main(int argc, char **argv) {
         std::vector<ORB_SLAM3::MapPoint*> mapStuff = SLAM.GetAtlas()->GetCurrentMap()->GetAllMapPoints();
         // Map* GetCurrentMap();
         // mapStuff = SLAM.GetTrackedMapPoints();
+        cout << "Start to write PCD with datapoints: " << endl;
         cout << mapStuff.size() << endl;
-        std::cout << "# x,y,z" << std::endl;
+        // std::cout << "# x,y,z" << std::endl;
+        string pathSaveFileName = "./";
+        pathSaveFileName = pathSaveFileName.append(file_name);
+        pathSaveFileName.append(".pcd");
+        std::remove(pathSaveFileName.c_str());
+        std::ofstream ofs(pathSaveFileName, std::ios::binary);
+        // boost::archive::text_oarchive oa(ofs);
+        ofs  << "VERSION .7\n"
+            << "FIELDS x y z\n"
+            << "SIZE 4 4 4\n"
+            << "TYPE F F F\n"
+            << "COUNT 1 1 1\n"
+            << "WIDTH "
+            << mapStuff.size()
+            << "\n"
+            << "HEIGHT " << 1 << "\n"
+            << "VIEWPOINT 0 0 0 1 0 0 0\n"
+            << "POINTS "
+            << mapStuff.size()
+            << "\n"
+            << "DATA ascii\n";
 	for (auto p : mapStuff) {
-		Eigen::Matrix<double, 3, 1> v = ORB_SLAM2::Converter::toVector3d(p->GetWorldPos());
-		std::cout << v.x() << "," << v.y() << "," << v.z() << std::endl;
+		Eigen::Matrix<float, 3, 1> v = p->GetWorldPos();//ORB_SLAM3::Converter::toVector3d(p->GetWorldPos());
+		// std::cout << v.x() << "," << v.y() << "," << v.z() << std::endl;
+        ofs << v.x()  << " " << v.y()  << " " << v.z()  << "\n";
 	}
+    ofs.close();
+    cout << "End to write PCD" << endl;
         SLAM.Shutdown();
         SLAM.SaveTrajectoryEuRoC(file_nameTraj);
         SLAM.SaveKeyFrameTrajectoryEuRoC(file_nameKey);
