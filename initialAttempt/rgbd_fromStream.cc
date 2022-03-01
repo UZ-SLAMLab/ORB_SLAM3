@@ -38,22 +38,22 @@
 #include <google/protobuf/util/json_util.h>
 #include <grpcpp/security/credentials.h>
 
-#include "proto/api/v1/robot.pb.h"
-#include "proto/api/v1/robot.grpc.pb.h"
-#include "proto/api/component/v1/camera.grpc.pb.h"
-#include "proto/api/component/v1/camera.pb.h"
+#include "proto/api/robot/v1/robot.pb.h"
+#include "proto/api/robot/v1/robot.grpc.pb.h"
+#include "proto/api/component/camera/v1/camera.grpc.pb.h"
+#include "proto/api/component/camera/v1/camera.pb.h"
 
 using namespace std;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
-using proto::api::v1::RobotService;
-using proto::api::v1::StatusRequest;
-using proto::api::v1::StatusResponse;
-using proto::api::component::v1::CameraService;
-using proto::api::component::v1::CameraServiceRenderFrameRequest;
-using proto::api::component::v1::CameraServiceGetFrameRequest;
-using proto::api::component::v1::CameraServiceGetFrameResponse;
+using proto::api::robot::v1::RobotService;
+using proto::api::robot::v1::StatusRequest;
+using proto::api::robot::v1::StatusResponse;
+using proto::api::component::camera::v1::CameraService;
+using proto::api::component::camera::v1::RenderFrameRequest;
+using proto::api::component::camera::v1::GetFrameRequest;
+using proto::api::component::camera::v1::GetFrameResponse;
 
 bool b_continue_session;
 
@@ -94,74 +94,17 @@ int main(int argc, char **argv)
 
     double offset = 0; // ms
 
-////// DEBUG GRPC HERE ////////////
-
-// ClientContext context2;
-// grpc::ChannelArguments ch_args;
-// ch_args.SetMaxReceiveMessageSize(-1);
-// const std::shared_ptr<Channel> channel2 = grpc::CreateCustomChannel(argv[1], grpc::InsecureChannelCredentials(),ch_args);
-// const std::unique_ptr<CameraService::Stub> client2 = CameraService::NewStub(channel2);
-
-// CameraServiceGetFrameRequest requestGet;
-// CameraServiceGetFrameResponse responseGet;
-// requestGet.set_mime_type("image/both");
-// requestGet.set_name("grandma.realsense");
-// const Status gStatus2 = client2->GetFrame(&context2,requestGet,&responseGet);  //render_frame(&context2, request2, &response2);
-// if (!gStatus2.ok()) {
-//   std::cout << "Status rpc failed." << gStatus2.error_code() <<  std::endl;
-// return 1;
-// }
-  
-// int nSize = responseGet.frame().length();
-// std::vector<char> bytes(responseGet.frame().begin(), responseGet.frame().end());
-// char *buffer = &bytes[0];
-// int  frameWidth = (int) responseGet.width_px();
-// int  frameHeight = (int) responseGet.height_px();
-// long width;
-// long height;
-// memcpy(&width, buffer , 8);
-// memcpy(&height, buffer+8 , 8);
-// std::cout << width << " " << height << std::endl;
-// int depthFrame[frameWidth][frameHeight];
-// int location = 16;
-// short j;
-// for (int x=0;x < frameWidth;x++){
-//   for (int y=0;y < frameHeight;y++){
-//     memcpy(&j, buffer+location , 2);
-//     depthFrame[x][y] = j;
-//     location=location+2;
-//   }
-// }
-//     cout << depthFrame[frameWidth/2][frameHeight/2] << endl;  
-//     return 0;
-
 
 std::string::size_type n;
-// n = responseGet.frame().find("\x89PNG\r\n\x1a\n",location);
-// cout << n << endl;
-// char* pngBuf = &bytes[n];
+
 
 
 cv::Mat im,depth, rawData;
-// rawData =  cv::Mat(cv::Size(1,nSize-n), CV_8UC1, (void*)pngBuf, cv::IMREAD_COLOR);
-// im = cv::imdecode(rawData,cv::IMREAD_COLOR);
-
-// depth = cv::Mat(cv::Size(frameWidth, frameHeight), CV_16U, depthFrame, cv::Mat::AUTO_STEP);
-// if(depth.empty())
-//             {
-//                 cerr << endl << "Failed to load depth " << endl;
-
-//             }
-// if(im.empty())
-//             {
-//                 cerr << endl << "Failed to load image " << endl;
-//                 return 1;
-//             }
 
     int frameWidth,frameHeight, nSize, location;
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM("./Vocabulary/ORBvoc.txt",argv[2],ORB_SLAM3::System::RGBD, false, 0, file_nameTraj);
+    ORB_SLAM3::System SLAM("./Vocabulary/ORBvoc.txt",argv[2],ORB_SLAM3::System::RGBD, true, 0, file_nameTraj);
 
     float imageScale = SLAM.GetImageScale();
     
@@ -185,10 +128,10 @@ cv::Mat im,depth, rawData;
       const std::shared_ptr<Channel> channel2 = grpc::CreateCustomChannel(argv[1], grpc::InsecureChannelCredentials(),ch_args);
       const std::unique_ptr<CameraService::Stub> client2 = CameraService::NewStub(channel2);
       
-      CameraServiceGetFrameRequest requestGet;
-      CameraServiceGetFrameResponse responseGet;
+      GetFrameRequest requestGet;
+      GetFrameResponse responseGet;
       requestGet.set_mime_type("image/both");
-      requestGet.set_name("grandma.realsense");
+      requestGet.set_name("r-vg2105m05.combined");
       const Status gStatus2 = client2->GetFrame(&context2,requestGet,&responseGet);  //render_frame(&context2, request2, &response2);
       if (!gStatus2.ok()) {
         std::cout << "Status rpc failed." << gStatus2.error_code() <<  std::endl;
@@ -271,6 +214,39 @@ cv::Mat im,depth, rawData;
     }
     cout << "System shutdown!\n";
     if(!b_continue_session){
+      std::vector<ORB_SLAM3::MapPoint*> mapStuff = SLAM.GetAtlas()->GetCurrentMap()->GetAllMapPoints();
+        // Map* GetCurrentMap();
+        // mapStuff = SLAM.GetTrackedMapPoints();
+        cout << "Start to write PCD with datapoints: " << endl;
+        cout << mapStuff.size() << endl;
+        // std::cout << "# x,y,z" << std::endl;
+        string pathSaveFileName = "./";
+        pathSaveFileName = pathSaveFileName.append(file_name);
+        pathSaveFileName.append(".pcd");
+        std::remove(pathSaveFileName.c_str());
+        std::ofstream ofs(pathSaveFileName, std::ios::binary);
+        // boost::archive::text_oarchive oa(ofs);
+        ofs  << "VERSION .7\n"
+            << "FIELDS x y z\n"
+            << "SIZE 4 4 4\n"
+            << "TYPE F F F\n"
+            << "COUNT 1 1 1\n"
+            << "WIDTH "
+            << mapStuff.size()
+            << "\n"
+            << "HEIGHT " << 1 << "\n"
+            << "VIEWPOINT 0 0 0 1 0 0 0\n"
+            << "POINTS "
+            << mapStuff.size()
+            << "\n"
+            << "DATA ascii\n";
+	for (auto p : mapStuff) {
+		Eigen::Matrix<float, 3, 1> v = p->GetWorldPos();//ORB_SLAM3::Converter::toVector3d(p->GetWorldPos());
+		// std::cout << v.x() << "," << v.y() << "," << v.z() << std::endl;
+        ofs << v.x()  << " " << v.y()  << " " << v.z()  << "\n";
+	}
+    ofs.close();
+    cout << "End to write PCD" << endl;
         SLAM.Shutdown();
         SLAM.SaveTrajectoryEuRoC(file_nameTraj);
         SLAM.SaveKeyFrameTrajectoryEuRoC(file_nameKey);
