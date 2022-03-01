@@ -33,7 +33,7 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-find_package(OpenCV 4.5.1)
+find_package(OpenCV 3.4.1)
    if(NOT OpenCV_FOUND)
       message(FATAL_ERROR "OpenCV > 3.2 not found.")
    endif()
@@ -147,48 +147,47 @@ add_executable(rgbd_realsense_test
         initialAttempt/rgbd_realsense_L515.cc)
 target_link_libraries(rgbd_realsense_test ${PROJECT_NAME})
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
+add_executable(rgbd_file
+        initialAttempt/rgbd_fromFiles.cc)
+target_link_libraries(rgbd_file ${PROJECT_NAME})
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
+add_executable(rec_realsense
+        initialAttempt/record_realsense.cc)
+target_link_libraries(rec_realsense ${PROJECT_NAME})
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
+add_executable(mono_file
+        initialAttempt/mono_fromFiles.cc)
+target_link_libraries(mono_file ${PROJECT_NAME})
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
 # add_executable(no_imu_test
 #         initialAttempt/rgbd_noimu.cc)
 # target_link_libraries(no_imu_test ${PROJECT_NAME})
 
-find_package(PkgConfig REQUIRED)
+if(EXISTS ${SRCDIR})
+   find_package(PkgConfig REQUIRED)
 
-pkg_check_modules(GRPC REQUIRED grpc) 
-pkg_check_modules(GRPCPP REQUIRED grpc++)
-pkg_check_modules(PROTOBUF REQUIRED protobuf)
+   pkg_check_modules(GRPC REQUIRED grpc) 
+   pkg_check_modules(GRPCPP REQUIRED grpc++)
+   pkg_check_modules(PROTOBUF REQUIRED protobuf)
 
-# find_package(Protobuf REQUIRED)
-
-# find_package(PkgConfig REQUIRED)
-# find_package(grpc REQUIRED) 
-# find_package(grpc++ REQUIRED)
-# find_package(protobuf REQUIRED)
-# include_directories(${SRCDIR})
-# include_directories(${GR PC_INCLUDE_DIRS} ${GRPCPP_INCLUDE_DIRS} ${PROTOBUF_INCLUDE_DIRS})
-
-# set(SOURCES ${SRCDIR}/proto/api/v1/robot.grpc.pb.cc ${SRCDIR}/proto/api/v1/robot.pb.cc)
-# set(SOURCES ${SOURCES} ${SRCDIR}/proto/api/component/v1/camera.grpc.pb.cc ${SRCDIR}/proto/api/component/v1/camera.pb.cc)
-# set(SOURCES ${SOURCES} ${SRCDIR}/proto/api/service/v1/metadata.grpc.pb.cc ${SRCDIR}/proto/api/service/v1/metadata.pb.cc)
-# set(SOURCES ${SOURCES} ${SRCDIR}/proto/api/common/v1/common.grpc.pb.cc ${SRCDIR}/proto/api/common/v1/common.pb.cc)
-# set(SOURCES ${SOURCES} ${SRCDIR}/google/api/annotations.pb.cc ${SRCDIR}/google/api/httpbody.pb.cc)
-# set(SOURCES ${SOURCES} ${SRCDIR}/google/api/http.pb.cc)
-set(SOURCES ${SRCDIR}/proto/api/robot/v1/robot.grpc.pb.cc ${SRCDIR}/proto/api/robot/v1/robot.pb.cc)
-set(SOURCES ${SOURCES} ${SRCDIR}/proto/api/component/camera/v1/camera.grpc.pb.cc ${SRCDIR}/proto/api/component/camera/v1/camera.pb.cc)
-set(SOURCES ${SOURCES} ${SRCDIR}/proto/api/service/metadata/v1/metadata.grpc.pb.cc ${SRCDIR}/proto/api/service/metadata/v1/metadata.pb.cc)
-set(SOURCES ${SOURCES} ${SRCDIR}/proto/api/common/v1/common.grpc.pb.cc ${SRCDIR}/proto/api/common/v1/common.pb.cc)
-set(SOURCES ${SOURCES} ${SRCDIR}/google/api/annotations.pb.cc ${SRCDIR}/google/api/httpbody.pb.cc)
-set(SOURCES ${SOURCES} ${SRCDIR}/google/api/http.pb.cc)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
+   set(SOURCES ${SRCDIR}/proto/api/robot/v1/robot.grpc.pb.cc ${SRCDIR}/proto/api/robot/v1/robot.pb.cc)
+   set(SOURCES ${SOURCES} ${SRCDIR}/proto/api/component/camera/v1/camera.grpc.pb.cc ${SRCDIR}/proto/api/component/camera/v1/camera.pb.cc)
+   set(SOURCES ${SOURCES} ${SRCDIR}/proto/api/service/metadata/v1/metadata.grpc.pb.cc ${SRCDIR}/proto/api/service/metadata/v1/metadata.pb.cc)
+   set(SOURCES ${SOURCES} ${SRCDIR}/proto/api/common/v1/common.grpc.pb.cc ${SRCDIR}/proto/api/common/v1/common.pb.cc)
+   set(SOURCES ${SOURCES} ${SRCDIR}/google/api/annotations.pb.cc ${SRCDIR}/google/api/httpbody.pb.cc)
+   set(SOURCES ${SOURCES} ${SRCDIR}/google/api/http.pb.cc)
+   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
 
 
-add_executable(rgbd_fromStream
-        initialAttempt/rgbd_fromStream.cc ${SOURCES})
-# target_link_libraries(rgbd_fromStream ${PROJECT_NAME})
-target_link_libraries(rgbd_fromStream ${PROJECT_NAME} ${GRPC_LIBRARIES} ${GRPCPP_LIBRARIES} ${PROTOBUF_LIBRARIES})
-target_include_directories(rgbd_fromStream PUBLIC ${SRCDIR} ${GRPC_INCLUDE_DIRS} ${GRPCPP_INCLUDE_DIRS} ${PROTOBUF_INCLUDE_DIRS})
-
-target_compile_options(rgbd_fromStream PUBLIC ${GRPC_CFLAGS_OTHER} ${GRPCPP_CFLAGS_OTHER} ${PROTOBUF_CFLAGS_OTHER})
+   add_executable(rgbd_fromStream
+         initialAttempt/rgbd_fromStream.cc ${SOURCES})
+   target_link_libraries(rgbd_fromStream ${PROJECT_NAME} ${GRPC_LIBRARIES} ${GRPCPP_LIBRARIES} ${PROTOBUF_LIBRARIES})
+   target_include_directories(rgbd_fromStream PUBLIC ${SRCDIR} ${GRPC_INCLUDE_DIRS} ${GRPCPP_INCLUDE_DIRS} ${PROTOBUF_INCLUDE_DIRS})
+   target_compile_options(rgbd_fromStream PUBLIC ${GRPC_CFLAGS_OTHER} ${GRPCPP_CFLAGS_OTHER} ${PROTOBUF_CFLAGS_OTHER})
+   endif()
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
 
 # add_executable(rgbd_tum
