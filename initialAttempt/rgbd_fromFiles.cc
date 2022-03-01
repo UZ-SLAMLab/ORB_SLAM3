@@ -90,6 +90,8 @@ int main(int argc, char **argv)
     // Main loop
     cv::Mat imRGB, imD;
     Sophus::SE3f pose;
+     std::chrono::steady_clock::time_point timeStart = std::chrono::steady_clock::now();
+      
     for(int ni=0; ni<nImages; ni++)
     {
         // Read image and depthmap from file
@@ -144,8 +146,43 @@ int main(int argc, char **argv)
         if(ttrack<T)
             usleep((T-ttrack)*1e6);
     }
-
+    std::chrono::steady_clock::time_point timeEnd = std::chrono::steady_clock::now();
+    double timeSLAM = std::chrono::duration_cast<std::chrono::duration<double> >(timeEnd - timeStart).count();
+    cout <<"Total time for SLAM: " << timeSLAM << endl;
     // Stop all threads
+    std::vector<ORB_SLAM3::MapPoint*> mapStuff = SLAM.GetAtlas()->GetCurrentMap()->GetAllMapPoints();
+        // Map* GetCurrentMap();
+        // mapStuff = SLAM.GetTrackedMapPoints();
+        cout << "Start to write PCD with datapoints: " << endl;
+        cout << mapStuff.size() << endl;
+        // std::cout << "# x,y,z" << std::endl;
+        string pathSaveFileName = "./";
+        pathSaveFileName = pathSaveFileName.append(file_name);
+        pathSaveFileName.append(".pcd");
+        std::remove(pathSaveFileName.c_str());
+        std::ofstream ofs(pathSaveFileName, std::ios::binary);
+        // boost::archive::text_oarchive oa(ofs);
+        ofs  << "VERSION .7\n"
+            << "FIELDS x y z\n"
+            << "SIZE 4 4 4\n"
+            << "TYPE F F F\n"
+            << "COUNT 1 1 1\n"
+            << "WIDTH "
+            << mapStuff.size()
+            << "\n"
+            << "HEIGHT " << 1 << "\n"
+            << "VIEWPOINT 0 0 0 1 0 0 0\n"
+            << "POINTS "
+            << mapStuff.size()
+            << "\n"
+            << "DATA ascii\n";
+	for (auto p : mapStuff) {
+		Eigen::Matrix<float, 3, 1> v = p->GetWorldPos();//ORB_SLAM3::Converter::toVector3d(p->GetWorldPos());
+		// std::cout << v.x() << "," << v.y() << "," << v.z() << std::endl;
+        ofs << v.x()  << " " << v.y()  << " " << v.z()  << "\n";
+	}
+    ofs.close();
+    cout << "End to write PCD" << endl;
     SLAM.Shutdown();
     SLAM.SaveTrajectoryEuRoC(file_nameTraj);
     SLAM.SaveKeyFrameTrajectoryEuRoC(file_nameKey);

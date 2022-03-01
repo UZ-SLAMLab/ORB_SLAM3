@@ -91,5 +91,5 @@ Viewer.ViewpointY: -0.7
 Viewer.ViewpointZ: -3.5
 Viewer.ViewpointF: 500.0
 
-System.SaveAtlasToFile: "sampleDataset"
+# System.SaveAtlasToFile: "sampleDataset"
 # System.LoadAtlasFromFile: "testCal0"
