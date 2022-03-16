@@ -303,6 +303,8 @@ public:
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
     void SetKeyFrameDatabase(KeyFrameDatabase* pKFDB);
 
+    void SetGNSSFrameRandom();
+
     bool bImu;
 
     // The following variables are accesed from only 1 thread or never change (no mutex needed).
@@ -420,6 +422,10 @@ public:
 
     std::vector <KeyFrame*> mvpLoopCandKFs;
     std::vector <KeyFrame*> mvpMergeCandKFs;
+
+    
+    //Erik: Flag to insert GNSS frame
+    bool insertGNSS;
 
     //bool mbHasHessian;
     //cv::Mat mHessianPose;

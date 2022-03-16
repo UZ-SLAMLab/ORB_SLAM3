@@ -20,6 +20,7 @@
 #include "Converter.h"
 #include "ImuTypes.h"
 #include<mutex>
+#include <stdlib.h>
 
 namespace ORB_SLAM3
 {
@@ -93,6 +94,7 @@ KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
     SetPose(F.GetPose());
 
     mnOriginMapId = pMap->GetId();
+    insertGNSS = false;
 }
 
 void KeyFrame::ComputeBoW()
@@ -1154,6 +1156,12 @@ void KeyFrame::SetORBVocabulary(ORBVocabulary* pORBVoc)
 void KeyFrame::SetKeyFrameDatabase(KeyFrameDatabase* pKFDB)
 {
     mpKeyFrameDB = pKFDB;
+}
+
+void KeyFrame::SetGNSSFrameRandom() //Erik
+{
+    srand(time(NULL));
+
 }
 
 } //namespace ORB_SLAM
