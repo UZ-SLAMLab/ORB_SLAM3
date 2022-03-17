@@ -303,7 +303,7 @@ public:
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
     void SetKeyFrameDatabase(KeyFrameDatabase* pKFDB);
 
-    void SetGNSSFrameRandom();
+    void UpdateGNSSFrameIter();
 
     bool bImu;
 
@@ -424,13 +424,18 @@ public:
     std::vector <KeyFrame*> mvpMergeCandKFs;
 
     
-    //Erik: Flag to insert GNSS frame
-    bool insertGNSS;
+    //Erik
+    bool insertGNSS; //flag to insert GNSS frame (GF)
+    int GNSSiter;
+    IMU::Preintegrated* mpImuPreintegratedToGNSS; // prev KF -> GF
+    IMU::Preintegrated* mpImuPreintegratedFromGNSS; // If GF introduced, mpImuPreintegrated will be redefined as GF -> current KF
+    double timeStampGNSS;
+    //E
 
     //bool mbHasHessian;
     //cv::Mat mHessianPose;
 
-    // The following variables need to be accessed trough a mutex to be thread safe.
+    // The following variables n6eed to be accessed trough a mutex to be thread safe.
 protected:
     // sophus poses
     Sophus::SE3<float> mTcw;
