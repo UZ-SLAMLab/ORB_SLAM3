@@ -241,6 +241,12 @@ public:
   bool loadFromTextFile(const std::string &filename);
 
   /**
+   * Loads the vocabulary from a binary file
+   * @param filename
+   */
+  bool loadFromBinaryFile(const std::string &filename);
+
+  /**
    * Saves the vocabulary into a text file
    * @param filename
    */
@@ -1421,6 +1427,51 @@ bool TemplatedVocabulary<TDescriptor,F>::loadFromTextFile(const std::string &fil
 
     return true;
 
+}
+
+// --------------------------------------------------------------------------
+template<class TDescriptor, class F>
+bool TemplatedVocabulary<TDescriptor,F>::loadFromBinaryFile(const std::string &filename) {
+  fstream f;
+  f.open(filename.c_str(), ios_base::in|ios::binary);
+  unsigned int nb_nodes, size_node;
+  f.read((char*)&nb_nodes, sizeof(nb_nodes));
+  f.read((char*)&size_node, sizeof(size_node));
+  f.read((char*)&m_k, sizeof(m_k));
+  f.read((char*)&m_L, sizeof(m_L));
+  f.read((char*)&m_scoring, sizeof(m_scoring));
+  f.read((char*)&m_weighting, sizeof(m_weighting));
+  createScoringObject();
+  
+  m_words.clear();
+  m_words.reserve(pow((double)m_k, (double)m_L + 1));
+  m_nodes.clear();
+  m_nodes.resize(nb_nodes+1);
+  m_nodes[0].id = 0;
+  char buf[size_node]; int nid = 1;
+  while (!f.eof()) {
+	f.read(buf, size_node);
+	m_nodes[nid].id = nid;
+	// FIXME
+	const int* ptr=(int*)buf;
+	m_nodes[nid].parent = *ptr;
+	//m_nodes[nid].parent = *(const int*)buf;
+	m_nodes[m_nodes[nid].parent].children.push_back(nid);
+	m_nodes[nid].descriptor = cv::Mat(1, F::L, CV_8U);
+	memcpy(m_nodes[nid].descriptor.data, buf+4, F::L);
+	m_nodes[nid].weight = *(float*)(buf+4+F::L);
+	if (buf[8+F::L]) { // is leaf
+	  int wid = m_words.size();
+	  m_words.resize(wid+1);
+	  m_nodes[nid].word_id = wid;
+	  m_words[wid] = &m_nodes[nid];
+	}
+	else
+	  m_nodes[nid].children.reserve(m_k);
+	nid+=1;
+  }
+  f.close();
+  return true;
 }
 
 // --------------------------------------------------------------------------
