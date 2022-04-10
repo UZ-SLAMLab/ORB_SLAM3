@@ -778,9 +778,72 @@ namespace ORB_SLAM3
         return vResultKeys;
     }
 
+    vector<cv::KeyPoint> ORBextractor::vToDistributeKeysCalculate(const int nRows, const int minBorderY,
+                                                                  const int hCell, const int maxBorderY,
+                                                                  const int nCols, const int minBorderX,
+                                                                  const int wCell, const int maxBorderX,
+                                                                  int level, bool isSlave){
+        vector<cv::KeyPoint> vToDistributeKeys;
+        vToDistributeKeys.reserve(nfeatures*10);
+        for(int i=0; i<nRows; i++)
+        {
+            const float iniY =minBorderY+i*hCell;
+            float maxY = iniY+hCell+6;
+
+            if(iniY>=maxBorderY-3)
+                continue;
+            if(maxY>maxBorderY)
+                maxY = maxBorderY;
+
+            for(int j=0; j<nCols; j++)
+            {
+                const float iniX =minBorderX+j*wCell;
+                float maxX = iniX+wCell+6;
+                if(iniX>=maxBorderX-6)
+                    continue;
+                if(maxX>maxBorderX)
+                    maxX = maxBorderX;
+
+                vector<cv::KeyPoint> vKeysCell;
+
+                if (isSlave) {
+                    FAST(mvImagePyramidS[level].rowRange(iniY, maxY).colRange(iniX, maxX),
+                         vKeysCell, iniThFAST, true);
+                }
+                else{
+                    FAST(mvImagePyramid[level].rowRange(iniY, maxY).colRange(iniX, maxX),
+                         vKeysCell, iniThFAST, true);
+                }
+                if(vKeysCell.empty())
+                {
+                    if (isSlave) {
+                        FAST(mvImagePyramidS[level].rowRange(iniY, maxY).colRange(iniX, maxX),
+                             vKeysCell, minThFAST, true);
+                    }
+                    else{
+                        FAST(mvImagePyramid[level].rowRange(iniY, maxY).colRange(iniX, maxX),
+                             vKeysCell, minThFAST, true);
+                    }
+                }
+
+                if(!vKeysCell.empty())
+                {
+                    for(vector<cv::KeyPoint>::iterator vit=vKeysCell.begin(); vit!=vKeysCell.end();vit++)
+                    {
+                        (*vit).pt.x+=j*wCell;
+                        (*vit).pt.y+=i*hCell;
+                        vToDistributeKeys.push_back(*vit);
+                    }
+                }
+
+            }
+        }
+        return vToDistributeKeys;
+    }
+
     void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints)
     {
-        allKeypoints.resize(nlevels);
+        allKeypoints.resize(nlevels * 2);
 
         const float W = 35;
 
@@ -791,8 +854,8 @@ namespace ORB_SLAM3
             const int maxBorderX = mvImagePyramid[level].cols-EDGE_THRESHOLD+3;
             const int maxBorderY = mvImagePyramid[level].rows-EDGE_THRESHOLD+3;
 
-            vector<cv::KeyPoint> vToDistributeKeys;
-            vToDistributeKeys.reserve(nfeatures*10);
+            const int maxBorderXS = mvImagePyramidS[level].cols-EDGE_THRESHOLD+3;
+            const int maxBorderYS = mvImagePyramidS[level].rows-EDGE_THRESHOLD+3;
 
             const float width = (maxBorderX-minBorderX);
             const float height = (maxBorderY-minBorderY);
@@ -802,80 +865,35 @@ namespace ORB_SLAM3
             const int wCell = ceil(width/nCols);
             const int hCell = ceil(height/nRows);
 
-            for(int i=0; i<nRows; i++)
-            {
-                const float iniY =minBorderY+i*hCell;
-                float maxY = iniY+hCell+6;
+            const float widthS = (maxBorderXS-minBorderX);
+            const float heightS = (maxBorderYS-minBorderY);
 
-                if(iniY>=maxBorderY-3)
-                    continue;
-                if(maxY>maxBorderY)
-                    maxY = maxBorderY;
+            const int nColsS = widthS/W;
+            const int nRowsS = heightS/W;
+            const int wCellS = ceil(widthS/nColsS);
+            const int hCellS = ceil(heightS/nRowsS);
 
-                for(int j=0; j<nCols; j++)
-                {
-                    const float iniX =minBorderX+j*wCell;
-                    float maxX = iniX+wCell+6;
-                    if(iniX>=maxBorderX-6)
-                        continue;
-                    if(maxX>maxBorderX)
-                        maxX = maxBorderX;
-
-                    vector<cv::KeyPoint> vKeysCell;
-
-                    FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                         vKeysCell,iniThFAST,true);
-
-                    /*if(bRight && j <= 13){
-                        FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                             vKeysCell,10,true);
-                    }
-                    else if(!bRight && j >= 16){
-                        FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                             vKeysCell,10,true);
-                    }
-                    else{
-                        FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                             vKeysCell,iniThFAST,true);
-                    }*/
-
-
-                    if(vKeysCell.empty())
-                    {
-                        FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                             vKeysCell,minThFAST,true);
-                        /*if(bRight && j <= 13){
-                            FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                                 vKeysCell,5,true);
-                        }
-                        else if(!bRight && j >= 16){
-                            FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                                 vKeysCell,5,true);
-                        }
-                        else{
-                            FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                                 vKeysCell,minThFAST,true);
-                        }*/
-                    }
-
-                    if(!vKeysCell.empty())
-                    {
-                        for(vector<cv::KeyPoint>::iterator vit=vKeysCell.begin(); vit!=vKeysCell.end();vit++)
-                        {
-                            (*vit).pt.x+=j*wCell;
-                            (*vit).pt.y+=i*hCell;
-                            vToDistributeKeys.push_back(*vit);
-                        }
-                    }
-
-                }
-            }
-
+            vector<cv::KeyPoint> vToDistributeKeys = vToDistributeKeysCalculate(nRows, minBorderY,
+                                                                                hCell, maxBorderY,
+                                                                                nCols, minBorderX,
+                                                                                wCell, maxBorderX,
+                                                                                level, false);
+            vector<cv::KeyPoint> vToDistributeKeysS = vToDistributeKeysCalculate(nRowsS, minBorderY,
+                                                                                hCellS, maxBorderYS,
+                                                                                nColsS, minBorderX,
+                                                                                wCellS, maxBorderXS,
+                                                                                level, true);
             vector<KeyPoint> & keypoints = allKeypoints[level];
             keypoints.reserve(nfeatures);
 
+            vector<KeyPoint> & keypointsS = allKeypoints[level + nlevels];
+            keypointsS.reserve(nfeatures);
+
             keypoints = DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX,
                                           minBorderY, maxBorderY,mnFeaturesPerLevel[level], level);
+
+            keypointsS = DistributeOctTree(vToDistributeKeysS, minBorderX, maxBorderXS,
+                                          minBorderY, maxBorderYS,mnFeaturesPerLevel[level], level);
 
             const int scaledPatchSize = PATCH_SIZE*mvScaleFactor[level];
 
@@ -891,8 +909,10 @@ namespace ORB_SLAM3
         }
 
         // compute orientations
-        for (int level = 0; level < nlevels; ++level)
+        for (int level = 0; level < nlevels; ++level) {
             computeOrientation(mvImagePyramid[level], allKeypoints[level], umax);
+            computeOrientation(mvImagePyramidS[level + nlevels], allKeypoints[level + nlevels], umax);
+        }
     }
 
     void ORBextractor::ComputeKeyPointsOld(std::vector<std::vector<KeyPoint> > &allKeypoints)
@@ -1083,27 +1103,32 @@ namespace ORB_SLAM3
             computeOrbDescriptor(keypoints[i], image, &pattern[0], descriptors.ptr((int)i));
     }
 
-    int ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
+    int ORBextractor::operator()( InputArray _image, InputArray _imageS, InputArray _mask, vector<KeyPoint>& _keypoints,
                                   OutputArray _descriptors, std::vector<int> &vLappingArea)
     {
         //cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
         if(_image.empty())
             return -1;
+        if(_imageS.empty())
+            return -1;
 
         Mat image = _image.getMat();
+        Mat imageS = _imageS.getMat();
         assert(image.type() == CV_8UC1 );
+        assert(imageS.type() == CV_8UC1 );
 
         // Pre-compute the scale pyramid
-        ComputePyramid(image);
-
+        ComputePyramid(image, imageS);
         vector < vector<KeyPoint> > allKeypoints;
         ComputeKeyPointsOctTree(allKeypoints);
+        // TODO: the end
+
         //ComputeKeyPointsOld(allKeypoints);
 
         Mat descriptors;
 
         int nkeypoints = 0;
-        for (int level = 0; level < nlevels; ++level)
+        for (int level = 0; level < nlevels * 2; ++level)
             nkeypoints += (int)allKeypoints[level].size();
         if( nkeypoints == 0 )
             _descriptors.release();
@@ -1120,7 +1145,7 @@ namespace ORB_SLAM3
         int offset = 0;
         //Modified for speeding up stereo fisheye matching
         int monoIndex = 0, stereoIndex = nkeypoints-1;
-        for (int level = 0; level < nlevels; ++level)
+        for (int level = 0; level < nlevels * 2; ++level)
         {
             vector<KeyPoint>& keypoints = allKeypoints[level];
             int nkeypointsLevel = (int)keypoints.size();
@@ -1128,8 +1153,15 @@ namespace ORB_SLAM3
             if(nkeypointsLevel==0)
                 continue;
 
+
             // preprocess the resized image
-            Mat workingMat = mvImagePyramid[level].clone();
+            Mat workingMat;
+            if (level < nlevels){
+                workingMat = mvImagePyramid[level].clone();
+            }
+            else{
+                workingMat = mvImagePyramidS[level].clone();
+            }
             GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
 
             // Compute the descriptors
@@ -1167,7 +1199,7 @@ namespace ORB_SLAM3
         return monoIndex;
     }
 
-    void ORBextractor::ComputePyramid(cv::Mat image)
+    void ORBextractor::ComputePyramid(cv::Mat image, cv::Mat imageS)
     {
         for (int level = 0; level < nlevels; ++level)
         {
@@ -1175,7 +1207,9 @@ namespace ORB_SLAM3
             Size sz(cvRound((float)image.cols*scale), cvRound((float)image.rows*scale));
             Size wholeSize(sz.width + EDGE_THRESHOLD*2, sz.height + EDGE_THRESHOLD*2);
             Mat temp(wholeSize, image.type()), masktemp;
+            Mat tempS(wholeSize, imageS.type()), masktempS;
             mvImagePyramid[level] = temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
+            mvImagePyramidS[level] = tempS(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
 
             // Compute the resized image
             if( level != 0 )
@@ -1184,10 +1218,17 @@ namespace ORB_SLAM3
 
                 copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101+BORDER_ISOLATED);
+
+                resize(mvImagePyramidS[level-1], mvImagePyramidS[level], sz, 0, 0, INTER_LINEAR);
+
+                copyMakeBorder(mvImagePyramidS[level], tempS, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                               BORDER_REFLECT_101+BORDER_ISOLATED);
             }
             else
             {
                 copyMakeBorder(image, temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                               BORDER_REFLECT_101);
+                copyMakeBorder(imageS, tempS, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101);
             }
         }

@@ -325,7 +325,7 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
     return Tcw;
 }
 
-Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
+Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const cv::Mat &imS, const cv::Mat &depthmapS, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
     if(mSensor!=RGBD  && mSensor!=IMU_RGBD)
     {
@@ -335,12 +335,21 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
 
     cv::Mat imToFeed = im.clone();
     cv::Mat imDepthToFeed = depthmap.clone();
+
+    cv::Mat imSToFeed = imS.clone();
+    cv::Mat imDepthSToFeed = depthmapS.clone();
     if(settings_ && settings_->needToResize()){
         cv::Mat resizedIm;
         cv::resize(im,resizedIm,settings_->newImSize());
         imToFeed = resizedIm;
 
         cv::resize(depthmap,imDepthToFeed,settings_->newImSize());
+
+        cv::Mat resizedImS;
+        cv::resize(imS,resizedImS,settings_->newImSize());
+        imSToFeed = resizedImS;
+
+        cv::resize(depthmapS,imDepthSToFeed,settings_->newImSize());
     }
 
     // Check mode change
@@ -388,7 +397,7 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
             mpTracker->GrabImuData(vImuMeas[i_imu]);
 
     // TODO: smth here
-    Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed,imDepthToFeed,timestamp,filename);
+    Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, imSToFeed, imDepthSToFeed, timestamp, filename);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;

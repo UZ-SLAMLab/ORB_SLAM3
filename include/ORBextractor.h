@@ -54,7 +54,7 @@ public:
     // Compute the ORB features and descriptors on an image.
     // ORB are dispersed on the image using an octree.
     // Mask is ignored in the current implementation.
-    int operator()( cv::InputArray _image, cv::InputArray _mask,
+    int operator()( cv::InputArray _image, cv::InputArray _imageS, cv::InputArray _mask,
                     std::vector<cv::KeyPoint>& _keypoints,
                     cv::OutputArray _descriptors, std::vector<int> &vLappingArea);
 
@@ -81,11 +81,12 @@ public:
     }
 
     std::vector<cv::Mat> mvImagePyramid;
+    std::vector<cv::Mat> mvImagePyramidS;
 
 protected:
 
-    void ComputePyramid(cv::Mat image);
-    void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);    
+    void ComputePyramid(cv::Mat image, cv::Mat imageS);
+    void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
     std::vector<cv::KeyPoint> DistributeOctTree(const std::vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
                                            const int &maxX, const int &minY, const int &maxY, const int &nFeatures, const int &level);
 
@@ -106,6 +107,13 @@ protected:
     std::vector<float> mvInvScaleFactor;    
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
+
+
+
+    vector<cv::KeyPoint>
+    vToDistributeKeysCalculate(const int nRows, const int minBorderY, const int hCell, const int maxBorderY,
+                               const int nCols, const int minBorderX, const int wCell, const int maxBorderX, int level,
+                               bool isSlave);
 };
 
 } //namespace ORB_SLAM
