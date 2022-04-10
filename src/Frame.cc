@@ -420,8 +420,8 @@ void Frame::ExtractORB(int flag, const cv::Mat &im, const cv::Mat &imS, const in
 {
     vector<int> vLapping = {x0,x1};
     if(flag==0)
-        // TODO: it's our case
         monoLeft = (*mpORBextractorLeft)(im,imS, cv::Mat(),mvKeys,mDescriptors,vLapping);
+    // TODO: deal with it
 //    else
 //        monoRight = (*mpORBextractorRight)(im,cv::Mat(),mvKeysRight,mDescriptorsRight,vLapping);
 }
