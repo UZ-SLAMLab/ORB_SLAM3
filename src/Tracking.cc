@@ -1562,7 +1562,7 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
         imDepthS.convertTo(imDepthS,CV_32F,mDepthMapFactor);
 
     if (mSensor == System::RGBD)
-        // TODO: it's our case
+        // TODO: intrinsics and maybe other parameters for scond camera
         mCurrentFrame = Frame(mImGray,imDepth,mImSGray,imDepthS,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
     //else if(mSensor == System::IMU_RGBD)
         //mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,&mLastFrame,*mpImuCalib);

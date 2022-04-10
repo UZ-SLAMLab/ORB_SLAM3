@@ -220,7 +220,6 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imSGr
 #ifdef REGISTER_TIMES
     std::chrono::steady_clock::time_point time_StartExtORB = std::chrono::steady_clock::now();
 #endif
-    // TODO: it's important
     ExtractORB(0,imGray,imSGray,0,0);
 #ifdef REGISTER_TIMES
     std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
@@ -235,7 +234,6 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imSGr
         return;
 
     UndistortKeyPoints();
-    // TODO: maybe it's important too
     ComputeStereoFromRGBD(imDepth);
 
     mvpMapPoints = vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));

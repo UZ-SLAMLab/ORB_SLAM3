@@ -1121,7 +1121,6 @@ namespace ORB_SLAM3
         ComputePyramid(image, imageS);
         vector < vector<KeyPoint> > allKeypoints;
         ComputeKeyPointsOctTree(allKeypoints);
-        // TODO: the end
 
         //ComputeKeyPointsOld(allKeypoints);
 

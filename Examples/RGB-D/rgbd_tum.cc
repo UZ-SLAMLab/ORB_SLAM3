@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 
     // Check consistency in the number of images and depthmaps
     int nImages = vstrImageFilenamesRGB.size();
-    // TODO: we need this check for slave too; more generally, we should have an equal number of images of each category
+    // TODO: we should have an equal number of images of each category
     if(vstrImageFilenamesRGB.empty())
     {
         cerr << endl << "No images found in provided path." << endl;
@@ -83,7 +83,6 @@ int main(int argc, char **argv)
     for(int ni=0; ni<nImages; ni++)
     {
         // Read image and depthmap from file
-        // TODO: four images
         imRGB = cv::imread(string(argv[3])+"/"+vstrImageFilenamesRGB[ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
         imD = cv::imread(string(argv[3])+"/"+vstrImageFilenamesD[ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
         // Slave
@@ -114,7 +113,6 @@ int main(int argc, char **argv)
 #endif
 
         // Pass the image to the SLAM system
-        // TODO: it's important
         SLAM.TrackRGBD(imRGB, imD, imRGBs, imDs, tframe);
 
 #ifdef COMPILEDWITHC11
