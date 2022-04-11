@@ -843,7 +843,7 @@ namespace ORB_SLAM3
 
     void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints)
     {
-        allKeypoints.resize(nlevels * 2);
+        allKeypoints.resize(nlevels);
 
         const float W = 35;
 
@@ -854,9 +854,6 @@ namespace ORB_SLAM3
             const int maxBorderX = mvImagePyramid[level].cols-EDGE_THRESHOLD+3;
             const int maxBorderY = mvImagePyramid[level].rows-EDGE_THRESHOLD+3;
 
-            const int maxBorderXS = mvImagePyramidS[level].cols-EDGE_THRESHOLD+3;
-            const int maxBorderYS = mvImagePyramidS[level].rows-EDGE_THRESHOLD+3;
-
             const float width = (maxBorderX-minBorderX);
             const float height = (maxBorderY-minBorderY);
 
@@ -865,53 +862,53 @@ namespace ORB_SLAM3
             const int wCell = ceil(width/nCols);
             const int hCell = ceil(height/nRows);
 
-            const float widthS = (maxBorderXS-minBorderX);
-            const float heightS = (maxBorderYS-minBorderY);
-
-            const int nColsS = widthS/W;
-            const int nRowsS = heightS/W;
-            const int wCellS = ceil(widthS/nColsS);
-            const int hCellS = ceil(heightS/nRowsS);
 
             vector<cv::KeyPoint> vToDistributeKeys = vToDistributeKeysCalculate(nRows, minBorderY,
                                                                                 hCell, maxBorderY,
                                                                                 nCols, minBorderX,
                                                                                 wCell, maxBorderX,
                                                                                 level, false);
-            vector<cv::KeyPoint> vToDistributeKeysS = vToDistributeKeysCalculate(nRowsS, minBorderY,
-                                                                                hCellS, maxBorderYS,
-                                                                                nColsS, minBorderX,
-                                                                                wCellS, maxBorderXS,
+            vector<cv::KeyPoint> vToDistributeKeysS = vToDistributeKeysCalculate(nRows, minBorderY,
+                                                                                hCell, maxBorderY,
+                                                                                nCols, minBorderX,
+                                                                                wCell, maxBorderX,
                                                                                 level, true);
             vector<KeyPoint> & keypoints = allKeypoints[level];
             keypoints.reserve(nfeatures);
 
-            vector<KeyPoint> & keypointsS = allKeypoints[level + nlevels];
-            keypointsS.reserve(nfeatures);
-
-            keypoints = DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX,
+            vector<KeyPoint> keypointsTemp = DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX,
                                           minBorderY, maxBorderY,mnFeaturesPerLevel[level], level);
 
-            keypointsS = DistributeOctTree(vToDistributeKeysS, minBorderX, maxBorderXS,
-                                          minBorderY, maxBorderYS,mnFeaturesPerLevel[level], level);
+            vector<KeyPoint> keypointsSTemp = DistributeOctTree(vToDistributeKeysS, minBorderX, maxBorderX,
+                                                               minBorderY, maxBorderY,mnFeaturesPerLevel[level], level);
+
 
             const int scaledPatchSize = PATCH_SIZE*mvScaleFactor[level];
 
             // Add border to coordinates and scale information
-            const int nkps = keypoints.size();
+            const int nkps = keypointsTemp.size();
             for(int i=0; i<nkps ; i++)
             {
-                keypoints[i].pt.x+=minBorderX;
-                keypoints[i].pt.y+=minBorderY;
-                keypoints[i].octave=level;
-                keypoints[i].size = scaledPatchSize;
+                keypointsTemp[i].pt.x+=minBorderX;
+                keypointsTemp[i].pt.y+=minBorderY;
+                keypointsTemp[i].octave=level;
+                keypointsTemp[i].size = scaledPatchSize;
             }
-        }
 
-        // compute orientations
-        for (int level = 0; level < nlevels; ++level) {
-            computeOrientation(mvImagePyramid[level], allKeypoints[level], umax);
-            computeOrientation(mvImagePyramidS[level + nlevels], allKeypoints[level + nlevels], umax);
+            const int nkpsS = keypointsSTemp.size();
+            for(int i=0; i<nkpsS ; i++)
+            {
+                keypointsSTemp[i].pt.x+=minBorderX;
+                keypointsSTemp[i].pt.y+=minBorderY;
+                keypointsSTemp[i].octave=level;
+                keypointsSTemp[i].size = scaledPatchSize;
+            }
+            // compute orientations
+            computeOrientation(mvImagePyramid[level], keypointsTemp, umax);
+            computeOrientation(mvImagePyramidS[level], keypointsSTemp, umax);
+
+            keypointsTemp.insert(keypointsTemp.end(), keypointsSTemp.begin(), keypointsSTemp.end());
+            keypoints = keypointsTemp;
         }
     }
 
