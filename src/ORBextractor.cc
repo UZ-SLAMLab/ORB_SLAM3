@@ -58,6 +58,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
 #include <iostream>
+#include <Eigen/Core>
 
 #include "ORBextractor.h"
 
@@ -841,7 +842,7 @@ namespace ORB_SLAM3
         return vToDistributeKeys;
     }
 
-    void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints)
+    void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints, Mat &depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T)
     {
         allKeypoints.resize(nlevels);
 
@@ -873,6 +874,26 @@ namespace ORB_SLAM3
                                                                                 nCols, minBorderX,
                                                                                 wCell, maxBorderX,
                                                                                 level, true);
+
+            for(auto & elem : vToDistributeKeysS)
+            {
+                float z = depthS.at<float>((int)elem.pt.x, (int)elem.pt.y);
+                float x = (elem.pt.x - KS.at<float>(0, 2)) * z / KS.at<float>(0, 0);
+                float y = (elem.pt.y - KS.at<float>(1, 2)) * z / KS.at<float>(1, 1);
+
+                Eigen::Vector4f xyz(x, y, z);
+                Eigen::Vector4f newXyz = T * xyz;
+                x = newXyz[0];
+                y = newXyz[1];
+                z = newXyz[2];
+
+                float u = round(((K.at<float>(0, 0) * x) / z) + K.at<float>(0, 2));
+                float v = round(((K.at<float>(1, 1) * y) / z) + K.at<float>(1, 2));
+
+                elem.pt.x = u;
+                elem.pt.x = v;
+            }
+
             vector<KeyPoint> & keypoints = allKeypoints[level];
             keypoints.reserve(nfeatures);
 
@@ -1101,7 +1122,7 @@ namespace ORB_SLAM3
     }
 
     int ORBextractor::operator()( InputArray _image, InputArray _imageS, InputArray _mask, vector<KeyPoint>& _keypoints,
-                                  OutputArray _descriptors, std::vector<int> &vLappingArea)
+                                  OutputArray _descriptors, std::vector<int> &vLappingArea, InputArray _depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T)
     {
         //cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
         if(_image.empty())
@@ -1111,20 +1132,21 @@ namespace ORB_SLAM3
 
         Mat image = _image.getMat();
         Mat imageS = _imageS.getMat();
+        Mat depthS = _depthS.getMat();
         assert(image.type() == CV_8UC1 );
         assert(imageS.type() == CV_8UC1 );
 
         // Pre-compute the scale pyramid
         ComputePyramid(image, imageS);
         vector < vector<KeyPoint> > allKeypoints;
-        ComputeKeyPointsOctTree(allKeypoints);
+        ComputeKeyPointsOctTree(allKeypoints, depthS, K, KS, T);
 
         //ComputeKeyPointsOld(allKeypoints);
 
         Mat descriptors;
 
         int nkeypoints = 0;
-        for (int level = 0; level < nlevels * 2; ++level)
+        for (int level = 0; level < nlevels; ++level)
             nkeypoints += (int)allKeypoints[level].size();
         if( nkeypoints == 0 )
             _descriptors.release();
@@ -1141,7 +1163,7 @@ namespace ORB_SLAM3
         int offset = 0;
         //Modified for speeding up stereo fisheye matching
         int monoIndex = 0, stereoIndex = nkeypoints-1;
-        for (int level = 0; level < nlevels * 2; ++level)
+        for (int level = 0; level < nlevels; ++level)
         {
             vector<KeyPoint>& keypoints = allKeypoints[level];
             int nkeypointsLevel = (int)keypoints.size();
@@ -1149,15 +1171,9 @@ namespace ORB_SLAM3
             if(nkeypointsLevel==0)
                 continue;
 
-
             // preprocess the resized image
             Mat workingMat;
-            if (level < nlevels){
-                workingMat = mvImagePyramid[level].clone();
-            }
-            else{
-                workingMat = mvImagePyramidS[level].clone();
-            }
+            workingMat = mvImagePyramid[level].clone();
             GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
 
             // Compute the descriptors

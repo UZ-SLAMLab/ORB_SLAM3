@@ -22,6 +22,7 @@
 #include <vector>
 #include <list>
 #include <opencv2/opencv.hpp>
+#include <Eigen/Core>
 
 
 namespace ORB_SLAM3
@@ -56,7 +57,8 @@ public:
     // Mask is ignored in the current implementation.
     int operator()( cv::InputArray _image, cv::InputArray _imageS, cv::InputArray _mask,
                     std::vector<cv::KeyPoint>& _keypoints,
-                    cv::OutputArray _descriptors, std::vector<int> &vLappingArea);
+                    cv::OutputArray _descriptors, std::vector<int> &vLappingArea,
+                    cv::InputArray _depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T);
 
     int inline GetLevels(){
         return nlevels;}
@@ -86,7 +88,7 @@ public:
 protected:
 
     void ComputePyramid(cv::Mat image, cv::Mat imageS);
-    void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
+    void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints, cv::Mat &depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T);
     std::vector<cv::KeyPoint> DistributeOctTree(const std::vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
                                            const int &maxX, const int &minY, const int &maxY, const int &nFeatures, const int &level);
 

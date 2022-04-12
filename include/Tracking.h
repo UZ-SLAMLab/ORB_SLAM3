@@ -289,10 +289,14 @@ protected:
 
     //Calibration matrix
     cv::Mat mK;
+    cv::Mat mKS;
     Eigen::Matrix3f mK_;
     cv::Mat mDistCoef;
     float mbf;
     float mImageScale;
+
+    // Transformation between cameras matrix
+    Eigen::Matrix4f T;
 
     float mImuFreq;
     double mImuPer;

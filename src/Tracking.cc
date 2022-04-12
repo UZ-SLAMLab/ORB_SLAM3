@@ -18,7 +18,7 @@
 
 
 #include "Tracking.h"
-
+#include <opencv2/core/eigen.hpp>
 #include "ORBmatcher.h"
 #include "FrameDrawer.h"
 #include "Converter.h"
@@ -625,7 +625,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
     string sCameraName = fSettings["Camera.type"];
     if(sCameraName == "PinHole")
     {
-        float fx, fy, cx, cy;
+        float fx, fy, cx, cy, fxS, fyS, cxS, cyS;
         mImageScale = 1.f;
 
         // Camera calibration parameters
@@ -671,6 +671,59 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         {
             std::cerr << "*Camera.cy parameter doesn't exist or is not a real number*" << std::endl;
             b_miss_params = true;
+        }
+
+        node = fSettings["Camera.fxS"];
+        if(!node.empty() && node.isReal())
+        {
+            fxS = node.real();
+        }
+        else
+        {
+            std::cerr << "*Camera.fxS parameter doesn't exist or is not a real number*" << std::endl;
+            b_miss_params = true;
+        }
+
+        node = fSettings["Camera.fyS"];
+        if(!node.empty() && node.isReal())
+        {
+            fyS = node.real();
+        }
+        else
+        {
+            std::cerr << "*Camera.fyS parameter doesn't exist or is not a real number*" << std::endl;
+            b_miss_params = true;
+        }
+
+        node = fSettings["Camera.cxS"];
+        if(!node.empty() && node.isReal())
+        {
+            cxS = node.real();
+        }
+        else
+        {
+            std::cerr << "*Camera.cxS parameter doesn't exist or is not a real number*" << std::endl;
+            b_miss_params = true;
+        }
+
+        node = fSettings["Camera.cyS"];
+        if(!node.empty() && node.isReal())
+        {
+            cyS = node.real();
+        }
+        else
+        {
+            std::cerr << "*Camera.cyS parameter doesn't exist or is not a real number*" << std::endl;
+            b_miss_params = true;
+        }
+
+        // Transformation matrix parameters
+        node = fSettings["TransformationMatrix"];
+        if(!node.empty())
+        {
+            cv::Mat TMat;
+            fSettings["TransformationMatrix"] >> TMat;
+            cv::cv2eigen(TMat, T);
         }
 
         // Distortion parameters
@@ -757,6 +810,10 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         std::cout << "- fy: " << fy << std::endl;
         std::cout << "- cx: " << cx << std::endl;
         std::cout << "- cy: " << cy << std::endl;
+        std::cout << "- fxS: " << fxS << std::endl;
+        std::cout << "- fyS: " << fyS << std::endl;
+        std::cout << "- cxS: " << cxS << std::endl;
+        std::cout << "- cyS: " << cyS << std::endl;
         std::cout << "- k1: " << mDistCoef.at<float>(0) << std::endl;
         std::cout << "- k2: " << mDistCoef.at<float>(1) << std::endl;
 
@@ -772,6 +829,12 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         mK.at<float>(1,1) = fy;
         mK.at<float>(0,2) = cx;
         mK.at<float>(1,2) = cy;
+
+        mKS = cv::Mat::eye(3,3,CV_32F);
+        mKS.at<float>(0,0) = fxS;
+        mKS.at<float>(1,1) = fyS;
+        mKS.at<float>(0,2) = cxS;
+        mKS.at<float>(1,2) = cyS;
 
         mK_.setIdentity();
         mK_(0,0) = fx;
@@ -1562,8 +1625,8 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
         imDepthS.convertTo(imDepthS,CV_32F,mDepthMapFactor);
 
     if (mSensor == System::RGBD)
-        // TODO: intrinsics and maybe other parameters for scond camera
-        mCurrentFrame = Frame(mImGray,imDepth,mImSGray,imDepthS,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
+        // TODO: intrinsics and maybe other parameters for second camera
+        mCurrentFrame = Frame(mImGray,imDepth,mImSGray,imDepthS,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth, mKS, T, mpCamera);
     //else if(mSensor == System::IMU_RGBD)
         //mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,&mLastFrame,*mpImuCalib);
 
