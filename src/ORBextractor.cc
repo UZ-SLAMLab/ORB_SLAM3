@@ -431,6 +431,7 @@ namespace ORB_SLAM3
         }
 
         mvImagePyramid.resize(nlevels);
+        mvImagePyramidS.resize(nlevels);
 
         mnFeaturesPerLevel.resize(nlevels);
         float factor = 1.0f / scaleFactor;
@@ -578,14 +579,12 @@ namespace ORB_SLAM3
             lNodes.push_back(ni);
             vpIniNodes[i] = &lNodes.back();
         }
-
         //Associate points to childs
         for(size_t i=0;i<vToDistributeKeys.size();i++)
         {
             const cv::KeyPoint &kp = vToDistributeKeys[i];
             vpIniNodes[kp.pt.x/hX]->vKeys.push_back(kp);
         }
-
         list<ExtractorNode>::iterator lit = lNodes.begin();
 
         while(lit!=lNodes.end())
@@ -600,26 +599,19 @@ namespace ORB_SLAM3
             else
                 lit++;
         }
-
         bool bFinish = false;
 
         int iteration = 0;
 
         vector<pair<int,ExtractorNode*> > vSizeAndPointerToNode;
         vSizeAndPointerToNode.reserve(lNodes.size()*4);
-
         while(!bFinish)
         {
             iteration++;
-
             int prevSize = lNodes.size();
-
             lit = lNodes.begin();
-
             int nToExpand = 0;
-
             vSizeAndPointerToNode.clear();
-
             while(lit!=lNodes.end())
             {
                 if(lit->bNoMore)
@@ -680,7 +672,6 @@ namespace ORB_SLAM3
                     continue;
                 }
             }
-
             // Finish if there are more nodes than required features
             // or all nodes contain just one point
             if((int)lNodes.size()>=N || (int)lNodes.size()==prevSize)
@@ -689,7 +680,6 @@ namespace ORB_SLAM3
             }
             else if(((int)lNodes.size()+nToExpand*3)>N)
             {
-
                 while(!bFinish)
                 {
 
@@ -747,9 +737,9 @@ namespace ORB_SLAM3
                         if((int)lNodes.size()>=N)
                             break;
                     }
-
                     if((int)lNodes.size()>=N || (int)lNodes.size()==prevSize)
                         bFinish = true;
+
 
                 }
             }
@@ -875,11 +865,21 @@ namespace ORB_SLAM3
                                                                                 wCell, maxBorderX,
                                                                                 level, true);
 
-            for(auto & elem : vToDistributeKeysS)
+            vector<KeyPoint> & keypoints = allKeypoints[level];
+            keypoints.reserve(nfeatures);
+
+            vector<KeyPoint> keypointsTemp = DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX,
+                                          minBorderY, maxBorderY,mnFeaturesPerLevel[level], level);
+            vector<KeyPoint> keypointsSTemp = DistributeOctTree(vToDistributeKeysS, minBorderX, maxBorderX,
+                                                               minBorderY, maxBorderY,mnFeaturesPerLevel[level], level);
+
+            float x, y, z, u, v;
+            vector<cv::KeyPoint> newKeypointsSTemp;
+            for(auto & i : keypointsSTemp)
             {
-                float z = depthS.at<float>((int)elem.pt.x, (int)elem.pt.y);
-                float x = (elem.pt.x - KS.at<float>(0, 2)) * z / KS.at<float>(0, 0);
-                float y = (elem.pt.y - KS.at<float>(1, 2)) * z / KS.at<float>(1, 1);
+                z = depthS.at<float>((int)i.pt.y, (int)i.pt.x);
+                x = (i.pt.x - KS.at<float>(0, 2)) * z / KS.at<float>(0, 0);
+                y = (i.pt.y - KS.at<float>(1, 2)) * z / KS.at<float>(1, 1);
 
                 Eigen::Vector4f xyz(x, y, z, 1);
                 Eigen::Vector4f newXyz = T * xyz;
@@ -887,22 +887,14 @@ namespace ORB_SLAM3
                 y = newXyz[1];
                 z = newXyz[2];
 
-                float u = round(((K.at<float>(0, 0) * x) / z) + K.at<float>(0, 2));
-                float v = round(((K.at<float>(1, 1) * y) / z) + K.at<float>(1, 2));
+                u = round(((K.at<float>(0, 0) * x) / z) + K.at<float>(0, 2));
+                v = round(((K.at<float>(1, 1) * y) / z) + K.at<float>(1, 2));
 
-                elem.pt.x = u;
-                elem.pt.x = v;
+                if ((u > 0) and (u < depthS.cols) and (v > 0) and (v < depthS.rows)){
+                    cv::KeyPoint kp(u, v, i.size, i.angle, i.response,i.octave, i.class_id);
+                    newKeypointsSTemp.push_back(kp);
+                }
             }
-
-            vector<KeyPoint> & keypoints = allKeypoints[level];
-            keypoints.reserve(nfeatures);
-
-            vector<KeyPoint> keypointsTemp = DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX,
-                                          minBorderY, maxBorderY,mnFeaturesPerLevel[level], level);
-
-            vector<KeyPoint> keypointsSTemp = DistributeOctTree(vToDistributeKeysS, minBorderX, maxBorderX,
-                                                               minBorderY, maxBorderY,mnFeaturesPerLevel[level], level);
-
 
             const int scaledPatchSize = PATCH_SIZE*mvScaleFactor[level];
 
@@ -915,20 +907,18 @@ namespace ORB_SLAM3
                 keypointsTemp[i].octave=level;
                 keypointsTemp[i].size = scaledPatchSize;
             }
-
-            const int nkpsS = keypointsSTemp.size();
+            const int nkpsS = newKeypointsSTemp.size();
             for(int i=0; i<nkpsS ; i++)
             {
-                keypointsSTemp[i].pt.x+=minBorderX;
-                keypointsSTemp[i].pt.y+=minBorderY;
-                keypointsSTemp[i].octave=level;
-                keypointsSTemp[i].size = scaledPatchSize;
+                newKeypointsSTemp[i].pt.x+=minBorderX;
+                newKeypointsSTemp[i].pt.y+=minBorderY;
+                newKeypointsSTemp[i].octave=level;
+                newKeypointsSTemp[i].size = scaledPatchSize;
             }
             // compute orientations
             computeOrientation(mvImagePyramid[level], keypointsTemp, umax);
-            computeOrientation(mvImagePyramidS[level], keypointsSTemp, umax);
-
-            keypointsTemp.insert(keypointsTemp.end(), keypointsSTemp.begin(), keypointsSTemp.end());
+            computeOrientation(mvImagePyramidS[level], newKeypointsSTemp, umax);
+            keypointsTemp.insert(keypointsTemp.end(), newKeypointsSTemp.begin(), newKeypointsSTemp.end());
             keypoints = keypointsTemp;
         }
     }
@@ -1235,6 +1225,7 @@ namespace ORB_SLAM3
 
                 copyMakeBorder(mvImagePyramidS[level], tempS, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101+BORDER_ISOLATED);
+
             }
             else
             {
