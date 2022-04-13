@@ -723,6 +723,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         {
             cv::Mat TMat;
             fSettings["TransformationMatrix"] >> TMat;
+            TMat = TMat.inv();
             cv::cv2eigen(TMat, T);
         }
 

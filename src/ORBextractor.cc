@@ -881,7 +881,7 @@ namespace ORB_SLAM3
                 float x = (elem.pt.x - KS.at<float>(0, 2)) * z / KS.at<float>(0, 0);
                 float y = (elem.pt.y - KS.at<float>(1, 2)) * z / KS.at<float>(1, 1);
 
-                Eigen::Vector4f xyz(x, y, z);
+                Eigen::Vector4f xyz(x, y, z, 1);
                 Eigen::Vector4f newXyz = T * xyz;
                 x = newXyz[0];
                 y = newXyz[1];

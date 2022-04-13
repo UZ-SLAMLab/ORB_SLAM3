@@ -112,7 +112,7 @@ protected:
 
 
 
-    vector<cv::KeyPoint>
+    std::vector<cv::KeyPoint>
     vToDistributeKeysCalculate(const int nRows, const int minBorderY, const int hCell, const int maxBorderY,
                                const int nCols, const int minBorderX, const int wCell, const int maxBorderX, int level,
                                bool isSlave);

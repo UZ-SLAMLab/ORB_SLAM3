@@ -28,29 +28,25 @@
 using namespace std;
 
 void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageFilenamesRGB,
-                vector<string> &vstrImageFilenamesD, vector<double> &vTimestamps);
+                vector<string> &vstrImageFilenamesD, vector<string> &vstrImageFilenamesRGBs,
+                vector<string> &vstrImageFilenamesDs, vector<double> &vTimestamps);
 
 int main(int argc, char **argv)
 {
-//    if(argc != 5)
-//    {
-//        cerr << endl << "Usage: ./rgbd_tum path_to_vocabulary path_to_settings path_to_sequence path_to_association" << endl;
-//        return 1;
-//    }
+    if(argc != 5)
+    {
+        cerr << endl << "Usage: ./rgbd_tum path_to_vocabulary path_to_settings path_to_sequence path_to_association" << endl;
+        return 1;
+    }
 
     // Retrieve paths to images
     vector<string> vstrImageFilenamesRGB;
     vector<string> vstrImageFilenamesD;
-    vector<double> vTimestamps;
-    string strAssociationFilename = string(argv[4]);
-    LoadImages(strAssociationFilename, vstrImageFilenamesRGB, vstrImageFilenamesD, vTimestamps);
-    // TODO: i think we need one association file for four images in future
-    // Retrieve paths to slave images
     vector<string> vstrImageFilenamesRGBs;
     vector<string> vstrImageFilenamesDs;
-    vector<double> vTimestampsS;
-    string strAssociationSFilename = string(argv[5]);
-    LoadImages(strAssociationSFilename, vstrImageFilenamesRGBs, vstrImageFilenamesDs, vTimestampsS);
+    vector<double> vTimestamps;
+    string strAssociationFilename = string(argv[4]);
+    LoadImages(strAssociationFilename, vstrImageFilenamesRGB, vstrImageFilenamesD, vstrImageFilenamesRGBs, vstrImageFilenamesDs, vTimestamps);
 
     // Check consistency in the number of images and depthmaps
     int nImages = vstrImageFilenamesRGB.size();
@@ -158,7 +154,8 @@ int main(int argc, char **argv)
 }
 
 void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageFilenamesRGB,
-                vector<string> &vstrImageFilenamesD, vector<double> &vTimestamps)
+                vector<string> &vstrImageFilenamesD, vector<string> &vstrImageFilenamesRGBs,
+                vector<string> &vstrImageFilenamesDs, vector<double> &vTimestamps)
 {
     ifstream fAssociation;
     fAssociation.open(strAssociationFilename.c_str());
@@ -179,7 +176,11 @@ void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageF
             ss >> t;
             ss >> sD;
             vstrImageFilenamesD.push_back(sD);
-
+            string sRGBs, sDs;
+            ss >> sRGBs;
+            vstrImageFilenamesRGBs.push_back(sRGBs);
+            ss >> sDs;
+            vstrImageFilenamesDs.push_back(sDs);
         }
     }
 }
