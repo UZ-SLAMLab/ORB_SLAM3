@@ -34,7 +34,7 @@ while (1) {
 
         auto now = chrono::system_clock::now();
         auto timestamp = chrono::duration_cast<chrono::milliseconds>(now - start);
-        SLAM.TrackMonocular(frame_resized, double(timestamp.count())/1000.0);
+        SLAM.TrackMonocular(frame, double(timestamp.count())/1000.0);
         cv::waitKey(30);
     }
 

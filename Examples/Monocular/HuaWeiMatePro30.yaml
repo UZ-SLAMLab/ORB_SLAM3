@@ -29,8 +29,8 @@ Camera.RGB: 1
 Camera.width: 3648
 Camera.height: 2736
 
-Camera.newWidth: 720
-Camera.newHeight: 1280
+Camera.newWidth: 640
+Camera.newHeight: 480
 
 
 #--------------------------------------------------------------------------------------------
