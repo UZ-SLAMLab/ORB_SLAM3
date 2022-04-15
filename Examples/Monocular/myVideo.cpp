@@ -9,9 +9,9 @@
 using namespace std;
 
 string parameterFile = "./HuaWeiMatePro30.yaml";
-string vocFile = "/home/lighthouse/orb-slam3/ORB_SLAM3/Vocabulary/ORBvoc.bin";
+string vocFile = "/home/lighthouse/orb_slam3/ORB_SLAM3/Vocabulary/ORBvoc.bin";
 
-string videoFile = "/home/lighthouse/orb-slam3/testVideo/test.mp4";
+string videoFile = "/home/lighthouse/orb_slam3/testVideo/test.mp4";
 
 int main(int argc, char **argv) {
 
