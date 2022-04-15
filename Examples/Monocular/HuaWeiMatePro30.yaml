@@ -26,8 +26,12 @@ Camera.fps: 30
 Camera.RGB: 1
 
 # Camera resolution
-Camera.width: 1920
-Camera.height: 1080
+Camera.width: 3648
+Camera.height: 2736
+
+Camera.newWidth: 720
+Camera.newHeight: 1280
+
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
@@ -49,6 +53,8 @@ ORBextractor.nLevels: 8
 ORBextractor.iniThFAST: 20
 ORBextractor.minThFAST: 7
 
+
+System.SaveAtlasToFile: myVideoAtlasMap.txt
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters
 #--------------------------------------------------------------------------------------------
