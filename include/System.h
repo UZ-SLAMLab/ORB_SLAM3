@@ -110,11 +110,16 @@ public:
     Sophus::SE3f TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas = vector<IMU::Point>(), string filename="");
 
     // Process the given rgbd frame. Depthmap must be registered to the RGB frame.
+    // Input images: two RGB (CV_8UC3) or grayscale (CV_8U) images. RGB is converted to grayscale.
+    // Input depthmaps: Float (CV_32F).
+    // Returns the camera pose (empty if tracking fails).
+    Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const cv::Mat &imS, const cv::Mat &depthmapS, const double &timestamp, const vector<IMU::Point>& vImuMeas = vector<IMU::Point>(), string filename="");
+
+    // Process the given rgbd frame. Depthmap must be registered to the RGB frame.
     // Input image: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
     // Input depthmap: Float (CV_32F).
     // Returns the camera pose (empty if tracking fails).
-    // TODO: right comment
-    Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const cv::Mat &imS, const cv::Mat &depthmapS, const double &timestamp, const vector<IMU::Point>& vImuMeas = vector<IMU::Point>(), string filename="");
+    Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, const vector<IMU::Point>& vImuMeas = vector<IMU::Point>(), string filename="");
 
     // Proccess the given monocular frame and optionally imu data
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.

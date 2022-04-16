@@ -60,6 +60,10 @@ public:
                     cv::OutputArray _descriptors, std::vector<int> &vLappingArea,
                     cv::InputArray _depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T);
 
+    int operator()( cv::InputArray _image, cv::InputArray _mask,
+                    std::vector<cv::KeyPoint>& _keypoints,
+                    cv::OutputArray _descriptors, std::vector<int> &vLappingArea);
+
     int inline GetLevels(){
         return nlevels;}
 
@@ -88,6 +92,8 @@ public:
 protected:
 
     void ComputePyramid(cv::Mat image, cv::Mat imageS);
+    void ComputePyramid(cv::Mat image);
+    void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
     void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints, cv::Mat &depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T);
     std::vector<cv::KeyPoint> DistributeOctTree(const std::vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
                                            const int &maxX, const int &minY, const int &maxY, const int &nFeatures, const int &level);

@@ -28,7 +28,8 @@
 using namespace std;
 
 void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageFilenamesRGB,
-                vector<string> &vstrImageFilenamesD, vector<double> &vTimestamps);
+                vector<string> &vstrImageFilenamesD, vector<string> &vstrImageFilenamesRGBs,
+                vector<string> &vstrImageFilenamesDs, vector<double> &vTimestamps);
 
 int main(int argc, char **argv)
 {
@@ -41,12 +42,15 @@ int main(int argc, char **argv)
     // Retrieve paths to images
     vector<string> vstrImageFilenamesRGB;
     vector<string> vstrImageFilenamesD;
+    vector<string> vstrImageFilenamesRGBs;
+    vector<string> vstrImageFilenamesDs;
     vector<double> vTimestamps;
     string strAssociationFilename = string(argv[4]);
-    LoadImages(strAssociationFilename, vstrImageFilenamesRGB, vstrImageFilenamesD, vTimestamps);
+    LoadImages(strAssociationFilename, vstrImageFilenamesRGB, vstrImageFilenamesD, vstrImageFilenamesRGBs, vstrImageFilenamesDs, vTimestamps);
 
     // Check consistency in the number of images and depthmaps
     int nImages = vstrImageFilenamesRGB.size();
+    // TODO: we should have an equal number of images of each category
     if(vstrImageFilenamesRGB.empty())
     {
         cerr << endl << "No images found in provided path." << endl;
@@ -71,14 +75,18 @@ int main(int argc, char **argv)
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
-    cv::Mat imRGB, imD;
+    cv::Mat imRGB, imD, imRGBs, imDs;
     for(int ni=0; ni<nImages; ni++)
     {
         // Read image and depthmap from file
         imRGB = cv::imread(string(argv[3])+"/"+vstrImageFilenamesRGB[ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
         imD = cv::imread(string(argv[3])+"/"+vstrImageFilenamesD[ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
+        // Slave
+        imRGBs = cv::imread(string(argv[3])+"/"+vstrImageFilenamesRGBs[ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
+        imDs = cv::imread(string(argv[3])+"/"+vstrImageFilenamesDs[ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
         double tframe = vTimestamps[ni];
 
+        // TODO: check for slave
         if(imRGB.empty())
         {
             cerr << endl << "Failed to load image at: "
@@ -101,7 +109,7 @@ int main(int argc, char **argv)
 #endif
 
         // Pass the image to the SLAM system
-        SLAM.TrackRGBD(imRGB,imD,tframe);
+        SLAM.TrackRGBD(imRGB, imD, imRGBs, imDs, tframe);
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -146,7 +154,8 @@ int main(int argc, char **argv)
 }
 
 void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageFilenamesRGB,
-                vector<string> &vstrImageFilenamesD, vector<double> &vTimestamps)
+                vector<string> &vstrImageFilenamesD, vector<string> &vstrImageFilenamesRGBs,
+                vector<string> &vstrImageFilenamesDs, vector<double> &vTimestamps)
 {
     ifstream fAssociation;
     fAssociation.open(strAssociationFilename.c_str());
@@ -167,7 +176,11 @@ void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageF
             ss >> t;
             ss >> sD;
             vstrImageFilenamesD.push_back(sD);
-
+            string sRGBs, sDs;
+            ss >> sRGBs;
+            vstrImageFilenamesRGBs.push_back(sRGBs);
+            ss >> sDs;
+            vstrImageFilenamesDs.push_back(sDs);
         }
     }
 }

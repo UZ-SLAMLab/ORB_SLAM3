@@ -76,10 +76,19 @@ public:
           GeometricCamera* pCamera,Frame* pPrevF = static_cast<Frame*>(NULL),
           const IMU::Calib &ImuCalib = IMU::Calib());
 
+    Frame(const cv::Mat &imGray, const cv::Mat &imDepth,
+          const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef,
+          const float &bf, const float &thDepth,
+          GeometricCamera *pCamera, Frame *pPrevF = static_cast<Frame *>(NULL),
+          const IMU::Calib &ImuCalib = IMU::Calib());
+
 // Extract ORB on the image. 0 for left image and 1 for right image.
     void
-    ExtractORB(int flag, const cv::Mat &im, const cv::Mat &imS, const int x0, const int x1, const cv::Mat &depth,
+    ExtractORB(const cv::Mat &im, const cv::Mat &imS, const int x0, const int x1, const cv::Mat &depth,
                const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T);
+
+    void
+    ExtractORB(int flag, const cv::Mat &im, const int x0, const int x1);
 
     // Compute Bag of Words representation.
     void ComputeBoW();

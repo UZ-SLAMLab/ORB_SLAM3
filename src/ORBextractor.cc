@@ -832,6 +832,123 @@ namespace ORB_SLAM3
         return vToDistributeKeys;
     }
 
+    void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints)
+    {
+        allKeypoints.resize(nlevels);
+
+        const float W = 35;
+
+        for (int level = 0; level < nlevels; ++level)
+        {
+            const int minBorderX = EDGE_THRESHOLD-3;
+            const int minBorderY = minBorderX;
+            const int maxBorderX = mvImagePyramid[level].cols-EDGE_THRESHOLD+3;
+            const int maxBorderY = mvImagePyramid[level].rows-EDGE_THRESHOLD+3;
+
+            vector<cv::KeyPoint> vToDistributeKeys;
+            vToDistributeKeys.reserve(nfeatures*10);
+
+            const float width = (maxBorderX-minBorderX);
+            const float height = (maxBorderY-minBorderY);
+
+            const int nCols = width/W;
+            const int nRows = height/W;
+            const int wCell = ceil(width/nCols);
+            const int hCell = ceil(height/nRows);
+
+            for(int i=0; i<nRows; i++)
+            {
+                const float iniY =minBorderY+i*hCell;
+                float maxY = iniY+hCell+6;
+
+                if(iniY>=maxBorderY-3)
+                    continue;
+                if(maxY>maxBorderY)
+                    maxY = maxBorderY;
+
+                for(int j=0; j<nCols; j++)
+                {
+                    const float iniX =minBorderX+j*wCell;
+                    float maxX = iniX+wCell+6;
+                    if(iniX>=maxBorderX-6)
+                        continue;
+                    if(maxX>maxBorderX)
+                        maxX = maxBorderX;
+
+                    vector<cv::KeyPoint> vKeysCell;
+
+                    FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
+                         vKeysCell,iniThFAST,true);
+
+                    /*if(bRight && j <= 13){
+                        FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
+                             vKeysCell,10,true);
+                    }
+                    else if(!bRight && j >= 16){
+                        FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
+                             vKeysCell,10,true);
+                    }
+                    else{
+                        FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
+                             vKeysCell,iniThFAST,true);
+                    }*/
+
+
+                    if(vKeysCell.empty())
+                    {
+                        FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
+                             vKeysCell,minThFAST,true);
+                        /*if(bRight && j <= 13){
+                            FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
+                                 vKeysCell,5,true);
+                        }
+                        else if(!bRight && j >= 16){
+                            FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
+                                 vKeysCell,5,true);
+                        }
+                        else{
+                            FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
+                                 vKeysCell,minThFAST,true);
+                        }*/
+                    }
+
+                    if(!vKeysCell.empty())
+                    {
+                        for(vector<cv::KeyPoint>::iterator vit=vKeysCell.begin(); vit!=vKeysCell.end();vit++)
+                        {
+                            (*vit).pt.x+=j*wCell;
+                            (*vit).pt.y+=i*hCell;
+                            vToDistributeKeys.push_back(*vit);
+                        }
+                    }
+
+                }
+            }
+
+            vector<KeyPoint> & keypoints = allKeypoints[level];
+            keypoints.reserve(nfeatures);
+
+            keypoints = DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX,
+                                          minBorderY, maxBorderY,mnFeaturesPerLevel[level], level);
+
+            const int scaledPatchSize = PATCH_SIZE*mvScaleFactor[level];
+
+            // Add border to coordinates and scale information
+            const int nkps = keypoints.size();
+            for(int i=0; i<nkps ; i++)
+            {
+                keypoints[i].pt.x+=minBorderX;
+                keypoints[i].pt.y+=minBorderY;
+                keypoints[i].octave=level;
+                keypoints[i].size = scaledPatchSize;
+            }
+        }
+
+        // compute orientations
+        for (int level = 0; level < nlevels; ++level)
+            computeOrientation(mvImagePyramid[level], allKeypoints[level], umax);
+    }
+
     void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints, Mat &depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T)
     {
         allKeypoints.resize(nlevels);
@@ -1111,6 +1228,90 @@ namespace ORB_SLAM3
             computeOrbDescriptor(keypoints[i], image, &pattern[0], descriptors.ptr((int)i));
     }
 
+    int ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
+                                  OutputArray _descriptors, std::vector<int> &vLappingArea)
+    {
+        //cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
+        if(_image.empty())
+            return -1;
+
+        Mat image = _image.getMat();
+        assert(image.type() == CV_8UC1 );
+
+        // Pre-compute the scale pyramid
+        ComputePyramid(image);
+
+        vector < vector<KeyPoint> > allKeypoints;
+        ComputeKeyPointsOctTree(allKeypoints);
+        //ComputeKeyPointsOld(allKeypoints);
+
+        Mat descriptors;
+
+        int nkeypoints = 0;
+        for (int level = 0; level < nlevels; ++level)
+            nkeypoints += (int)allKeypoints[level].size();
+        if( nkeypoints == 0 )
+            _descriptors.release();
+        else
+        {
+            _descriptors.create(nkeypoints, 32, CV_8U);
+            descriptors = _descriptors.getMat();
+        }
+
+        //_keypoints.clear();
+        //_keypoints.reserve(nkeypoints);
+        _keypoints = vector<cv::KeyPoint>(nkeypoints);
+
+        int offset = 0;
+        //Modified for speeding up stereo fisheye matching
+        int monoIndex = 0, stereoIndex = nkeypoints-1;
+        for (int level = 0; level < nlevels; ++level)
+        {
+            vector<KeyPoint>& keypoints = allKeypoints[level];
+            int nkeypointsLevel = (int)keypoints.size();
+
+            if(nkeypointsLevel==0)
+                continue;
+
+            // preprocess the resized image
+            Mat workingMat = mvImagePyramid[level].clone();
+            GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
+
+            // Compute the descriptors
+            //Mat desc = descriptors.rowRange(offset, offset + nkeypointsLevel);
+            Mat desc = cv::Mat(nkeypointsLevel, 32, CV_8U);
+            computeDescriptors(workingMat, keypoints, desc, pattern);
+
+            offset += nkeypointsLevel;
+
+
+            float scale = mvScaleFactor[level]; //getScale(level, firstLevel, scaleFactor);
+            int i = 0;
+            for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
+                         keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint){
+
+                // Scale keypoint coordinates
+                if (level != 0){
+                    keypoint->pt *= scale;
+                }
+
+                if(keypoint->pt.x >= vLappingArea[0] && keypoint->pt.x <= vLappingArea[1]){
+                    _keypoints.at(stereoIndex) = (*keypoint);
+                    desc.row(i).copyTo(descriptors.row(stereoIndex));
+                    stereoIndex--;
+                }
+                else{
+                    _keypoints.at(monoIndex) = (*keypoint);
+                    desc.row(i).copyTo(descriptors.row(monoIndex));
+                    monoIndex++;
+                }
+                i++;
+            }
+        }
+        //cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints" << endl;
+        return monoIndex;
+    }
+
     int ORBextractor::operator()( InputArray _image, InputArray _imageS, InputArray _mask, vector<KeyPoint>& _keypoints,
                                   OutputArray _descriptors, std::vector<int> &vLappingArea, InputArray _depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T)
     {
@@ -1167,7 +1368,7 @@ namespace ORB_SLAM3
             GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
 
             // Compute the descriptors
-            //Mat desc = descriptors.rowRange(offset, offset + nkeypointsLevel);
+            // Mat desc = descriptors.rowRange(offset, offset + nkeypointsLevel);
             Mat desc = cv::Mat(nkeypointsLevel, 32, CV_8U);
             computeDescriptors(workingMat, keypoints, desc, pattern);
 
@@ -1232,6 +1433,33 @@ namespace ORB_SLAM3
                 copyMakeBorder(image, temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101);
                 copyMakeBorder(imageS, tempS, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                               BORDER_REFLECT_101);
+            }
+        }
+
+    }
+
+    void ORBextractor::ComputePyramid(cv::Mat image)
+    {
+        for (int level = 0; level < nlevels; ++level)
+        {
+            float scale = mvInvScaleFactor[level];
+            Size sz(cvRound((float)image.cols*scale), cvRound((float)image.rows*scale));
+            Size wholeSize(sz.width + EDGE_THRESHOLD*2, sz.height + EDGE_THRESHOLD*2);
+            Mat temp(wholeSize, image.type()), masktemp;
+            mvImagePyramid[level] = temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
+
+            // Compute the resized image
+            if( level != 0 )
+            {
+                resize(mvImagePyramid[level-1], mvImagePyramid[level], sz, 0, 0, INTER_LINEAR);
+
+                copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                               BORDER_REFLECT_101+BORDER_ISOLATED);
+            }
+            else
+            {
+                copyMakeBorder(image, temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101);
             }
         }
