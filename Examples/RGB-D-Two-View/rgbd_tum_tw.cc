@@ -54,9 +54,14 @@ int main(int argc, char **argv)
     {
         cerr << endl << "No images found in provided path." << endl;
         return 1;
-    } else if (vstrImageFilenamesRGB.size() != vstrImageFilenamesD.size() != vstrImageFilenamesRGBs.size() !=
-               vstrImageFilenamesDs.size()) {
-        cerr << endl << "Different number of images for rgb and depth." << endl;
+    } else if (vstrImageFilenamesRGB.size() != vstrImageFilenamesD.size()) {
+        cerr << endl << "Different number of images for rgb master and depth master." << endl;
+        return 1;
+    } else if (vstrImageFilenamesRGB.size() != vstrImageFilenamesDs.size()) {
+        cerr << endl << "Different number of images for rgb master and depth slave." << endl;
+        return 1;
+    } else if (vstrImageFilenamesRGB.size() != vstrImageFilenamesRGBs.size()) {
+        cerr << endl << "Different number of images for rgb master and rgb slave." << endl;
         return 1;
     }
 
