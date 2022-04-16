@@ -50,14 +50,12 @@ int main(int argc, char **argv)
 
     // Check consistency in the number of images and depthmaps
     int nImages = vstrImageFilenamesRGB.size();
-    // TODO: we should have an equal number of images of each category
     if(vstrImageFilenamesRGB.empty())
     {
         cerr << endl << "No images found in provided path." << endl;
         return 1;
-    }
-    else if(vstrImageFilenamesD.size()!=vstrImageFilenamesRGB.size())
-    {
+    } else if (vstrImageFilenamesRGB.size() != vstrImageFilenamesD.size() != vstrImageFilenamesRGBs.size() !=
+               vstrImageFilenamesDs.size()) {
         cerr << endl << "Different number of images for rgb and depth." << endl;
         return 1;
     }
@@ -86,11 +84,16 @@ int main(int argc, char **argv)
         imDs = cv::imread(string(argv[3])+"/"+vstrImageFilenamesDs[ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
         double tframe = vTimestamps[ni];
 
-        // TODO: check for slave
         if(imRGB.empty())
         {
             cerr << endl << "Failed to load image at: "
                  << string(argv[3]) << "/" << vstrImageFilenamesRGB[ni] << endl;
+            return 1;
+        }
+        if(imRGBs.empty())
+        {
+            cerr << endl << "Failed to load image at: "
+                 << string(argv[3]) << "/" << vstrImageFilenamesRGBs[ni] << endl;
             return 1;
         }
 
