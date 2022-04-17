@@ -1406,6 +1406,8 @@ void System::InsertTrackTime(double& time)
 void System::SaveAtlas(int type){
     if(!mStrSaveAtlasToFile.empty())
     {
+        cout << "begin to save atlas file" << endl;
+        cout << "type is : " << type << endl;
         //clock_t start = clock();
 
         // Save the current session
