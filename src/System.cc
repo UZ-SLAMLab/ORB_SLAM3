@@ -549,7 +549,8 @@ void System::Shutdown()
     if(!mStrSaveAtlasToFile.empty())
     {
         Verbose::PrintMess("Atlas saving to file " + mStrSaveAtlasToFile, Verbose::VERBOSITY_NORMAL);
-        SaveAtlas(FileType::BINARY_FILE);
+        //SaveAtlas(FileType::BINARY_FILE);
+        SaveAtlas(FileType::TEXT_FILE;
     }
 
     /*if(mpViewer)
