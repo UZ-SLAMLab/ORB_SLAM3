@@ -8,16 +8,16 @@ File.version: "1.0"
 Camera.type: "PinHole"
 
 # Camera calibration and distortion parameters (OpenCV) 
-Camera1.fx: 1.83967244e+04
-Camera1.fy: 3.20548404e+04
-Camera1.cx: 6.66240108e+02
-Camera1.cy: -1.09185645e+02
+Camera1.fx: 503.37802572
+Camera1.fy: 502.14645985
+Camera1.cx: 320.87743973
+Camera1.cy: 236.44062294
 
-Camera1.k1: 2.40284872e+01
-Camera1.k2: 2.28197121e+03
-Camera1.p1: 5.00167019e-02
-Camera1.p2: -4.02349443e-01
-Camera1.k3: -2.22029888e+05
+Camera1.k1: -0.03625386
+Camera1.k2: 0.21856535
+Camera1.p1: -0.00225098
+Camera1.p2: -0.00285852
+Camera1.k3: -0.45622708
 
 # Camera frames per second 
 Camera.fps: 30
@@ -26,8 +26,12 @@ Camera.fps: 30
 Camera.RGB: 1
 
 # Camera resolution
-Camera.width: 1920
-Camera.height: 1080
+Camera.width: 640
+Camera.height: 480
+
+Camera.newWidth: 480
+Camera.newHeight: 640
+
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
@@ -49,6 +53,8 @@ ORBextractor.nLevels: 8
 ORBextractor.iniThFAST: 20
 ORBextractor.minThFAST: 7
 
+
+System.SaveAtlasToFile: myVideoAtlasMap.txt
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters
 #--------------------------------------------------------------------------------------------

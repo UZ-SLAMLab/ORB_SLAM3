@@ -9,9 +9,9 @@
 using namespace std;
 
 string parameterFile = "./HuaWeiMatePro30.yaml";
-string vocFile = "/home/lighthouse/orb-slam3/ORB_SLAM3/Vocabulary/ORBvoc.bin";
+string vocFile = "/home/lighthouse/orb_slam3/ORB_SLAM3/Vocabulary/ORBvoc.bin";
 
-string videoFile = "/home/lighthouse/orb-slam3/testVideo/test.mp4";
+string videoFile = "/home/lighthouse/orb_slam3/testVideo/test.mp4";
 
 int main(int argc, char **argv) {
 
@@ -34,7 +34,7 @@ while (1) {
 
         auto now = chrono::system_clock::now();
         auto timestamp = chrono::duration_cast<chrono::milliseconds>(now - start);
-        SLAM.TrackMonocular(frame_resized, double(timestamp.count())/1000.0);
+        SLAM.TrackMonocular(frame, double(timestamp.count())/1000.0);
         cv::waitKey(30);
     }
 
