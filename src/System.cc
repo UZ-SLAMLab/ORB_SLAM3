@@ -546,6 +546,7 @@ void System::Shutdown()
         /*usleep(5000);
     }*/
 
+    cout << " atlas file name: " << mStrSaveAtlasToFile << endl;
     if(!mStrSaveAtlasToFile.empty())
     {
         Verbose::PrintMess("Atlas saving to file " + mStrSaveAtlasToFile, Verbose::VERBOSITY_NORMAL);
