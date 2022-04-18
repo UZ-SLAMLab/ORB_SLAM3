@@ -1424,7 +1424,8 @@ void System::SaveAtlas(int type){
         cout << "======================== debug info ============================" << endl;
         cout << "strVocabularyName: " << strVocabularyName << endl;
         cout << "strVocabularyChecksum: " << strVocabularyChecksum << endl;
-        cout << "myAltas: " << mpAtlas->mnLastInitKFidMap << endl;
+        cout << "MP number: " << mpAtlas->GetNumLivedMP() << endl;
+        cout << "KF number: " << mpAtlas->GetNumLivedKF() << endl;
 
         if(type == TEXT_FILE) // File text
         {
