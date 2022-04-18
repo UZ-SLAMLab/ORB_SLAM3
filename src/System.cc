@@ -1421,6 +1421,10 @@ void System::SaveAtlas(int type){
         std::size_t found = mStrVocabularyFilePath.find_last_of("/\\");
         string strVocabularyName = mStrVocabularyFilePath.substr(found+1);
 
+        cout << "======================== debug info ============================" << endl;
+        cout << "strVocabularyName: " << strVocabularyName << endl;
+        cout << "strVocabularyChecksum: " << strVocabularyChecksum << endl;
+
         if(type == TEXT_FILE) // File text
         {
             cout << "Starting to write the save text file " << endl;
