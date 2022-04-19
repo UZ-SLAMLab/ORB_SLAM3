@@ -748,10 +748,9 @@ namespace ORB_SLAM3
                         if((int)lNodes.size()>=N)
                             break;
                     }
-                    
+
                     if((int)lNodes.size()>=N || (int)lNodes.size()==prevSize)
                         bFinish = true;
-
 
                 }
             }
