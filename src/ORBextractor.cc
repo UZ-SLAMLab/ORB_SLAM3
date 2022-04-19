@@ -608,6 +608,7 @@ namespace ORB_SLAM3
 
         vector<pair<int,ExtractorNode*> > vSizeAndPointerToNode;
         vSizeAndPointerToNode.reserve(lNodes.size()*4);
+
         while(!bFinish)
         {
             iteration++;
@@ -689,7 +690,7 @@ namespace ORB_SLAM3
             }
             else if(((int)lNodes.size()+nToExpand*3)>N)
             {
-                
+
                 while(!bFinish)
                 {
 
@@ -747,6 +748,7 @@ namespace ORB_SLAM3
                         if((int)lNodes.size()>=N)
                             break;
                     }
+                    
                     if((int)lNodes.size()>=N || (int)lNodes.size()==prevSize)
                         bFinish = true;
 
