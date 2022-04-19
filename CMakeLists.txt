@@ -275,7 +275,6 @@ if(realsense2_FOUND)
     target_link_libraries(recorder_realsense_T265 ${PROJECT_NAME})
 endif()
 
-
 #Old examples
 
 # RGB-D examples
