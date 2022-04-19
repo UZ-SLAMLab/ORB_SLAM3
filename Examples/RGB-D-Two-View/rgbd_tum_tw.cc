@@ -45,8 +45,7 @@ int main(int argc, char **argv) {
     vector<double> vTimestamps;
     auto const strAssociationFilename = string(argv[4]);
     auto const code = LoadImages(strAssociationFilename, masterImageFilenamesRGB, masterImageFilenamesD,
-                                 slaveImageFilenamesRGB,
-                                 slaveImageFilenamesD, vTimestamps);
+                                 slaveImageFilenamesRGB, slaveImageFilenamesD, vTimestamps);
     if (code == 1) return 1;
 
     // Check consistency in the number of images and depthmaps
@@ -82,14 +81,14 @@ int main(int argc, char **argv) {
     for (int ni = 0; ni < nImages; ni++) {
         // Read image and depthmap from file
         auto imRGBMaster = cv::imread(string(argv[3]) + "/" + masterImageFilenamesRGB[ni],
-                                      cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
+                                      cv::IMREAD_UNCHANGED);
         auto imDMaster = cv::imread(string(argv[3]) + "/" + masterImageFilenamesD[ni],
-                                    cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
+                                    cv::IMREAD_UNCHANGED);
         // Slave
         auto imRGBSlave = cv::imread(string(argv[3]) + "/" + slaveImageFilenamesRGB[ni],
-                                     cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
+                                     cv::IMREAD_UNCHANGED);
         auto imDSlave = cv::imread(string(argv[3]) + "/" + slaveImageFilenamesD[ni],
-                                   cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
+                                   cv::IMREAD_UNCHANGED);
         double tframe = vTimestamps[ni];
 
         if (imRGBMaster.empty()) {
