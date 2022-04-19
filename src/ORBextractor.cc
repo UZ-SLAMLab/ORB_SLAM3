@@ -949,9 +949,10 @@ namespace ORB_SLAM3
             computeOrientation(mvImagePyramid[level], allKeypoints[level], umax);
     }
 
-    void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints, Mat &depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T)
+    void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>>& allMasterKeypoints, vector<vector<KeyPoint>>& allSlaveKeypoints)
     {
-        allKeypoints.resize(nlevels);
+        allMasterKeypoints.resize(nlevels);
+        allSlaveKeypoints.resize(nlevels);
 
         const float W = 35;
 
@@ -982,61 +983,41 @@ namespace ORB_SLAM3
                                                                                 wCell, maxBorderX,
                                                                                 level, true);
 
-            vector<KeyPoint> & keypoints = allKeypoints[level];
-            keypoints.reserve(nfeatures);
+            vector<KeyPoint> & keypointsM = allMasterKeypoints[level];
+            vector<KeyPoint> & keypointsS = allSlaveKeypoints[level];
 
-            vector<KeyPoint> keypointsTemp = DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX,
-                                          minBorderY, maxBorderY,mnFeaturesPerLevel[level], level);
-            vector<KeyPoint> keypointsSTemp = DistributeOctTree(vToDistributeKeysS, minBorderX, maxBorderX,
-                                                               minBorderY, maxBorderY,mnFeaturesPerLevel[level], level);
+            keypointsM.reserve(nfeatures);
+            keypointsS.reserve(nfeatures);
 
-            float x, y, z, u, v;
-            vector<cv::KeyPoint> newKeypointsSTemp;
-            for(auto & i : keypointsSTemp)
-            {
-                z = depthS.at<float>((int)i.pt.y, (int)i.pt.x);
-                x = (i.pt.x - KS.at<float>(0, 2)) * z / KS.at<float>(0, 0);
-                y = (i.pt.y - KS.at<float>(1, 2)) * z / KS.at<float>(1, 1);
-
-                Eigen::Vector4f xyz(x, y, z, 1);
-                Eigen::Vector4f newXyz = T * xyz;
-                x = newXyz[0];
-                y = newXyz[1];
-                z = newXyz[2];
-
-                u = round(((K.at<float>(0, 0) * x) / z) + K.at<float>(0, 2));
-                v = round(((K.at<float>(1, 1) * y) / z) + K.at<float>(1, 2));
-
-                if ((u > 0) and (u < depthS.cols) and (v > 0) and (v < depthS.rows)){
-                    cv::KeyPoint kp(u, v, i.size, i.angle, i.response,i.octave, i.class_id);
-                    newKeypointsSTemp.push_back(kp);
-                }
-            }
+            keypointsM = DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX,
+                                           minBorderY, maxBorderY, mnFeaturesPerLevel[level], level);
+            keypointsS = DistributeOctTree(vToDistributeKeysS, minBorderX, maxBorderX,
+                                           minBorderY, maxBorderY, mnFeaturesPerLevel[level], level);
 
             const int scaledPatchSize = PATCH_SIZE*mvScaleFactor[level];
 
             // Add border to coordinates and scale information
-            const int nkps = keypointsTemp.size();
+            const int nkps = keypointsM.size();
             for(int i=0; i<nkps ; i++)
             {
-                keypointsTemp[i].pt.x+=minBorderX;
-                keypointsTemp[i].pt.y+=minBorderY;
-                keypointsTemp[i].octave=level;
-                keypointsTemp[i].size = scaledPatchSize;
+                keypointsM[i].pt.x+=minBorderX;
+                keypointsM[i].pt.y+=minBorderY;
+                keypointsM[i].octave=level;
+                keypointsM[i].size = scaledPatchSize;
             }
-            const int nkpsS = newKeypointsSTemp.size();
+            const int nkpsS = keypointsS.size();
             for(int i=0; i<nkpsS ; i++)
             {
-                newKeypointsSTemp[i].pt.x+=minBorderX;
-                newKeypointsSTemp[i].pt.y+=minBorderY;
-                newKeypointsSTemp[i].octave=level;
-                newKeypointsSTemp[i].size = scaledPatchSize;
+                keypointsS[i].pt.x+=minBorderX;
+                keypointsS[i].pt.y+=minBorderY;
+                keypointsS[i].octave=level;
+                keypointsS[i].size = scaledPatchSize;
             }
-            // compute orientations
-            computeOrientation(mvImagePyramid[level], keypointsTemp, umax);
-            computeOrientation(mvImagePyramidS[level], newKeypointsSTemp, umax);
-            keypointsTemp.insert(keypointsTemp.end(), newKeypointsSTemp.begin(), newKeypointsSTemp.end());
-            keypoints = keypointsTemp;
+        }
+        // compute orientations
+        for (int level = 0; level < nlevels; ++level) {
+            computeOrientation(mvImagePyramid[level], allMasterKeypoints[level], umax);
+            computeOrientation(mvImagePyramidS[level], allSlaveKeypoints[level], umax);
         }
     }
 
@@ -1315,7 +1296,6 @@ namespace ORB_SLAM3
     int ORBextractor::operator()( InputArray _image, InputArray _imageS, InputArray _mask, vector<KeyPoint>& _keypoints,
                                   OutputArray _descriptors, std::vector<int> &vLappingArea, InputArray _depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T)
     {
-        //cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
         if(_image.empty())
             return -1;
         if(_imageS.empty())
@@ -1328,17 +1308,25 @@ namespace ORB_SLAM3
         assert(imageS.type() == CV_8UC1 );
 
         // Pre-compute the scale pyramid
-        ComputePyramid(image, imageS);
-        vector < vector<KeyPoint> > allKeypoints;
-        ComputeKeyPointsOctTree(allKeypoints, depthS, K, KS, T);
-
-        //ComputeKeyPointsOld(allKeypoints);
+        ComputePyramids(image, imageS);
+        vector <vector<KeyPoint>> allMasterKeypoints, allSlaveKeypoints;
+        ComputeKeyPointsOctTree(allMasterKeypoints, allSlaveKeypoints);
 
         Mat descriptors;
 
         int nkeypoints = 0;
-        for (int level = 0; level < nlevels; ++level)
-            nkeypoints += (int)allKeypoints[level].size();
+        for (int level = 0; level < nlevels; ++level) {
+            for (auto & keypoint : allSlaveKeypoints[level]){
+                float scale = mvScaleFactor[level];
+                if (level != 0){
+                    keypoint.pt *= scale;
+                }
+                if (depthS.at<float>((int)keypoint.pt.y, (int)keypoint.pt.x) != 0){
+                    nkeypoints += 1;
+                }
+            }
+            nkeypoints += (int)allMasterKeypoints[level].size();
+        }
         if( nkeypoints == 0 )
             _descriptors.release();
         else
@@ -1347,62 +1335,92 @@ namespace ORB_SLAM3
             descriptors = _descriptors.getMat();
         }
 
-        //_keypoints.clear();
-        //_keypoints.reserve(nkeypoints);
         _keypoints = vector<cv::KeyPoint>(nkeypoints);
 
-        int offset = 0;
         //Modified for speeding up stereo fisheye matching
+        cout << "num keypoints " << nkeypoints << endl;
         int monoIndex = 0, stereoIndex = nkeypoints-1;
         for (int level = 0; level < nlevels; ++level)
         {
-            vector<KeyPoint>& keypoints = allKeypoints[level];
-            int nkeypointsLevel = (int)keypoints.size();
+            vector<KeyPoint>& keypointsM = allMasterKeypoints[level];
+            vector<KeyPoint>& keypointsS = allSlaveKeypoints[level];
+            int nkeypointsLevelM = (int)keypointsM.size();
+            int nkeypointsLevelS = (int)keypointsS.size();
 
-            if(nkeypointsLevel==0)
+            if(nkeypointsLevelM==0 and nkeypointsLevelS==0)
                 continue;
 
             // preprocess the resized image
-            Mat workingMat;
-            workingMat = mvImagePyramid[level].clone();
-            GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
+            Mat workingMatM;
+            workingMatM = mvImagePyramid[level].clone();
+            GaussianBlur(workingMatM, workingMatM, Size(7, 7), 2, 2, BORDER_REFLECT_101);
+            Mat workingMatS;
+            workingMatS = mvImagePyramidS[level].clone();
+            GaussianBlur(workingMatS, workingMatS, Size(7, 7), 2, 2, BORDER_REFLECT_101);
 
             // Compute the descriptors
-            // Mat desc = descriptors.rowRange(offset, offset + nkeypointsLevel);
-            Mat desc = cv::Mat(nkeypointsLevel, 32, CV_8U);
-            computeDescriptors(workingMat, keypoints, desc, pattern);
+            Mat descM = cv::Mat(nkeypointsLevelM, 32, CV_8U);
+            computeDescriptors(workingMatM, keypointsM, descM, pattern);
+            Mat descS = cv::Mat(nkeypointsLevelS, 32, CV_8U);
+            computeDescriptors(workingMatS, keypointsS, descS, pattern);
 
-            offset += nkeypointsLevel;
-
-
-            float scale = mvScaleFactor[level]; //getScale(level, firstLevel, scaleFactor);
+            float scale = mvScaleFactor[level];
             int i = 0;
-            for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
-                         keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint){
-
+            for (auto & keypoint : keypointsM){
                 // Scale keypoint coordinates
                 if (level != 0){
-                    keypoint->pt *= scale;
+                    keypoint.pt *= scale;
                 }
 
-                if(keypoint->pt.x >= vLappingArea[0] && keypoint->pt.x <= vLappingArea[1]){
-                    _keypoints.at(stereoIndex) = (*keypoint);
-                    desc.row(i).copyTo(descriptors.row(stereoIndex));
+                if(keypoint.pt.x >= vLappingArea[0] && keypoint.pt.x <= vLappingArea[1]){
+                    _keypoints.at(stereoIndex) = keypoint;
+                    descM.row(i).copyTo(descriptors.row(stereoIndex));
                     stereoIndex--;
                 }
                 else{
-                    _keypoints.at(monoIndex) = (*keypoint);
-                    desc.row(i).copyTo(descriptors.row(monoIndex));
+                    _keypoints.at(monoIndex) = keypoint;
+                    descM.row(i).copyTo(descriptors.row(monoIndex));
                     monoIndex++;
                 }
                 i++;
             }
+            i = 0;
+            for (auto & keypoint : keypointsS){
+                float x, y, z, u, v;
+                z = depthS.at<float>((int)keypoint.pt.y, (int)keypoint.pt.x);
+                if (z != 0) {
+                x = (keypoint.pt.x - KS.at<float>(0, 2)) * z / KS.at<float>(0, 0);
+                y = (keypoint.pt.y - KS.at<float>(1, 2)) * z / KS.at<float>(1, 1);
+
+                Eigen::Vector4f xyz(x, y, z, 1);
+                Eigen::Vector4f newXyz = T * xyz;
+                x = newXyz[0];
+                y = newXyz[1];
+                z = newXyz[2];
+                u = round(((K.at<float>(0, 0) * x) / z) + K.at<float>(0, 2));
+                v = round(((K.at<float>(1, 1) * y) / z) + K.at<float>(1, 2));
+
+                cv::KeyPoint kp(u, v, keypoint.size, keypoint.angle, keypoint.response, keypoint.octave,
+                                keypoint.class_id);
+
+                if (keypoint.pt.x >= vLappingArea[0] && keypoint.pt.x <= vLappingArea[1]) {
+                    cout << stereoIndex << endl;
+                    _keypoints.at(stereoIndex) = kp;
+                    descS.row(i).copyTo(descriptors.row(stereoIndex));
+                    stereoIndex--;
+                } else {
+                    cout << monoIndex << endl;
+                    _keypoints.at(monoIndex) = kp;
+                    descS.row(i).copyTo(descriptors.row(monoIndex));
+                    monoIndex++;
+                }}
+                i++;
+            }
         }
-        //cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints" << endl;
         return monoIndex;
     }
 
-    void ORBextractor::ComputePyramid(cv::Mat image, cv::Mat imageS)
+    void ORBextractor::ComputePyramids(cv::Mat image, cv::Mat imageS)
     {
         for (int level = 0; level < nlevels; ++level)
         {

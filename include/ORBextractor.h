@@ -91,10 +91,10 @@ public:
 
 protected:
 
-    void ComputePyramid(cv::Mat image, cv::Mat imageS);
+    void ComputePyramids(cv::Mat image, cv::Mat imageS);
     void ComputePyramid(cv::Mat image);
     void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
-    void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints, cv::Mat &depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T);
+    void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint>>& allMasterKeypoints, std::vector<std::vector<cv::KeyPoint>>& allSlaveKeypoints);
     std::vector<cv::KeyPoint> DistributeOctTree(const std::vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
                                            const int &maxX, const int &minY, const int &maxY, const int &nFeatures, const int &level);
 
@@ -115,8 +115,6 @@ protected:
     std::vector<float> mvInvScaleFactor;    
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
-
-
 
     std::vector<cv::KeyPoint>
     vToDistributeKeysCalculate(const int nRows, const int minBorderY, const int hCell, const int maxBorderY,
