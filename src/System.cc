@@ -901,7 +901,7 @@ void System::SaveTrajectoryEuRoC(const string &filename, Map* pMap)
 
 
     for(auto lit=mpTracker->mlRelativeFramePoses.begin(),
-                lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++, lbL++)
+        lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++, lbL++)
     {
         //cout << "1" << endl;
         if(*lbL)
@@ -961,8 +961,8 @@ void System::SaveTrajectoryEuRoC(const string &filename, Map* pMap)
     cout << endl << "End of saving trajectory to " << filename << " ..." << endl;
 }
 
-    /*void System::SaveTrajectoryEuRoC(const string &filename)
-    {
+/*void System::SaveTrajectoryEuRoC(const string &filename)
+{
 
     cout << endl << "Saving trajectory to " << filename << " ..." << endl;
     if(mSensor==MONOCULAR)
@@ -1079,11 +1079,11 @@ void System::SaveTrajectoryEuRoC(const string &filename, Map* pMap)
     //cout << "end saving trajectory" << endl;
     f.close();
     cout << endl << "End of saving trajectory to " << filename << " ..." << endl;
-    }*/
+}*/
 
 
-    /*void System::SaveKeyFrameTrajectoryEuRoC_old(const string &filename)
-    {
+/*void System::SaveKeyFrameTrajectoryEuRoC_old(const string &filename)
+{
     cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
 
     vector<Map*> vpMaps = mpAtlas->GetAllMaps();
@@ -1132,7 +1132,7 @@ void System::SaveTrajectoryEuRoC(const string &filename, Map* pMap)
         }
     }
     f.close();
-    }*/
+}*/
 
 void System::SaveKeyFrameTrajectoryEuRoC(const string &filename)
 {
@@ -1169,7 +1169,7 @@ void System::SaveKeyFrameTrajectoryEuRoC(const string &filename)
     {
         KeyFrame* pKF = vpKFs[i];
 
-        // pKF->SetPose(pKF->GetPose()*Two);
+       // pKF->SetPose(pKF->GetPose()*Two);
 
         if(!pKF || pKF->isBad())
             continue;
@@ -1232,55 +1232,55 @@ void System::SaveKeyFrameTrajectoryEuRoC(const string &filename, Map* pMap)
 
 /*void System::SaveTrajectoryKITTI(const string &filename)
 {
-cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
-if(mSensor==MONOCULAR)
-{
-    cerr << "ERROR: SaveTrajectoryKITTI cannot be used for monocular." << endl;
-    return;
-}
-
-vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
-sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
-
-// Transform all keyframes so that the first keyframe is at the origin.
-// After a loop closure the first keyframe might not be at the origin.
-cv::Mat Two = vpKFs[0]->GetPoseInverse();
-
-ofstream f;
-f.open(filename.c_str());
-f << fixed;
-
-// Frame pose is stored relative to its reference keyframe (which is optimized by BA and pose graph).
-// We need to get first the keyframe pose and then concatenate the relative transformation.
-// Frames not localized (tracking failure) are not saved.
-
-// For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
-// which is true when tracking failed (lbL).
-list<ORB_SLAM3::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
-list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
-for(list<cv::Mat>::iterator lit=mpTracker->mlRelativeFramePoses.begin(), lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++)
-{
-    ORB_SLAM3::KeyFrame* pKF = *lRit;
-
-    cv::Mat Trw = cv::Mat::eye(4,4,CV_32F);
-
-    while(pKF->isBad())
+    cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
+    if(mSensor==MONOCULAR)
     {
-        Trw = Trw * Converter::toCvMat(pKF->mTcp.matrix());
-        pKF = pKF->GetParent();
+        cerr << "ERROR: SaveTrajectoryKITTI cannot be used for monocular." << endl;
+        return;
     }
 
-    Trw = Trw * pKF->GetPoseCv() * Two;
+    vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
+    sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
-    cv::Mat Tcw = (*lit)*Trw;
-    cv::Mat Rwc = Tcw.rowRange(0,3).colRange(0,3).t();
-    cv::Mat twc = -Rwc*Tcw.rowRange(0,3).col(3);
+    // Transform all keyframes so that the first keyframe is at the origin.
+    // After a loop closure the first keyframe might not be at the origin.
+    cv::Mat Two = vpKFs[0]->GetPoseInverse();
 
-    f << setprecision(9) << Rwc.at<float>(0,0) << " " << Rwc.at<float>(0,1)  << " " << Rwc.at<float>(0,2) << " "  << twc.at<float>(0) << " " <<
-         Rwc.at<float>(1,0) << " " << Rwc.at<float>(1,1)  << " " << Rwc.at<float>(1,2) << " "  << twc.at<float>(1) << " " <<
-         Rwc.at<float>(2,0) << " " << Rwc.at<float>(2,1)  << " " << Rwc.at<float>(2,2) << " "  << twc.at<float>(2) << endl;
-}
-f.close();
+    ofstream f;
+    f.open(filename.c_str());
+    f << fixed;
+
+    // Frame pose is stored relative to its reference keyframe (which is optimized by BA and pose graph).
+    // We need to get first the keyframe pose and then concatenate the relative transformation.
+    // Frames not localized (tracking failure) are not saved.
+
+    // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
+    // which is true when tracking failed (lbL).
+    list<ORB_SLAM3::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
+    list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
+    for(list<cv::Mat>::iterator lit=mpTracker->mlRelativeFramePoses.begin(), lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++)
+    {
+        ORB_SLAM3::KeyFrame* pKF = *lRit;
+
+        cv::Mat Trw = cv::Mat::eye(4,4,CV_32F);
+
+        while(pKF->isBad())
+        {
+            Trw = Trw * Converter::toCvMat(pKF->mTcp.matrix());
+            pKF = pKF->GetParent();
+        }
+
+        Trw = Trw * pKF->GetPoseCv() * Two;
+
+        cv::Mat Tcw = (*lit)*Trw;
+        cv::Mat Rwc = Tcw.rowRange(0,3).colRange(0,3).t();
+        cv::Mat twc = -Rwc*Tcw.rowRange(0,3).col(3);
+
+        f << setprecision(9) << Rwc.at<float>(0,0) << " " << Rwc.at<float>(0,1)  << " " << Rwc.at<float>(0,2) << " "  << twc.at<float>(0) << " " <<
+             Rwc.at<float>(1,0) << " " << Rwc.at<float>(1,1)  << " " << Rwc.at<float>(1,2) << " "  << twc.at<float>(1) << " " <<
+             Rwc.at<float>(2,0) << " " << Rwc.at<float>(2,1)  << " " << Rwc.at<float>(2,2) << " "  << twc.at<float>(2) << endl;
+    }
+    f.close();
 }*/
 
 void System::SaveTrajectoryKITTI(const string &filename)
@@ -1312,7 +1312,7 @@ void System::SaveTrajectoryKITTI(const string &filename)
     list<ORB_SLAM3::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
     list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
     for(list<Sophus::SE3f>::iterator lit=mpTracker->mlRelativeFramePoses.begin(),
-                lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++)
+        lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++)
     {
         ORB_SLAM3::KeyFrame* pKF = *lRit;
 
@@ -1335,8 +1335,8 @@ void System::SaveTrajectoryKITTI(const string &filename)
         Eigen::Vector3f twc = Twc.translation();
 
         f << setprecision(9) << Rwc(0,0) << " " << Rwc(0,1)  << " " << Rwc(0,2) << " "  << twc(0) << " " <<
-          Rwc(1,0) << " " << Rwc(1,1)  << " " << Rwc(1,2) << " "  << twc(1) << " " <<
-          Rwc(2,0) << " " << Rwc(2,1)  << " " << Rwc(2,2) << " "  << twc(2) << endl;
+             Rwc(1,0) << " " << Rwc(1,1)  << " " << Rwc(1,2) << " "  << twc(1) << " " <<
+             Rwc(2,0) << " " << Rwc(2,1)  << " " << Rwc(2,2) << " "  << twc(2) << endl;
     }
     f.close();
 }
@@ -1466,17 +1466,17 @@ float System::GetImageScale()
 #ifdef REGISTER_TIMES
 void System::InsertRectTime(double& time)
 {
-mpTracker->vdRectStereo_ms.push_back(time);
+    mpTracker->vdRectStereo_ms.push_back(time);
 }
 
 void System::InsertResizeTime(double& time)
 {
-mpTracker->vdResizeImage_ms.push_back(time);
+    mpTracker->vdResizeImage_ms.push_back(time);
 }
 
 void System::InsertTrackTime(double& time)
 {
-mpTracker->vdTrackTotal_ms.push_back(time);
+    mpTracker->vdTrackTotal_ms.push_back(time);
 }
 #endif
 
