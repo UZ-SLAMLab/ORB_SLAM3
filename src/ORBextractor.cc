@@ -579,12 +579,14 @@ namespace ORB_SLAM3
             lNodes.push_back(ni);
             vpIniNodes[i] = &lNodes.back();
         }
+
         //Associate points to childs
         for(size_t i=0;i<vToDistributeKeys.size();i++)
         {
             const cv::KeyPoint &kp = vToDistributeKeys[i];
             vpIniNodes[kp.pt.x/hX]->vKeys.push_back(kp);
         }
+
         list<ExtractorNode>::iterator lit = lNodes.begin();
 
         while(lit!=lNodes.end())
@@ -599,6 +601,7 @@ namespace ORB_SLAM3
             else
                 lit++;
         }
+
         bool bFinish = false;
 
         int iteration = 0;
@@ -608,10 +611,15 @@ namespace ORB_SLAM3
         while(!bFinish)
         {
             iteration++;
+
             int prevSize = lNodes.size();
+
             lit = lNodes.begin();
+
             int nToExpand = 0;
+
             vSizeAndPointerToNode.clear();
+
             while(lit!=lNodes.end())
             {
                 if(lit->bNoMore)
@@ -672,6 +680,7 @@ namespace ORB_SLAM3
                     continue;
                 }
             }
+
             // Finish if there are more nodes than required features
             // or all nodes contain just one point
             if((int)lNodes.size()>=N || (int)lNodes.size()==prevSize)
@@ -680,6 +689,7 @@ namespace ORB_SLAM3
             }
             else if(((int)lNodes.size()+nToExpand*3)>N)
             {
+                
                 while(!bFinish)
                 {
 
