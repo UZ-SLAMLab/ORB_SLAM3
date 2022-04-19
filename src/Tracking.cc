@@ -626,7 +626,8 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
     string sCameraName = fSettings["Camera.type"];
     if(sCameraName == "PinHole")
     {
-        float fx, fy, cx, cy, fxS, fyS, cxS, cyS;
+        float fx, fy, cx, cy;
+        float fxS, fyS, cxS, cyS;
         mImageScale = 1.f;
 
         // Camera calibration parameters
@@ -1690,6 +1691,7 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
 
     return mCurrentFrame.GetPose();
 }
+
 
 Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename)
 {
