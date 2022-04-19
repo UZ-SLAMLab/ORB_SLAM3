@@ -54,13 +54,13 @@ int main(int argc, char **argv) {
         cerr << endl << "No images were found in provided path." << endl;
         return 1;
     } else if (masterImageFilenamesRGB.size() != masterImageFilenamesD.size()) {
-        cerr << endl << "Different number of images for rgb master and depth master." << endl;
+        cerr << endl << "Different number of images for master RGB and depth." << endl;
         return 1;
-    } else if (masterImageFilenamesRGB.size() != slaveImageFilenamesD.size()) {
-        cerr << endl << "Different number of images for rgb master and depth slave." << endl;
+    } else if (slaveImageFilenamesRGB.size() != slaveImageFilenamesD.size()) {
+        cerr << endl << "Different number of images for salve RGB and depth." << endl;
         return 1;
     } else if (masterImageFilenamesRGB.size() != slaveImageFilenamesRGB.size()) {
-        cerr << endl << "Different number of images for rgb master and rgb slave." << endl;
+        cerr << endl << "Different number of images for RGB master and RGB slave." << endl;
         return 1;
     }
 
