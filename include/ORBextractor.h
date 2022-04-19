@@ -95,7 +95,7 @@ protected:
     void ComputePyramids(cv::Mat image, cv::Mat imageS);
     void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint>>& allMasterKeypoints, std::vector<std::vector<cv::KeyPoint>>& allSlaveKeypoints);
     std::vector<cv::KeyPoint> DistributeOctTree(const std::vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
-                                                const int &maxX, const int &minY, const int &maxY, const int &nFeatures, const int &level);
+                                           const int &maxX, const int &minY, const int &maxY, const int &nFeatures, const int &level);
 
     void ComputeKeyPointsOld(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
     std::vector<cv::Point> pattern;
@@ -111,7 +111,7 @@ protected:
     std::vector<int> umax;
 
     std::vector<float> mvScaleFactor;
-    std::vector<float> mvInvScaleFactor;
+    std::vector<float> mvInvScaleFactor;    
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
 
