@@ -329,7 +329,7 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
 {
     if(mSensor!=RGBD  && mSensor!=IMU_RGBD)
     {
-        cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD." << endl;
+        cerr << "ERROR: you called TrackRGBDTwoView but input sensor was not set to RGBD." << endl;
         exit(-1);
     }
 
@@ -396,51 +396,48 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
     return Tcw;
 }
 
-Sophus::SE3f System::TrackRGBD(const cv::Mat &imMaster, const cv::Mat &depthmapMaster, const cv::Mat &imSlave, const cv::Mat &depthmapSlave, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
-{
-    if(mSensor!=RGBD  && mSensor!=IMU_RGBD)
-    {
-        cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD." << endl;
+Sophus::SE3f System::TrackRGBDTwoView(const cv::Mat &imMaster, const cv::Mat &depthmapMaster,
+                                      const cv::Mat &imSlave, const cv::Mat &depthmapSlave, const double &timestamp,
+                                      const vector<IMU::Point> &vImuMeas, string filename) {
+    if (mSensor != RGBD && mSensor != IMU_RGBD) {
+        cerr << "ERROR: you called TrackRGBDTwoView but input sensor was not set to RGBD." << endl;
         exit(-1);
     }
 
-    cv::Mat imToFeed = imMaster.clone();
-    cv::Mat imDepthToFeed = depthmapMaster.clone();
+    auto imToFeedMaster = imMaster.clone();
+    auto imDepthToFeedMaster = depthmapMaster.clone();
 
-    cv::Mat imSToFeed = imSlave.clone();
-    cv::Mat imDepthSToFeed = depthmapSlave.clone();
-    if(settings_ && settings_->needToResize()){
+    auto imToFeedSlave = imSlave.clone();
+    auto imDepthToFeedSlave = depthmapSlave.clone();
+    if (settings_ && settings_->needToResize()) {
         cv::Mat resizedIm;
         cv::resize(imMaster, resizedIm, settings_->newImSize());
-        imToFeed = resizedIm;
+        imToFeedMaster = resizedIm;
 
-        cv::resize(depthmapMaster, imDepthToFeed, settings_->newImSize());
+        cv::resize(depthmapMaster, imDepthToFeedMaster, settings_->newImSize());
 
         cv::Mat resizedImS;
         cv::resize(imSlave, resizedImS, settings_->newImSize());
-        imSToFeed = resizedImS;
+        imToFeedSlave = resizedImS;
 
-        cv::resize(depthmapSlave, imDepthSToFeed, settings_->newImSize());
+        cv::resize(depthmapSlave, imDepthToFeedSlave, settings_->newImSize());
     }
 
     // Check mode change
     {
         unique_lock<mutex> lock(mMutexMode);
-        if(mbActivateLocalizationMode)
-        {
+        if (mbActivateLocalizationMode) {
             mpLocalMapper->RequestStop();
 
             // Wait until Local Mapping has effectively stopped
-            while(!mpLocalMapper->isStopped())
-            {
+            while (!mpLocalMapper->isStopped()) {
                 usleep(1000);
             }
 
             mpTracker->InformOnlyTracking(true);
             mbActivateLocalizationMode = false;
         }
-        if(mbDeactivateLocalizationMode)
-        {
+        if (mbDeactivateLocalizationMode) {
             mpTracker->InformOnlyTracking(false);
             mpLocalMapper->Release();
             mbDeactivateLocalizationMode = false;
@@ -450,24 +447,22 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &imMaster, const cv::Mat &depthmapM
     // Check reset
     {
         unique_lock<mutex> lock(mMutexReset);
-        if(mbReset)
-        {
+        if (mbReset) {
             mpTracker->Reset();
             mbReset = false;
             mbResetActiveMap = false;
-        }
-        else if(mbResetActiveMap)
-        {
+        } else if (mbResetActiveMap) {
             mpTracker->ResetActiveMap();
             mbResetActiveMap = false;
         }
     }
 
     if (mSensor == System::IMU_RGBD)
-        for(size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
+        for (size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
             mpTracker->GrabImuData(vImuMeas[i_imu]);
 
-    Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, imSToFeed, imDepthSToFeed, timestamp, filename);
+    Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeedMaster, imDepthToFeedMaster, imToFeedSlave,
+                                                imDepthToFeedSlave, timestamp, filename);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
