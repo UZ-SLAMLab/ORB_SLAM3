@@ -59,10 +59,10 @@ public:
                     std::vector<cv::KeyPoint>& _keypoints,
                     cv::OutputArray _descriptors, std::vector<int> &vLappingArea);
 
-    int operator()(cv::InputArray _image, cv::InputArray _imageS, cv::InputArray _mask,
-                   std::vector<cv::KeyPoint> &_keypoints,
-                   cv::OutputArray _descriptors, std::vector<int> &vLappingArea,
-                   cv::InputArray _depthS, const cv::Mat &K, const cv::Mat &KS, const Eigen::Matrix4f &T);
+    int operator()(cv::InputArray _imageMaster, cv::InputArray _imageSlave, cv::InputArray _mask,
+                   std::vector<cv::KeyPoint> &_keypoints, cv::OutputArray _descriptors,
+                   std::vector<int> &vLappingArea, cv::InputArray _depthSlave, const cv::Mat &KMaster,
+                   const cv::Mat &KSlave, const Eigen::Matrix4f &T);
 
     int inline GetLevels(){
         return nlevels;}
@@ -87,12 +87,13 @@ public:
     }
 
     std::vector<cv::Mat> mvImagePyramid;
-    std::vector<cv::Mat> mvImagePyramidS;
+    std::vector<cv::Mat> mvImagePyramidSlave;
 
 protected:
 
-    void ComputePyramids(cv::Mat image, cv::Mat imageS);
-    void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint>>& allMasterKeypoints, std::vector<std::vector<cv::KeyPoint>>& allSlaveKeypoints);
+    void ComputePyramids(cv::Mat imageMaster, cv::Mat imageSlave);
+    void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint>> &allMasterKeypoints,
+                                 std::vector<std::vector<cv::KeyPoint>> &allSlaveKeypoints);
 
     void ComputePyramid(cv::Mat image);
     void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);    

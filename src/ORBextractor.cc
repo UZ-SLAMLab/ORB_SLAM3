@@ -431,7 +431,7 @@ namespace ORB_SLAM3
         }
 
         mvImagePyramid.resize(nlevels);
-        mvImagePyramidS.resize(nlevels);
+        mvImagePyramidSlave.resize(nlevels);
 
         mnFeaturesPerLevel.resize(nlevels);
         float factor = 1.0f / scaleFactor;
@@ -809,7 +809,7 @@ namespace ORB_SLAM3
                 vector<cv::KeyPoint> vKeysCell;
 
                 if (isSlave) {
-                    FAST(mvImagePyramidS[level].rowRange(iniY, maxY).colRange(iniX, maxX),
+                    FAST(mvImagePyramidSlave[level].rowRange(iniY, maxY).colRange(iniX, maxX),
                          vKeysCell, iniThFAST, true);
                 }
                 else{
@@ -819,7 +819,7 @@ namespace ORB_SLAM3
                 if(vKeysCell.empty())
                 {
                     if (isSlave) {
-                        FAST(mvImagePyramidS[level].rowRange(iniY, maxY).colRange(iniX, maxX),
+                        FAST(mvImagePyramidSlave[level].rowRange(iniY, maxY).colRange(iniX, maxX),
                              vKeysCell, minThFAST, true);
                     }
                     else{
@@ -1028,7 +1028,7 @@ namespace ORB_SLAM3
         // compute orientations
         for (int level = 0; level < nlevels; ++level) {
             computeOrientation(mvImagePyramid[level], allMasterKeypoints[level], umax);
-            computeOrientation(mvImagePyramidS[level], allSlaveKeypoints[level], umax);
+            computeOrientation(mvImagePyramidSlave[level], allSlaveKeypoints[level], umax);
         }
     }
 
@@ -1304,17 +1304,17 @@ namespace ORB_SLAM3
         return monoIndex;
     }
 
-    int ORBextractor::operator()( InputArray _image, InputArray _imageS, InputArray _mask, vector<KeyPoint>& _keypoints,
-                                  OutputArray _descriptors, std::vector<int> &vLappingArea, InputArray _depthS, const cv::Mat &K, const cv::Mat &KS, const Eigen::Matrix4f &T)
+    int ORBextractor::operator()(InputArray _imageMaster, InputArray _imageSlave, InputArray _mask, vector<KeyPoint>& _keypoints,
+                                 OutputArray _descriptors, std::vector<int> &vLappingArea, InputArray _depthSlave, const cv::Mat &KMaster, const cv::Mat &KSlave, const Eigen::Matrix4f &T)
     {
-        if(_image.empty())
+        if(_imageMaster.empty())
             return -1;
-        if(_imageS.empty())
+        if(_imageSlave.empty())
             return -1;
 
-        Mat image = _image.getMat();
-        Mat imageS = _imageS.getMat();
-        Mat depthS = _depthS.getMat();
+        Mat image = _imageMaster.getMat();
+        Mat imageS = _imageSlave.getMat();
+        Mat depthS = _depthSlave.getMat();
         assert(image.type() == CV_8UC1 );
         assert(imageS.type() == CV_8UC1 );
 
@@ -1366,7 +1366,7 @@ namespace ORB_SLAM3
             workingMatM = mvImagePyramid[level].clone();
             GaussianBlur(workingMatM, workingMatM, Size(7, 7), 2, 2, BORDER_REFLECT_101);
             Mat workingMatS;
-            workingMatS = mvImagePyramidS[level].clone();
+            workingMatS = mvImagePyramidSlave[level].clone();
             GaussianBlur(workingMatS, workingMatS, Size(7, 7), 2, 2, BORDER_REFLECT_101);
 
             // Compute the descriptors
@@ -1400,16 +1400,16 @@ namespace ORB_SLAM3
                 float x, y, z, u, v;
                 z = depthS.at<float>((int)keypoint.pt.y, (int)keypoint.pt.x);
                 if (z != 0) {
-                x = (keypoint.pt.x - KS.at<float>(0, 2)) * z / KS.at<float>(0, 0);
-                y = (keypoint.pt.y - KS.at<float>(1, 2)) * z / KS.at<float>(1, 1);
+                x = (keypoint.pt.x - KSlave.at<float>(0, 2)) * z / KSlave.at<float>(0, 0);
+                y = (keypoint.pt.y - KSlave.at<float>(1, 2)) * z / KSlave.at<float>(1, 1);
 
                 Eigen::Vector4f xyz(x, y, z, 1);
                 Eigen::Vector4f newXyz = T * xyz;
                 x = newXyz[0];
                 y = newXyz[1];
                 z = newXyz[2];
-                u = round(((K.at<float>(0, 0) * x) / z) + K.at<float>(0, 2));
-                v = round(((K.at<float>(1, 1) * y) / z) + K.at<float>(1, 2));
+                u = round(((KMaster.at<float>(0, 0) * x) / z) + KMaster.at<float>(0, 2));
+                v = round(((KMaster.at<float>(1, 1) * y) / z) + KMaster.at<float>(1, 2));
 
                 cv::KeyPoint kp(u, v, keypoint.size, keypoint.angle, keypoint.response, keypoint.octave,
                                 keypoint.class_id);
@@ -1431,19 +1431,19 @@ namespace ORB_SLAM3
         return monoIndex;
     }
 
-    void ORBextractor::ComputePyramids(cv::Mat image, cv::Mat imageS)
+    void ORBextractor::ComputePyramids(cv::Mat imageMaster, cv::Mat imageSlave)
     {
         for (int level = 0; level < nlevels; ++level)
         {
             float scale = mvInvScaleFactor[level];
-            Size sz(cvRound((float)image.cols*scale), cvRound((float)image.rows*scale));
+            Size sz(cvRound((float)imageMaster.cols * scale), cvRound((float)imageMaster.rows * scale));
             Size wholeSize(sz.width + EDGE_THRESHOLD*2, sz.height + EDGE_THRESHOLD*2);
-            Mat temp(wholeSize, image.type()), masktemp;
-            Mat tempS(wholeSize, imageS.type()), masktempS;
+            Mat temp(wholeSize, imageMaster.type()), masktemp;
+            Mat tempS(wholeSize, imageSlave.type()), masktempS;
             mvImagePyramid[level] = temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
-            mvImagePyramidS[level] = tempS(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
+            mvImagePyramidSlave[level] = tempS(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
 
-            // Compute the resized image
+            // Compute the resized imageMaster
             if( level != 0 )
             {
                 resize(mvImagePyramid[level-1], mvImagePyramid[level], sz, 0, 0, INTER_LINEAR);
@@ -1451,17 +1451,17 @@ namespace ORB_SLAM3
                 copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101+BORDER_ISOLATED);
 
-                resize(mvImagePyramidS[level-1], mvImagePyramidS[level], sz, 0, 0, INTER_LINEAR);
+                resize(mvImagePyramidSlave[level - 1], mvImagePyramidSlave[level], sz, 0, 0, INTER_LINEAR);
 
-                copyMakeBorder(mvImagePyramidS[level], tempS, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                copyMakeBorder(mvImagePyramidSlave[level], tempS, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101+BORDER_ISOLATED);
 
             }
             else
             {
-                copyMakeBorder(image, temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                copyMakeBorder(imageMaster, temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101);
-                copyMakeBorder(imageS, tempS, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                copyMakeBorder(imageSlave, tempS, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101);
             }
         }
