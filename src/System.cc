@@ -396,7 +396,7 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
     return Tcw;
 }
 
-Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const cv::Mat &imS, const cv::Mat &depthmapS, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
+Sophus::SE3f System::TrackRGBD(const cv::Mat &imMaster, const cv::Mat &depthmapMaster, const cv::Mat &imSlave, const cv::Mat &depthmapSlave, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
     if(mSensor!=RGBD  && mSensor!=IMU_RGBD)
     {
@@ -404,23 +404,23 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
         exit(-1);
     }
 
-    cv::Mat imToFeed = im.clone();
-    cv::Mat imDepthToFeed = depthmap.clone();
+    cv::Mat imToFeed = imMaster.clone();
+    cv::Mat imDepthToFeed = depthmapMaster.clone();
 
-    cv::Mat imSToFeed = imS.clone();
-    cv::Mat imDepthSToFeed = depthmapS.clone();
+    cv::Mat imSToFeed = imSlave.clone();
+    cv::Mat imDepthSToFeed = depthmapSlave.clone();
     if(settings_ && settings_->needToResize()){
         cv::Mat resizedIm;
-        cv::resize(im,resizedIm,settings_->newImSize());
+        cv::resize(imMaster, resizedIm, settings_->newImSize());
         imToFeed = resizedIm;
 
-        cv::resize(depthmap,imDepthToFeed,settings_->newImSize());
+        cv::resize(depthmapMaster, imDepthToFeed, settings_->newImSize());
 
         cv::Mat resizedImS;
-        cv::resize(imS,resizedImS,settings_->newImSize());
+        cv::resize(imSlave, resizedImS, settings_->newImSize());
         imSToFeed = resizedImS;
 
-        cv::resize(depthmapS,imDepthSToFeed,settings_->newImSize());
+        cv::resize(depthmapSlave, imDepthSToFeed, settings_->newImSize());
     }
 
     // Check mode change

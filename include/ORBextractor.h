@@ -58,10 +58,11 @@ public:
     int operator()( cv::InputArray _image, cv::InputArray _imageS, cv::InputArray _mask,
                     std::vector<cv::KeyPoint>& _keypoints,
                     cv::OutputArray _descriptors, std::vector<int> &vLappingArea,
-                    cv::InputArray _depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T);
-    int operator()( cv::InputArray _image, cv::InputArray _mask,
-                    std::vector<cv::KeyPoint>& _keypoints,
-                    cv::OutputArray _descriptors, std::vector<int> &vLappingArea);
+                    cv::InputArray _depthS, const cv::Mat &K, const cv::Mat &KS, const Eigen::Matrix4f &T);
+
+    int operator()(cv::InputArray _image, cv::InputArray _mask,
+                   std::vector<cv::KeyPoint> &_keypoints,
+                   cv::OutputArray _descriptors, std::vector<int> &vLappingArea);
 
     int inline GetLevels(){
         return nlevels;}
@@ -116,10 +117,10 @@ protected:
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
 
-    std::vector<cv::KeyPoint>
-    vToDistributeKeysCalculate(const int nRows, const int minBorderY, const int hCell, const int maxBorderY,
-                               const int nCols, const int minBorderX, const int wCell, const int maxBorderX, int level,
-                               bool isSlave);
+    std::vector<cv::KeyPoint> vToDistributeKeysCalculate(const int nRows, const int minBorderY, const int hCell,
+                                                         const int maxBorderY, const int nCols, const int minBorderX,
+                                                         const int wCell, const int maxBorderX, int level,
+                                                         bool isSlave);
 };
 
 } //namespace ORB_SLAM

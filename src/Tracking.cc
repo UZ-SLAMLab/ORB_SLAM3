@@ -1582,12 +1582,12 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
     return mCurrentFrame.GetPose();
 }
 
-Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const cv::Mat &imRGBs, const cv::Mat &imDs, const double &timestamp, string filename)
+Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGBMaster, const cv::Mat &imDMaster, const cv::Mat &imRGBSlave, const cv::Mat &imDSlave, const double &timestamp, string filename)
 {
-    mImGray = imRGB;
-    mImSGray = imRGBs;
-    cv::Mat imDepth = imD;
-    cv::Mat imDepthS = imDs;
+    mImGray = imRGBMaster;
+    mImSGray = imRGBSlave;
+    cv::Mat imDepth = imDepth;
+    cv::Mat imDepthS = imDSlave;
 
     if(mImGray.channels()==3)
     {
@@ -1628,7 +1628,7 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
         mCurrentFrame = Frame(mImGray,imDepth,mImSGray,imDepthS,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth, mKS, T, mpCamera);
     // TODO: what we can do with IMU_RGBD?
     //else if(mSensor == System::IMU_RGBD)
-    //mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,&mLastFrame,*mpImuCalib);
+    //mCurrentFrame = Frame(mImGray,imDMaster,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,&mLastFrame,*mpImuCalib);
 
 
 

@@ -1305,7 +1305,7 @@ namespace ORB_SLAM3
     }
 
     int ORBextractor::operator()( InputArray _image, InputArray _imageS, InputArray _mask, vector<KeyPoint>& _keypoints,
-                                  OutputArray _descriptors, std::vector<int> &vLappingArea, InputArray _depthS, const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T)
+                                  OutputArray _descriptors, std::vector<int> &vLappingArea, InputArray _depthS, const cv::Mat &K, const cv::Mat &KS, const Eigen::Matrix4f &T)
     {
         if(_image.empty())
             return -1;

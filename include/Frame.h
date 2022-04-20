@@ -63,10 +63,13 @@ public:
 
     // Constructor for RGB-D cameras.
     Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera* pCamera,Frame* pPrevF = static_cast<Frame*>(NULL), const IMU::Calib &ImuCalib = IMU::Calib());
-    Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imSGray, const cv::Mat &imDepthS,
-          const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef,
-          const float &bf, const float &thDepth, cv::Mat &KS, Eigen::Matrix4f &T,
-          GeometricCamera* pCamera,Frame* pPrevF = static_cast<Frame*>(NULL),
+
+    // Constructor for RGB-D cameras (Two-View case).
+    Frame(const cv::Mat &imGrayMaster, const cv::Mat &imDepthMaster, const cv::Mat &imGraySlave,
+          const cv::Mat &imDepthSlave, const double &timeStamp, ORBextractor *extractor,
+          ORBVocabulary *voc, const cv::Mat &KMaster, cv::Mat &distCoef, const float &bf,
+          const float &thDepth, const cv::Mat &KSlave, const Eigen::Matrix4f &T,
+          GeometricCamera *pCamera, Frame *pPrevF = static_cast<Frame *>(NULL),
           const IMU::Calib &ImuCalib = IMU::Calib());
 
     // Constructor for Monocular cameras.
@@ -77,8 +80,10 @@ public:
 
     // Extract ORB on the image. 0 for left image and 1 for right image.
     void ExtractORB(int flag, const cv::Mat &im, const int x0, const int x1);
-    void ExtractORBTwoView(const cv::Mat &im, const cv::Mat &imS, const int x0, const int x1, const cv::Mat &depth,
-                           const cv::Mat &K, const cv::Mat &KS, Eigen::Matrix4f &T);
+
+    void ExtractORBTwoView(const cv::Mat &imMaster, const cv::Mat &imSlave, const int x0, const int x1,
+                           const cv::Mat &depth, const cv::Mat &KMaster, const cv::Mat &KSlave,
+                           const Eigen::Matrix4f &T);
 
     // Compute Bag of Words representation.
     void ComputeBoW();

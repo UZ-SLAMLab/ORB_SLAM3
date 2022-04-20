@@ -71,7 +71,8 @@ public:
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
     Sophus::SE3f GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp, string filename);
     Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, string filename);
-    Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD, const cv::Mat &imRGBs, const cv::Mat &imDs, const double &timestamp, string filename);
+    Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGBMaster, const cv::Mat &imDMaster, const cv::Mat &imRGBSlave,
+                               const cv::Mat &imDSlave, const double &timestamp, string filename);
     Sophus::SE3f GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename);
 
     void GrabImuData(const IMU::Point &imuMeasurement);
@@ -296,7 +297,8 @@ protected:
     float mbf;
     float mImageScale;
 
-    // Transformation between cameras matrix
+    // Transformation between cameras matrix.
+    // It is used in RGBD-Two-View case.
     Eigen::Matrix4f T;
 
     float mImuFreq;
