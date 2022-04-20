@@ -627,7 +627,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
     if(sCameraName == "PinHole")
     {
         float fx, fy, cx, cy;
-        float fxS, fyS, cxS, cyS;
+        float fxSlave, fySlave, cxSlave, cySlave;
         mImageScale = 1.f;
 
         // Camera calibration parameters
@@ -675,54 +675,41 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             b_miss_params = true;
         }
 
-        node = fSettings["Camera.fxS"];
-        if(!node.empty() && node.isReal())
-        {
-            fxS = node.real();
-        }
-        else
-        {
-            std::cerr << "*Camera.fxS parameter doesn't exist or is not a real number*" << std::endl;
+        node = fSettings["Camera.fxSlave"];
+        if (!node.empty() && node.isReal()) {
+            fxSlave = node.real();
+        } else {
+            std::cerr << "*Camera.fxSlave parameter doesn't exist or is not a real number*" << std::endl;
             b_miss_params = true;
         }
 
-        node = fSettings["Camera.fyS"];
-        if(!node.empty() && node.isReal())
-        {
-            fyS = node.real();
-        }
-        else
-        {
-            std::cerr << "*Camera.fyS parameter doesn't exist or is not a real number*" << std::endl;
+        node = fSettings["Camera.fySlave"];
+        if (!node.empty() && node.isReal()) {
+            fySlave = node.real();
+        } else {
+            std::cerr << "*Camera.fySlave parameter doesn't exist or is not a real number*" << std::endl;
             b_miss_params = true;
         }
 
-        node = fSettings["Camera.cxS"];
-        if(!node.empty() && node.isReal())
-        {
-            cxS = node.real();
-        }
-        else
-        {
-            std::cerr << "*Camera.cxS parameter doesn't exist or is not a real number*" << std::endl;
+        node = fSettings["Camera.cxSlave"];
+        if (!node.empty() && node.isReal()) {
+            cxSlave = node.real();
+        } else {
+            std::cerr << "*Camera.cxSlave parameter doesn't exist or is not a real number*" << std::endl;
             b_miss_params = true;
         }
 
-        node = fSettings["Camera.cyS"];
-        if(!node.empty() && node.isReal())
-        {
-            cyS = node.real();
-        }
-        else
-        {
-            std::cerr << "*Camera.cyS parameter doesn't exist or is not a real number*" << std::endl;
+        node = fSettings["Camera.cySlave"];
+        if (!node.empty() && node.isReal()) {
+            cySlave = node.real();
+        } else {
+            std::cerr << "*Camera.cySlave parameter doesn't exist or is not a real number*" << std::endl;
             b_miss_params = true;
         }
 
         // Transformation matrix parameters
         node = fSettings["TransformationMatrix"];
-        if(!node.empty())
-        {
+        if (!node.empty()) {
             cv::Mat TMat;
             fSettings["TransformationMatrix"] >> TMat;
             TMat = TMat.inv();
@@ -813,10 +800,10 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         std::cout << "- fy: " << fy << std::endl;
         std::cout << "- cx: " << cx << std::endl;
         std::cout << "- cy: " << cy << std::endl;
-        std::cout << "- fxS: " << fxS << std::endl;
-        std::cout << "- fyS: " << fyS << std::endl;
-        std::cout << "- cxS: " << cxS << std::endl;
-        std::cout << "- cyS: " << cyS << std::endl;
+        std::cout << "- fxSlave: " << fxSlave << std::endl;
+        std::cout << "- fySlave: " << fySlave << std::endl;
+        std::cout << "- cxSlave: " << cxSlave << std::endl;
+        std::cout << "- cySlave: " << cySlave << std::endl;
         std::cout << "- k1: " << mDistCoef.at<float>(0) << std::endl;
         std::cout << "- k2: " << mDistCoef.at<float>(1) << std::endl;
 
@@ -834,10 +821,10 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         mK.at<float>(1,2) = cy;
 
         mKSlave = cv::Mat::eye(3, 3, CV_32F);
-        mKSlave.at<float>(0, 0) = fxS;
-        mKSlave.at<float>(1, 1) = fyS;
-        mKSlave.at<float>(0, 2) = cxS;
-        mKSlave.at<float>(1, 2) = cyS;
+        mKSlave.at<float>(0, 0) = fxSlave;
+        mKSlave.at<float>(1, 1) = fySlave;
+        mKSlave.at<float>(0, 2) = cxSlave;
+        mKSlave.at<float>(1, 2) = cySlave;
 
         mK_.setIdentity();
         mK_(0,0) = fx;
@@ -1582,57 +1569,48 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
     return mCurrentFrame.GetPose();
 }
 
-Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGBMaster, const cv::Mat &imDMaster, const cv::Mat &imRGBSlave, const cv::Mat &imDSlave, const double &timestamp, string filename)
-{
+Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGBMaster, const cv::Mat &imDMaster, const cv::Mat &imRGBSlave,
+                                     const cv::Mat &imDSlave, const double &timestamp, string filename) {
     mImGray = imRGBMaster;
     mImGraySlave = imRGBSlave;
-    cv::Mat imDepth = imDepth;
-    cv::Mat imDepthS = imDSlave;
+    auto imDepthMaster = imDMaster;
+    auto imDepthSlave = imDSlave;
 
-    if(mImGray.channels()==3)
-    {
-        if(mbRGB)
-            cvtColor(mImGray,mImGray,cv::COLOR_RGB2GRAY);
+    if (mImGray.channels() == 3) {
+        if (mbRGB)
+            cvtColor(mImGray, mImGray, cv::COLOR_RGB2GRAY);
         else
-            cvtColor(mImGray,mImGray,cv::COLOR_BGR2GRAY);
-    }
-    else if(mImGray.channels()==4)
-    {
-        if(mbRGB)
-            cvtColor(mImGray,mImGray,cv::COLOR_RGBA2GRAY);
+            cvtColor(mImGray, mImGray, cv::COLOR_BGR2GRAY);
+    } else if (mImGray.channels() == 4) {
+        if (mbRGB)
+            cvtColor(mImGray, mImGray, cv::COLOR_RGBA2GRAY);
         else
-            cvtColor(mImGray,mImGray,cv::COLOR_BGRA2GRAY);
+            cvtColor(mImGray, mImGray, cv::COLOR_BGRA2GRAY);
     }
-    if(mImGraySlave.channels() == 3)
-    {
-        if(mbRGB)
+    if (mImGraySlave.channels() == 3) {
+        if (mbRGB)
             cvtColor(mImGraySlave, mImGraySlave, cv::COLOR_RGB2GRAY);
         else
             cvtColor(mImGraySlave, mImGraySlave, cv::COLOR_BGR2GRAY);
-    }
-    else if(mImGraySlave.channels() == 4)
-    {
-        if(mbRGB)
+    } else if (mImGraySlave.channels() == 4) {
+        if (mbRGB)
             cvtColor(mImGraySlave, mImGraySlave, cv::COLOR_RGBA2GRAY);
         else
             cvtColor(mImGraySlave, mImGraySlave, cv::COLOR_BGRA2GRAY);
     }
 
-    if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
-        imDepth.convertTo(imDepth,CV_32F,mDepthMapFactor);
+    if ((fabs(mDepthMapFactor - 1.0f) > 1e-5) || imDepthMaster.type() != CV_32F)
+        imDepthMaster.convertTo(imDepthMaster, CV_32F, mDepthMapFactor);
 
-    if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
-        imDepthS.convertTo(imDepthS,CV_32F,mDepthMapFactor);
+    if ((fabs(mDepthMapFactor - 1.0f) > 1e-5) || imDepthMaster.type() != CV_32F)
+        imDepthSlave.convertTo(imDepthSlave, CV_32F, mDepthMapFactor);
 
     if (mSensor == System::RGBD)
-        mCurrentFrame = Frame(mImGray, imDepth, mImGraySlave, imDepthS, timestamp, mpORBextractorLeft, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mKSlave, T, mpCamera);
+        mCurrentFrame = Frame(mImGray, imDepthMaster, mImGraySlave, imDepthSlave, timestamp, mpORBextractorLeft,
+                              mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mKSlave, T, mpCamera);
     // TODO: what we can do with IMU_RGBD?
     //else if(mSensor == System::IMU_RGBD)
     //mCurrentFrame = Frame(mImGray,imDMaster,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,&mLastFrame,*mpImuCalib);
-
-
-
-
 
 
     mCurrentFrame.mNameFile = filename;
