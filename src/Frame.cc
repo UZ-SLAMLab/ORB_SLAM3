@@ -198,14 +198,20 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
 }
 
 
-Frame::Frame(const cv::Mat &imGrayMaster, const cv::Mat &imDepthMaster, const cv::Mat &imGraySlave, const cv::Mat &imDepthSlave, const double &timeStamp, ORBextractor* extractor, ORBVocabulary* voc, const cv::Mat &KMaster, cv::Mat &distCoef, const float &bf, const float &thDepth, const cv::Mat &KSlave, const Eigen::Matrix4f &T, GeometricCamera* pCamera, Frame* pPrevF, const IMU::Calib &ImuCalib)
-    : mpcpi(NULL), mpORBvocabulary(voc), mpORBextractorLeft(extractor), mpORBextractorRight(static_cast<ORBextractor*>(NULL)),
-      mTimeStamp(timeStamp), mK(KMaster.clone()), mK_(Converter::toMatrix3f(KMaster)), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
-      mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame*>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
-      mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
-{
+Frame::Frame(const cv::Mat &imGrayMaster, const cv::Mat &imDepthMaster, const cv::Mat &imGraySlave,
+             const cv::Mat &imDepthSlave, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc,
+             const cv::Mat &KMaster, cv::Mat &distCoef, const float &bf, const float &thDepth,
+             const cv::Mat &KSlave, const Eigen::Matrix4f &T, GeometricCamera *pCamera, Frame *pPrevF,
+             const IMU::Calib &ImuCalib)
+        : mpcpi(NULL), mpORBvocabulary(voc), mpORBextractorLeft(extractor),
+          mpORBextractorRight(static_cast<ORBextractor *>(NULL)),
+          mTimeStamp(timeStamp), mK(KMaster.clone()), mK_(Converter::toMatrix3f(KMaster)),
+          mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
+          mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL),
+          mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
+          mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false) {
     // Frame ID
-    mnId=nNextId++;
+    mnId = nNextId++;
 
     // Scale Level Info
     mnScaleLevels = mpORBextractorLeft->GetLevels();
@@ -230,44 +236,42 @@ Frame::Frame(const cv::Mat &imGrayMaster, const cv::Mat &imDepthMaster, const cv
 
     N = mvKeys.size();
 
-    if(mvKeys.empty())
+    if (mvKeys.empty())
         return;
 
     UndistortKeyPoints();
     ComputeStereoFromRGBD(imDepthMaster);
 
-    mvpMapPoints = vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));
+    mvpMapPoints = vector<MapPoint *>(N, static_cast<MapPoint *>(NULL));
 
     mmProjectPoints.clear();
     mmMatchedInImage.clear();
 
-    mvbOutlier = vector<bool>(N,false);
+    mvbOutlier = vector<bool>(N, false);
 
     // This is done only for the first Frame (or after a change in the calibration)
-    if(mbInitialComputations)
-    {
+    if (mbInitialComputations) {
         ComputeImageBounds(imGrayMaster);
 
-        mfGridElementWidthInv=static_cast<float>(FRAME_GRID_COLS)/static_cast<float>(mnMaxX-mnMinX);
-        mfGridElementHeightInv=static_cast<float>(FRAME_GRID_ROWS)/static_cast<float>(mnMaxY-mnMinY);
+        mfGridElementWidthInv = static_cast<float>(FRAME_GRID_COLS) / static_cast<float>(mnMaxX - mnMinX);
+        mfGridElementHeightInv = static_cast<float>(FRAME_GRID_ROWS) / static_cast<float>(mnMaxY - mnMinY);
 
         fx = KMaster.at<float>(0, 0);
         fy = KMaster.at<float>(1, 1);
         cx = KMaster.at<float>(0, 2);
         cy = KMaster.at<float>(1, 2);
-        invfx = 1.0f/fx;
-        invfy = 1.0f/fy;
+        invfx = 1.0f / fx;
+        invfy = 1.0f / fy;
 
-        mbInitialComputations=false;
+        mbInitialComputations = false;
     }
 
-    mb = mbf/fx;
+    mb = mbf / fx;
 
-    if(pPrevF){
-        if(pPrevF->HasVelocity())
+    if (pPrevF) {
+        if (pPrevF->HasVelocity())
             SetVelocity(pPrevF->GetVelocity());
-    }
-    else{
+    } else {
         mVw.setZero();
     }
 
@@ -513,10 +517,12 @@ void Frame::ExtractORB(int flag, const cv::Mat &im, const int x0, const int x1)
         monoRight = (*mpORBextractorRight)(im,cv::Mat(),mvKeysRight,mDescriptorsRight,vLapping);
 }
 
-void Frame::ExtractORBTwoView(const cv::Mat &imMaster, const cv::Mat &imSlave, const int x0, const int x1, const cv::Mat &depth, const cv::Mat &KMaster, const cv::Mat &KSlave, const Eigen::Matrix4f &T)
-{
-    vector<int> vLapping = {x0,x1};
-    monoLeft = (*mpORBextractorLeft)(imMaster, imSlave, cv::Mat(), mvKeys, mDescriptors, vLapping, depth, KMaster, KSlave, T);
+void Frame::ExtractORBTwoView(const cv::Mat &imMaster, const cv::Mat &imSlave, const int x0, const int x1,
+                              const cv::Mat &depth, const cv::Mat &KMaster, const cv::Mat &KSlave,
+                              const Eigen::Matrix4f &T) {
+    vector<int> vLapping = {x0, x1};
+    monoLeft = (*mpORBextractorLeft)(imMaster, imSlave, cv::Mat(), mvKeys,
+                                     mDescriptors, vLapping, depth, KMaster, KSlave, T);
 }
 
 bool Frame::isSet() const {
