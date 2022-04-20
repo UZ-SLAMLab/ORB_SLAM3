@@ -141,7 +141,9 @@ public:
     Frame mLastFrame;
 
     cv::Mat mImGray;
-    cv::Mat mImSGray;
+
+    // Used in RGBD Two-View case
+    cv::Mat mImGraySlave;
 
     // Initialization Variables (Monocular)
     std::vector<int> mvIniLastMatches;
@@ -291,7 +293,10 @@ protected:
 
     //Calibration matrix
     cv::Mat mK;
-    cv::Mat mKS;
+
+    // Used in RGBD Two-View case
+    cv::Mat mKSlave;
+
     Eigen::Matrix3f mK_;
     cv::Mat mDistCoef;
     float mbf;

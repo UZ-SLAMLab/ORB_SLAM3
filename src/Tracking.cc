@@ -833,11 +833,11 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         mK.at<float>(0,2) = cx;
         mK.at<float>(1,2) = cy;
 
-        mKS = cv::Mat::eye(3,3,CV_32F);
-        mKS.at<float>(0,0) = fxS;
-        mKS.at<float>(1,1) = fyS;
-        mKS.at<float>(0,2) = cxS;
-        mKS.at<float>(1,2) = cyS;
+        mKSlave = cv::Mat::eye(3, 3, CV_32F);
+        mKSlave.at<float>(0, 0) = fxS;
+        mKSlave.at<float>(1, 1) = fyS;
+        mKSlave.at<float>(0, 2) = cxS;
+        mKSlave.at<float>(1, 2) = cyS;
 
         mK_.setIdentity();
         mK_(0,0) = fx;
@@ -1585,7 +1585,7 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
 Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGBMaster, const cv::Mat &imDMaster, const cv::Mat &imRGBSlave, const cv::Mat &imDSlave, const double &timestamp, string filename)
 {
     mImGray = imRGBMaster;
-    mImSGray = imRGBSlave;
+    mImGraySlave = imRGBSlave;
     cv::Mat imDepth = imDepth;
     cv::Mat imDepthS = imDSlave;
 
@@ -1603,19 +1603,19 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGBMaster, const cv::Mat &
         else
             cvtColor(mImGray,mImGray,cv::COLOR_BGRA2GRAY);
     }
-    if(mImSGray.channels()==3)
+    if(mImGraySlave.channels() == 3)
     {
         if(mbRGB)
-            cvtColor(mImSGray,mImSGray,cv::COLOR_RGB2GRAY);
+            cvtColor(mImGraySlave, mImGraySlave, cv::COLOR_RGB2GRAY);
         else
-            cvtColor(mImSGray,mImSGray,cv::COLOR_BGR2GRAY);
+            cvtColor(mImGraySlave, mImGraySlave, cv::COLOR_BGR2GRAY);
     }
-    else if(mImSGray.channels()==4)
+    else if(mImGraySlave.channels() == 4)
     {
         if(mbRGB)
-            cvtColor(mImSGray,mImSGray,cv::COLOR_RGBA2GRAY);
+            cvtColor(mImGraySlave, mImGraySlave, cv::COLOR_RGBA2GRAY);
         else
-            cvtColor(mImSGray,mImSGray,cv::COLOR_BGRA2GRAY);
+            cvtColor(mImGraySlave, mImGraySlave, cv::COLOR_BGRA2GRAY);
     }
 
     if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
@@ -1625,7 +1625,7 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGBMaster, const cv::Mat &
         imDepthS.convertTo(imDepthS,CV_32F,mDepthMapFactor);
 
     if (mSensor == System::RGBD)
-        mCurrentFrame = Frame(mImGray,imDepth,mImSGray,imDepthS,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth, mKS, T, mpCamera);
+        mCurrentFrame = Frame(mImGray, imDepth, mImGraySlave, imDepthS, timestamp, mpORBextractorLeft, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mKSlave, T, mpCamera);
     // TODO: what we can do with IMU_RGBD?
     //else if(mSensor == System::IMU_RGBD)
     //mCurrentFrame = Frame(mImGray,imDMaster,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,&mLastFrame,*mpImuCalib);

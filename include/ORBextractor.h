@@ -87,6 +87,8 @@ public:
     }
 
     std::vector<cv::Mat> mvImagePyramid;
+    
+    // Used in RGBD Two-View case
     std::vector<cv::Mat> mvImagePyramidSlave;
 
 protected:
