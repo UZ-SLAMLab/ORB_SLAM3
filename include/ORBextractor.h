@@ -93,7 +93,7 @@ public:
 
 protected:
 
-    void ComputePyramids(cv::Mat imageMaster, cv::Mat imageSlave);
+    void ComputePyramids(const cv::Mat& imageMaster, const cv::Mat& imageSlave);
     void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint>> &allMasterKeypoints,
                                  std::vector<std::vector<cv::KeyPoint>> &allSlaveKeypoints);
 
