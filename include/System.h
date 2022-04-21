@@ -173,8 +173,8 @@ public:
     void SaveMap(const string &filename, const cv::MatSize image_size);
     // LoadMap(const string &filename);
 
-    void SaveMapPoint(ofstream &f, MapPoint *mp);
-    void SaveKeyFrame(ofstream &f, KeyFrame *kf);
+    void SaveMapPoint(ofstream &f, MapPoint *mp, std::vector<int>& keyIds);
+    void SaveKeyFrame(ofstream &f, KeyFrame *kf, std::vector<int>& keyIds);
 
 
     // Information from most recent processed frame
