@@ -1336,14 +1336,22 @@ namespace ORB_SLAM3
         }
 
         _keypoints = vector<cv::KeyPoint>(nkeypoints);
+        Mat KSlaveInvT = KSlave.inv().t();
+        Eigen::Map<Eigen::Matrix3f> KSlaveInvEigen(KSlaveInvT.ptr<float>(), 3, 3);
+        Eigen::Matrix4f extendedKSlaveInv = Eigen::Matrix4f::Identity(4, 4);
+        extendedKSlaveInv.topLeftCorner(3, 3) = KSlaveInvEigen;
 
+        Mat KMasterT = KMaster.t();
+        Eigen::Map<Eigen::Matrix3f> KMasterEigen(KMasterT.ptr<float>(), 3, 3);
+        Eigen::Matrix4f extendedKMaster = Eigen::Matrix4f::Identity(4, 4);
+        extendedKMaster.topLeftCorner(3, 3) = KMasterEigen;
         //Modified for speeding up stereo fisheye matching
         auto monoIndex = 0, stereoIndex = nkeypoints - 1;
         for (auto level = 0; level < nlevels; ++level) {
-            vector<KeyPoint> &keypointsMaster = allMasterKeypoints[level];
-            vector<KeyPoint> &keypointsSlave = allSlaveKeypoints[level];
-            int nkeypointsLevelMaster = (int) keypointsMaster.size();
-            int nkeypointsLevelSlave = (int) keypointsSlave.size();
+            auto &keypointsMaster = allMasterKeypoints[level];
+            auto &keypointsSlave = allSlaveKeypoints[level];
+            auto nkeypointsLevelMaster = (int) keypointsMaster.size();
+            auto nkeypointsLevelSlave = (int) keypointsSlave.size();
 
             if (nkeypointsLevelMaster == 0 and nkeypointsLevelSlave == 0)
                 continue;
@@ -1384,17 +1392,9 @@ namespace ORB_SLAM3
                 auto z = depthS.at<float>((int) keypoint.pt.y, (int) keypoint.pt.x);
                 if (z != 0) {
                     Eigen::Vector4f uvVector(keypoint.pt.x, keypoint.pt.y, 1, 1 / z);
-                    Mat KSlaveInv = KSlave.inv();
-                    Eigen::Map<Eigen::Matrix3f> KSlaveInvEigen(KSlaveInv.ptr<float>(), KSlaveInv.rows, KSlaveInv.cols);
-                    Eigen::Matrix4f extendedKSlaveInv = Eigen::Matrix4f::Identity(4, 4);
-                    extendedKSlaveInv.topLeftCorner(3, 3) = KSlaveInvEigen;
                     Eigen::Vector4f xyzVector = z * extendedKSlaveInv * uvVector;
                     Eigen::Vector4f transformedXyzVector = T * xyzVector;
 
-                    auto KMasterCV = KMaster;
-                    Eigen::Map<Eigen::Matrix3f> KMasterEigen(KMasterCV.ptr<float>(), KSlaveInv.rows, KSlaveInv.cols);
-                    Eigen::Matrix4f extendedKMaster = Eigen::Matrix4f::Identity(4, 4);
-                    extendedKMaster.topLeftCorner(3, 3) = KMasterEigen;
                     Eigen::Vector4f uvReprojected = 1 / z * extendedKMaster * transformedXyzVector;
 
                     cv::KeyPoint kp(uvReprojected[0], uvReprojected[1], keypoint.size, keypoint.angle,

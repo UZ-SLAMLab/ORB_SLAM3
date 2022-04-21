@@ -458,8 +458,8 @@ Sophus::SE3f System::TrackRGBDTwoView(const cv::Mat &imMaster, const cv::Mat &de
     }
 
     if (mSensor == System::IMU_RGBD)
-        for (size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
-            mpTracker->GrabImuData(vImuMeas[i_imu]);
+        for (const auto & vImuMea : vImuMeas)
+            mpTracker->GrabImuData(vImuMea);
 
     Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeedMaster, imDepthToFeedMaster, imToFeedSlave,
                                                 imDepthToFeedSlave, timestamp, filename);
