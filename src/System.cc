@@ -1419,7 +1419,7 @@ void System::SaveMapPoint(ofstream &f, MapPoint *mp, std::vector<int>& keyIds) {
     f << "\n";
 }
 
-void Map::SaveKeyFrame(ofstream &f, KeyFrame *kf, std::vector<int>& keyIds)
+void System::SaveKeyFrame(ofstream &f, KeyFrame *kf, std::vector<int>& keyIds)
 {
     keyIds.push_back(kf->mnId);
     // 保存当前关键帧的id
