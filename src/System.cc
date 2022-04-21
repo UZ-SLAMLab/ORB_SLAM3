@@ -1428,23 +1428,22 @@ void System::SaveKeyFrame(ofstream &f, KeyFrame *kf, std::vector<int>& keyIds)
     f << kf->fx << " " << kf->fy << " " << kf->cx << " " << kf->cy << " ";
     // 保存当前关键帧的位姿
     Sophus::SE3<float> Tcw = kf->GetPose();
-    cout << "GetPose " << std::to_string(kf->mTimeStamp) <<"\nTcw\n" <<Tcw<< endl;
-    /*
-    Eigen::Vector3f Rcw = Tcw.translation();
-    cout << "Rcw\n" << Rcw << endl;
     // 通过四元数保存旋转矩阵
-    std::vector<float> Quat = Converter::toQuaternion(Rcw);
+    std::vector<float> Quat = Converter::toQuaternion(Tcw.rotationMatrix());
 
     for(int i=0; i<4; i++)
     {
         f << Quat[(3+i)%4] << " ";// qw qx qy qz
     }
+
+    Eigen::Matrix<float,3,4> Seg3 = Tcw.matrix3x4()
+    cout << "GetPose " << std::to_string(kf->mTimeStamp) << "Tcw " << Seg3 << endl;
     //保存平移
     for(int i=0; i<3; i++)
     {
-        f << Tcw.at<float>(i,3) << " ";
+        f << Seg3(i,3) << " ";
     }
-    */
+    
     ostringstream sTimeStamp;
     sTimeStamp << std::to_string(kf->mTimeStamp);
     f << sTimeStamp.str();
