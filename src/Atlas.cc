@@ -200,6 +200,7 @@ std::vector<MapPoint*> Atlas::GetAllMapPoints()
     return mpCurrentMap->GetAllMapPoints();
 }
 
+
 std::vector<MapPoint*> Atlas::GetReferenceMapPoints()
 {
     unique_lock<mutex> lock(mMutexAtlas);
@@ -392,6 +393,21 @@ long unsigned int Atlas::GetNumLivedMP() {
     }
 
     return num;
+}
+
+map<long unsigned int, MapPoint*> Atlas::GetAtlasMapPoints()
+{
+    map<long unsigned int, MapPoint*> mpIdMPs;
+    for(Map* pMap_i : mvpBackupMaps)
+    {
+        vector<MapPoint*> vpMPs_Mi = pMap_i->GetAllMapPoints();
+
+        for(MapPoint* pMP_j_Mi : vpMPs_Mi)
+        {
+            mpIdMPs[pMP_j_Mi->mnId] = pMP_j_Mi;
+        }
+    }
+    return mpIdMPs;
 }
 
 map<long unsigned int, KeyFrame*> Atlas::GetAtlasKeyframes()

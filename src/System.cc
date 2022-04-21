@@ -20,9 +20,13 @@
 
 #include "System.h"
 #include "Converter.h"
+#include <Eigen/Core>
+#include <Eigen/Dense>
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
+#include <opencv2/core/eigen.hpp>
+#include <opencv2/opencv.hpp>
 #include <openssl/md5.h>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/string.hpp>
@@ -546,10 +550,12 @@ void System::Shutdown()
         /*usleep(5000);
     }*/
 
+    cout << " atlas file name: " << mStrSaveAtlasToFile << endl;
     if(!mStrSaveAtlasToFile.empty())
     {
         Verbose::PrintMess("Atlas saving to file " + mStrSaveAtlasToFile, Verbose::VERBOSITY_NORMAL);
-        SaveAtlas(FileType::BINARY_FILE);
+        //SaveAtlas(FileType::BINARY_FILE);
+        SaveAtlas(FileType::TEXT_FILE);
     }
 
     /*if(mpViewer)
@@ -1401,21 +1407,106 @@ void System::InsertTrackTime(double& time)
 }
 #endif
 
+void System::SaveMapPoint(ofstream &f, MapPoint *mp, std::vector<int>& keyIds) {
+    Eigen::Matrix<float,3,1> mpWorldPos = mp->GetWorldPos();
+    f <<" " <<mpWorldPos(0)<<" " << mpWorldPos(1)<<" " << mpWorldPos(2) << " ";
+    f << (mp->nObs)/2<< " ";
+
+    std::map<KeyFrame*,std::tuple<int,int>> mapObservation = mp->GetObservations();
+    for(auto mit = mapObservation.begin(); mit != mapObservation.end(); mit++)
+    {
+        int Frameid;
+        Frameid = mit->first->mnId;
+        auto keyid = find(keyIds.begin(),keyIds.end(),Frameid) - keyIds.begin();
+        f << keyid << " ";
+    }
+    f << "\n";
+}
+
+void System::SaveKeyFrame(ofstream &f, KeyFrame *kf, std::vector<int>& keyIds)
+{
+    keyIds.push_back(kf->mnId);
+    // 保存当前关键帧的id
+    f << keyIds.end() - keyIds.begin() - 1<< " ";
+    // 关键帧内参
+    f << kf->fx << " " << kf->fy << " " << kf->cx << " " << kf->cy << " ";
+    // 保存当前关键帧的位姿
+    Sophus::SE3<float> Tcw = kf->GetPose();
+    Eigen::Matrix<float, 3, 3> rotM = Tcw.rotationMatrix();
+    cv::Mat cvRotM;
+    cv::eigen2cv(rotM, cvRotM);
+    // 通过四元数保存旋转矩阵
+    std::vector<float> Quat = Converter::toQuaternion(cvRotM);
+
+    for(int i=0; i<4; i++)
+    {
+        f << Quat[(3+i)%4] << " ";// qw qx qy qz
+    }
+
+    Eigen::Matrix<float,3,4> Seg3 = Tcw.matrix3x4();
+    cout << "GetPose " << std::to_string(kf->mTimeStamp) << "Tcw " << Seg3 << endl;
+    //保存平移
+    for(int i=0; i<3; i++)
+    {
+        f << Seg3(i,3) << " ";
+    }
+    
+    ostringstream sTimeStamp;
+    sTimeStamp << std::to_string(kf->mTimeStamp);
+    f << sTimeStamp.str();
+    f << "\n";
+}
+
+void System::SaveMap(const string &filename, const cv::Size image_size) {
+    std::vector<int> keyIds;
+
+    cout << "begin to save map file for mvs" << endl;
+    mpAtlas->PreSave();
+
+    cout << "SFM Saving to "<< filename << endl;
+    ofstream f;
+    f.open(filename.c_str());
+    f << "MVS "<< image_size.height << " "<< image_size.width << endl;
+
+    map<long unsigned int, KeyFrame*> kfs = mpAtlas->GetAtlasKeyframes();
+    unsigned long int nKeyFrames = kfs.size();
+    // output # of keyframes
+    cout << "The number of KeyFrames: " << nKeyFrames << endl;
+    f << nKeyFrames << endl;
+    for(auto kf:kfs)
+        SaveKeyFrame(f,kf.second,keyIds);
+    
+
+    map<long unsigned int, MapPoint*> mps = mpAtlas->GetAtlasMapPoints();
+    unsigned long int nMapPoints = mps.size();
+    // output # of mappoints
+    cout << "The number of MapPoints: " << nMapPoints << endl;
+    f << nMapPoints << endl;
+    for(auto mp:mps)
+        SaveMapPoint(f,mp.second,keyIds);
+
+    f.close();
+}
+
 void System::SaveAtlas(int type){
     if(!mStrSaveAtlasToFile.empty())
     {
+        cout << "begin to save atlas file" << endl;
+        cout << "type is : " << type << endl;
         //clock_t start = clock();
 
         // Save the current session
         mpAtlas->PreSave();
 
         string pathSaveFileName = "./";
-        pathSaveFileName = pathSaveFileName.append(mStrSaveAtlasToFile);
-        pathSaveFileName = pathSaveFileName.append(".osa");
+        string tempPathSaveFileName = pathSaveFileName.append(mStrSaveAtlasToFile);
+        pathSaveFileName = tempPathSaveFileName.append(".osa");
+        string mvsMapFileName = tempPathSaveFileName.append(".mvs");
 
         string strVocabularyChecksum = CalculateCheckSum(mStrVocabularyFilePath,TEXT_FILE);
         std::size_t found = mStrVocabularyFilePath.find_last_of("/\\");
         string strVocabularyName = mStrVocabularyFilePath.substr(found+1);
+        
 
         if(type == TEXT_FILE) // File text
         {
@@ -1440,6 +1531,8 @@ void System::SaveAtlas(int type){
             oa << mpAtlas;
             cout << "End to write save binary file" << endl;
         }
+
+        SaveMap(mvsMapFileName, cv::Size(640,480));
     }
 }
 

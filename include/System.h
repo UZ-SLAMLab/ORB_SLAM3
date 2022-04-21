@@ -30,6 +30,7 @@
 
 #include "Tracking.h"
 #include "FrameDrawer.h"
+#include "Map.h"
 #include "MapDrawer.h"
 #include "Atlas.h"
 #include "LocalMapping.h"
@@ -73,6 +74,7 @@ public:
 
 class Viewer;
 class FrameDrawer;
+class Map;
 class MapDrawer;
 class Atlas;
 class Tracking;
@@ -168,8 +170,12 @@ public:
     void SaveTrajectoryKITTI(const string &filename);
 
     // TODO: Save/Load functions
-    // SaveMap(const string &filename);
+    void SaveMap(const string &filename, const cv::Size image_size);
     // LoadMap(const string &filename);
+
+    void SaveMapPoint(ofstream &f, MapPoint *mp, std::vector<int>& keyIds);
+    void SaveKeyFrame(ofstream &f, KeyFrame *kf, std::vector<int>& keyIds);
+
 
     // Information from most recent processed frame
     // You can call this right after TrackMonocular (or stereo or RGBD)
