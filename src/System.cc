@@ -1443,7 +1443,7 @@ void System::SaveKeyFrame(ofstream &f, KeyFrame *kf, std::vector<int>& keyIds)
         f << Quat[(3+i)%4] << " ";// qw qx qy qz
     }
 
-    Eigen::Matrix<float,3,4> Seg3 = Tcw.matrix3x4()
+    Eigen::Matrix<float,3,4> Seg3 = Tcw.matrix3x4();
     cout << "GetPose " << std::to_string(kf->mTimeStamp) << "Tcw " << Seg3 << endl;
     //保存平移
     for(int i=0; i<3; i++)
