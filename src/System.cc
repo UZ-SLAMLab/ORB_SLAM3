@@ -1461,7 +1461,7 @@ void System::SaveMap(const string &filename, const cv::MatSize image_size) {
     f << "MVS "<< image_size[1] << " "<< image_size[0] << endl;
 
     map<long unsigned int, KeyFrame*> kfs = mpAtlas->GetAtlasKeyframes();
-    unsigned long int nKeyFrames = kfs.size()
+    unsigned long int nKeyFrames = kfs.size();
     // output # of keyframes
     cout << "The number of KeyFrames: " << nKeyFrames << endl;
     f << nKeyFrames << endl;
@@ -1470,7 +1470,7 @@ void System::SaveMap(const string &filename, const cv::MatSize image_size) {
     
 
     map<long unsigned int, MapPoint*> mps = mpAtlas->GetAtlasMapPoints();
-    unsigned long int nMapPoints = mps.size()
+    unsigned long int nMapPoints = mps.size();
     // output # of mappoints
     cout << "The number of MapPoints: " << nMapPoints << endl;
     f << nMapPoints << endl;
