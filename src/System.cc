@@ -1457,7 +1457,7 @@ void System::SaveKeyFrame(ofstream &f, KeyFrame *kf, std::vector<int>& keyIds)
     f << "\n";
 }
 
-void System::SaveMap(const string &filename, const cv::MatSize image_size) {
+void System::SaveMap(const string &filename, const cv::Size image_size) {
     std::vector<int> keyIds;
 
     cout << "begin to save map file for mvs" << endl;
@@ -1466,7 +1466,7 @@ void System::SaveMap(const string &filename, const cv::MatSize image_size) {
     cout << "SFM Saving to "<< filename << endl;
     ofstream f;
     f.open(filename.c_str());
-    f << "MVS "<< image_size[1] << " "<< image_size[0] << endl;
+    f << "MVS "<< image_size.height << " "<< image_size.width << endl;
 
     map<long unsigned int, KeyFrame*> kfs = mpAtlas->GetAtlasKeyframes();
     unsigned long int nKeyFrames = kfs.size();
