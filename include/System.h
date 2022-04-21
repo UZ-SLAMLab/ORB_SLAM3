@@ -170,7 +170,7 @@ public:
     void SaveTrajectoryKITTI(const string &filename);
 
     // TODO: Save/Load functions
-    void SaveMap(const string &filename);
+    void SaveMap(const string &filename, const cv::MatSize image_size);
     // LoadMap(const string &filename);
 
     void SaveMapPoint(ofstream &f, MapPoint *mp);
