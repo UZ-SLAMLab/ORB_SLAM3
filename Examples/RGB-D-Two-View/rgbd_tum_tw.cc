@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
                                      cv::IMREAD_UNCHANGED);
         auto imDSlave = cv::imread(string(argv[3]) + "/" + slaveImageFilenamesD[ni],
                                    cv::IMREAD_UNCHANGED);
-        double tframe = vTimestamps[ni];
+        auto tframe = vTimestamps[ni];
 
         if (imRGBMaster.empty()) {
             cerr << endl << "Failed to load image at: "
@@ -104,8 +104,8 @@ int main(int argc, char **argv) {
         }
 
         if (imageScale != 1.f) {
-            int width = imRGBMaster.cols * imageScale;
-            int height = imRGBMaster.rows * imageScale;
+            auto width = imRGBMaster.cols * int(imageScale);
+            auto height = imRGBMaster.rows * int(imageScale);
             cv::resize(imRGBMaster, imRGBMaster, cv::Size(width, height));
             cv::resize(imDMaster, imDMaster, cv::Size(width, height));
         }
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
     // Tracking time statistics
     sort(vTimesTrack.begin(), vTimesTrack.end());
     float totaltime = 0;
-    for (int ni = 0; ni < nImages; ni++) {
+    for (auto ni = 0; ni < nImages; ni++) {
         totaltime += vTimesTrack[ni];
     }
     cout << "-------" << endl << endl;

@@ -975,19 +975,19 @@ namespace ORB_SLAM3
             auto const hCell = int(ceil(height / float(nRows)));
 
 
-            vector<cv::KeyPoint> vToDistributeKeys = vToDistributeKeysCalculate(nRows, minBorderY,
-                                                                                hCell, maxBorderY,
-                                                                                nCols, minBorderX,
-                                                                                wCell, maxBorderX,
-                                                                                level, false);
-            vector<cv::KeyPoint> vToDistributeKeysS = vToDistributeKeysCalculate(nRows, minBorderY,
-                                                                                 hCell, maxBorderY,
-                                                                                 nCols, minBorderX,
-                                                                                 wCell, maxBorderX,
-                                                                                 level, true);
+            auto vToDistributeKeys = vToDistributeKeysCalculate(nRows, minBorderY,
+                                                                hCell, maxBorderY,
+                                                                nCols, minBorderX,
+                                                                wCell, maxBorderX,
+                                                                level, false);
+            auto vToDistributeKeysS = vToDistributeKeysCalculate(nRows, minBorderY,
+                                                                 hCell, maxBorderY,
+                                                                 nCols, minBorderX,
+                                                                 wCell, maxBorderX,
+                                                                 level, true);
 
-            vector<KeyPoint> &keypointsMaster = allMasterKeypoints[level];
-            vector<KeyPoint> &keypointsSlave = allSlaveKeypoints[level];
+            auto &keypointsMaster = allMasterKeypoints[level];
+            auto &keypointsSlave = allSlaveKeypoints[level];
 
             keypointsMaster.reserve(nfeatures);
             keypointsSlave.reserve(nfeatures);
