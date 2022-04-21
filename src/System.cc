@@ -1404,8 +1404,8 @@ void System::InsertTrackTime(double& time)
 #endif
 
 void System::SaveMapPoint(ofstream &f, MapPoint *mp, std::vector<int>& keyIds) {
-    Eigen::Vector3f mpWorldPos = mp->GetWorldPos();
-    f <<" " <<mpWorldPos.at<float>(0)<<" " << mpWorldPos.at<float>(1)<<" " << mpWorldPos.at<float>(2) << " ";
+    Eigen::Matrix<float,3,1> mpWorldPos = mp->GetWorldPos();
+    f <<" " <<mpWorldPos(0)<<" " << mpWorldPos(1)<<" " << mpWorldPos(2) << " ";
     f << (mp->nObs)/2<< " ";
 
     std::map<KeyFrame*,std::tuple<int,int>> mapObservation = mp->GetObservations();
