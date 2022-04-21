@@ -1403,6 +1403,83 @@ void System::InsertTrackTime(double& time)
 }
 #endif
 
+void System::SaveMapPoint(ofstream &f, MapPoint *mp, std::vector<int>& keyIds) {
+    Eigen::Vector3f mpWorldPos = mp->GetWorldPos();
+    f <<" " <<mpWorldPos.at<float>(0)<<" " << mpWorldPos.at<float>(1)<<" " << mpWorldPos.at<float>(2) << " ";
+    f << (mp->nObs)/2<< " ";
+
+    std::map<KeyFrame*,std::tuple<int,int>> mapObservation = mp->GetObservations();
+    for(auto mit = mapObservation.begin(); mit != mapObservation.end(); mit++)
+    {
+        int Frameid;
+        Frameid = mit->first->mnId;
+        auto keyid = find(keyIds.begin(),keyIds.end(),Frameid) - keyIds.begin();
+        f << keyid << " ";
+    }
+    f << "\n";
+}
+
+void Map::SaveKeyFrame(ofstream &f, KeyFrame *kf, std::vector<int>& keyIds)
+{
+    keyIds.push_back(kf->mnId);
+    // 保存当前关键帧的id
+    f << keyIds.end() - keyIds.begin() - 1<< " ";
+    // 关键帧内参
+    f << kf->fx << " " << kf->fy << " " << kf->cx << " " << kf->cy << " ";
+    // 保存当前关键帧的位姿
+    cv::Mat Tcw = kf->GetPose();
+    cout << "GetPose " << std::to_string(kf->mTimeStamp) <<"\nTcw\n" <<Tcw<< endl;
+    cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
+    cout << "Rcw\n" << Rcw << endl;
+    // 通过四元数保存旋转矩阵
+    std::vector<float> Quat = Converter::toQuaternion(Rcw);
+
+    for(int i=0; i<4; i++)
+    {
+        f << Quat[(3+i)%4] << " ";// qw qx qy qz
+    }
+    //保存平移
+    for(int i=0; i<3; i++)
+    {
+        f << Tcw.at<float>(i,3) << " ";
+    }
+    ostringstream sTimeStamp;
+    sTimeStamp << std::to_string(kf->mTimeStamp);
+    f << sTimeStamp.str();
+    f << "\n";
+}
+
+void System::SaveMap(const string &filename, const cv::MatSize image_size) {
+    std::vector<int> keyIds;
+
+    cout << "begin to save map file for mvs" << endl;
+    mpAtlas->PreSave();
+
+    cout << "SFM Saving to "<< filename << endl;
+    ofstream f;
+    f.open(filename.c_str());
+    f << "MVS "<< image_size[1] << " "<< image_size[0] << endl;
+
+    map<long unsigned int, KeyFrame*> kfs = mpAtlas->GetAtlasKeyframes();
+    unsigned long int nKeyFrames = kfs.size()
+    // output # of keyframes
+    cout << "The number of KeyFrames: " << nKeyFrames << endl;
+    f << nKeyFrames << endl;
+    for(auto kf:kfs)
+        SaveKeyFrame(f,kf->second,keyIds);
+    
+
+    map<long unsigned int, MapPoint*> mps = mpAtlas->GetAtlasMapPoints();
+    unsigned long int nMapPoints = mps.size()
+    // output # of mappoints
+    cout << "The number of MapPoints: " << nMapPoints << endl;
+    f << nMapPoints << endl;
+    for(auto mp:mps)
+        SaveMapPoint(f,mp->second,keyIds);
+
+    f.close();
+}
+
 void System::SaveAtlas(int type){
     if(!mStrSaveAtlasToFile.empty())
     {
@@ -1420,12 +1497,7 @@ void System::SaveAtlas(int type){
         string strVocabularyChecksum = CalculateCheckSum(mStrVocabularyFilePath,TEXT_FILE);
         std::size_t found = mStrVocabularyFilePath.find_last_of("/\\");
         string strVocabularyName = mStrVocabularyFilePath.substr(found+1);
-
-        cout << "======================== debug info ============================" << endl;
-        cout << "strVocabularyName: " << strVocabularyName << endl;
-        cout << "strVocabularyChecksum: " << strVocabularyChecksum << endl;
-        cout << "MP number: " << mpAtlas->GetNumLivedMP() << endl;
-        cout << "KF number: " << mpAtlas->GetNumLivedKF() << endl;
+        
 
         if(type == TEXT_FILE) // File text
         {

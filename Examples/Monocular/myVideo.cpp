@@ -39,6 +39,7 @@ while (1) {
     }
 
     SLAM.Shutdown();
+    SLAM.SaveMap("myVideoSFM.txt", cv::Size(640,480));
     return 0;
 
 }

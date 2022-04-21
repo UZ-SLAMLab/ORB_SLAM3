@@ -128,6 +128,7 @@ public:
     void PostLoad();
 
     map<long unsigned int, KeyFrame*> GetAtlasKeyframes();
+    map<long unsigned int, MapPoint*> GetAtlasMapPoints();
 
     void SetKeyFrameDababase(KeyFrameDatabase* pKFDB);
     KeyFrameDatabase* GetKeyFrameDatabase();
