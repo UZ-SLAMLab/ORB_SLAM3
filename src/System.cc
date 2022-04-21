@@ -1427,9 +1427,10 @@ void System::SaveKeyFrame(ofstream &f, KeyFrame *kf, std::vector<int>& keyIds)
     // 关键帧内参
     f << kf->fx << " " << kf->fy << " " << kf->cx << " " << kf->cy << " ";
     // 保存当前关键帧的位姿
-    cv::Mat Tcw = kf->GetPose();
+    Sophus::SE3<float> Tcw = kf->GetPose();
     cout << "GetPose " << std::to_string(kf->mTimeStamp) <<"\nTcw\n" <<Tcw<< endl;
-    cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
+    /*
+    Eigen::Vector3f Rcw = Tcw.translation();
     cout << "Rcw\n" << Rcw << endl;
     // 通过四元数保存旋转矩阵
     std::vector<float> Quat = Converter::toQuaternion(Rcw);
@@ -1443,6 +1444,7 @@ void System::SaveKeyFrame(ofstream &f, KeyFrame *kf, std::vector<int>& keyIds)
     {
         f << Tcw.at<float>(i,3) << " ";
     }
+    */
     ostringstream sTimeStamp;
     sTimeStamp << std::to_string(kf->mTimeStamp);
     f << sTimeStamp.str();
