@@ -1499,9 +1499,9 @@ void System::SaveAtlas(int type){
         mpAtlas->PreSave();
 
         string pathSaveFileName = "./";
-        tempPathSaveFileName = pathSaveFileName.append(mStrSaveAtlasToFile);
+        string tempPathSaveFileName = pathSaveFileName.append(mStrSaveAtlasToFile);
         pathSaveFileName = tempPathSaveFileName.append(".osa");
-        string mvsMapFileName = tempPathSaveFileName.append(".mvs")
+        string mvsMapFileName = tempPathSaveFileName.append(".mvs");
 
         string strVocabularyChecksum = CalculateCheckSum(mStrVocabularyFilePath,TEXT_FILE);
         std::size_t found = mStrVocabularyFilePath.find_last_of("/\\");
