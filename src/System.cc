@@ -20,9 +20,13 @@
 
 #include "System.h"
 #include "Converter.h"
+#include <Eigen/Core>
+#include <Eigen/Dense>
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
+#include <opencv2/core/eigen.hpp>
+#include <opencv2/opencv.hpp>
 #include <openssl/md5.h>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/string.hpp>
