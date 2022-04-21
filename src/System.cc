@@ -1466,7 +1466,7 @@ void System::SaveMap(const string &filename, const cv::MatSize image_size) {
     cout << "The number of KeyFrames: " << nKeyFrames << endl;
     f << nKeyFrames << endl;
     for(auto kf:kfs)
-        SaveKeyFrame(f,kf->second,keyIds);
+        SaveKeyFrame(f,kf.second,keyIds);
     
 
     map<long unsigned int, MapPoint*> mps = mpAtlas->GetAtlasMapPoints();
@@ -1475,7 +1475,7 @@ void System::SaveMap(const string &filename, const cv::MatSize image_size) {
     cout << "The number of MapPoints: " << nMapPoints << endl;
     f << nMapPoints << endl;
     for(auto mp:mps)
-        SaveMapPoint(f,mp->second,keyIds);
+        SaveMapPoint(f,mp.second,keyIds);
 
     f.close();
 }
