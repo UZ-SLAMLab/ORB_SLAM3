@@ -1461,8 +1461,6 @@ void System::SaveMap(const string &filename, const cv::Size image_size) {
     std::vector<int> keyIds;
 
     cout << "begin to save map file for mvs" << endl;
-   // mpAtlas->PreSave(); have already saved in saveAtlas
-
     cout << "SFM Saving to "<< filename << endl;
     ofstream f;
     f.open(filename.c_str());
