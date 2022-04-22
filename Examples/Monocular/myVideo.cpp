@@ -32,7 +32,7 @@ while (1) {
         // rescale because image is too large
         cv::Mat frame_resized;
         cv::resize(frame, frame_resized, cv::Size(640,480));
-        imshow("image", frame)
+        imshow("image", frame);
 
         auto now = chrono::system_clock::now();
         auto timestamp = chrono::duration_cast<chrono::milliseconds>(now - start);
