@@ -26,7 +26,7 @@ auto start = chrono::system_clock::now();
 while (1) {
         cv::Mat frame;
         cap >> frame;   // 读取相机数据
-        if ( frame.data == nullptr )
+        if (frame.empty())
             break;
 
         // rescale because image is too large
