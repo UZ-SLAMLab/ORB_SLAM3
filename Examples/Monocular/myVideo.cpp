@@ -38,7 +38,7 @@ while (1) {
         double imageTimestamp = double(timestamp.count())/1000.0;
 
         string path = imageStorePath + to_string(imageTimestamp) + ".png";
-        imwrite(path, frame_resized)
+        imwrite(path, frame_resized);
 
         SLAM.TrackMonocular(frame_resized, imageTimestamp);
         cv::waitKey(30);
