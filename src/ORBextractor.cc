@@ -1295,9 +1295,10 @@ namespace ORB_SLAM3
     }
 
     int ORBextractor::operator()(InputArray _imageMaster, InputArray _imageSlave, InputArray _mask,
-                                 vector <KeyPoint> &_keypoints,
-                                 OutputArray _descriptors, std::vector<int> &vLappingArea, InputArray _depthSlave,
-                                 const cv::Mat &KMaster, const cv::Mat &KSlave, const Eigen::Matrix4f &T) {
+                                 vector<tuple<KeyPoint, float>> &_keypoints,
+                                 OutputArray _descriptors, vector<int> &vLappingArea, InputArray _depthMaster,
+                                 InputArray _depthSlave, const Mat &KMaster, const Mat &KSlave,
+                                 const Eigen::Matrix4f &T) {
         if (_imageMaster.empty())
             return -1;
         if (_imageSlave.empty())
@@ -1305,6 +1306,7 @@ namespace ORB_SLAM3
 
         auto image = _imageMaster.getMat();
         auto imageS = _imageSlave.getMat();
+        auto depth = _depthMaster.getMat();
         auto depthS = _depthSlave.getMat();
         assert(image.type() == CV_8UC1);
         assert(imageS.type() == CV_8UC1);
@@ -1335,7 +1337,7 @@ namespace ORB_SLAM3
             descriptors = _descriptors.getMat();
         }
 
-        _keypoints = vector<cv::KeyPoint>(nkeypoints);
+        _keypoints = vector<tuple<cv::KeyPoint, float>>(nkeypoints);
         Mat KSlaveInvT = KSlave.inv().t();
         Eigen::Map<Eigen::Matrix3f> KSlaveInvEigen(KSlaveInvT.ptr<float>(), 3, 3);
         Eigen::Matrix4f extendedKSlaveInv = Eigen::Matrix4f::Identity(4, 4);
@@ -1375,13 +1377,13 @@ namespace ORB_SLAM3
                 if (level != 0) {
                     keypoint.pt *= scale;
                 }
-
+                auto z = depth.at<float>((int) keypoint.pt.y, (int) keypoint.pt.x);
                 if (keypoint.pt.x >= float(vLappingArea[0]) && keypoint.pt.x <= float(vLappingArea[1])) {
-                    _keypoints.at(stereoIndex) = keypoint;
+                    _keypoints.at(stereoIndex) = make_tuple(keypoint, z);
                     descMaster.row(i).copyTo(descriptors.row(stereoIndex));
                     stereoIndex--;
                 } else {
-                    _keypoints.at(monoIndex) = keypoint;
+                    _keypoints.at(monoIndex) = make_tuple(keypoint, z);
                     descMaster.row(i).copyTo(descriptors.row(monoIndex));
                     monoIndex++;
                 }
@@ -1401,11 +1403,11 @@ namespace ORB_SLAM3
                                     keypoint.response, keypoint.octave, keypoint.class_id);
 
                     if (keypoint.pt.x >= float(vLappingArea[0]) && keypoint.pt.x <= float(vLappingArea[1])) {
-                        _keypoints.at(stereoIndex) = kp;
+                        _keypoints.at(stereoIndex) = make_tuple(kp, z);
                         descSlave.row(i).copyTo(descriptors.row(stereoIndex));
                         stereoIndex--;
                     } else {
-                        _keypoints.at(monoIndex) = kp;
+                        _keypoints.at(monoIndex) = make_tuple(kp, z);
                         descSlave.row(i).copyTo(descriptors.row(monoIndex));
                         monoIndex++;
                     }

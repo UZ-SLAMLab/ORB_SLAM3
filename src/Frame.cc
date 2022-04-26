@@ -226,7 +226,7 @@ Frame::Frame(const cv::Mat &imGrayMaster, const cv::Mat &imDepthMaster, const cv
 #ifdef REGISTER_TIMES
     std::chrono::steady_clock::time_point time_StartExtORB = std::chrono::steady_clock::now();
 #endif
-    ExtractORBTwoView(imGrayMaster, imGraySlave, 0, 0, imDepthSlave, KMaster, KSlave, T);
+    ExtractORBTwoView(imGrayMaster, imGraySlave, 0, 0, imDepthMaster, imDepthSlave, KMaster, KSlave, T);
 #ifdef REGISTER_TIMES
     std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
 
@@ -234,13 +234,12 @@ Frame::Frame(const cv::Mat &imGrayMaster, const cv::Mat &imDepthMaster, const cv
 #endif
 
 
-    N = mvKeys.size();
+    N = mvKeysTV.size();
 
-    if (mvKeys.empty())
+    if (mvKeysTV.empty())
         return;
-
-    UndistortKeyPoints();
-    ComputeStereoFromRGBD(imDepthMaster);
+    UndistortKeyPointsTwoView();
+    ComputeStereoFromRGBDTwoView();
 
     mvpMapPoints = vector<MapPoint *>(N, static_cast<MapPoint *>(NULL));
 
@@ -518,11 +517,11 @@ void Frame::ExtractORB(int flag, const cv::Mat &im, const int x0, const int x1)
 }
 
 void Frame::ExtractORBTwoView(const cv::Mat &imMaster, const cv::Mat &imSlave, const int x0, const int x1,
-                              const cv::Mat &depth, const cv::Mat &KMaster, const cv::Mat &KSlave,
-                              const Eigen::Matrix4f &T) {
+                              const cv::Mat &depthMaster, const cv::Mat &depthSlave, const cv::Mat &KMaster,
+                              const cv::Mat &KSlave, const Eigen::Matrix4f &T) {
     vector<int> vLapping = {x0, x1};
-    monoLeft = (*mpORBextractorLeft)(imMaster, imSlave, cv::Mat(), mvKeys,
-                                     mDescriptors, vLapping, depth, KMaster, KSlave, T);
+    monoLeft = (*mpORBextractorLeft)(imMaster, imSlave, cv::Mat(), mvKeysTV,
+                                     mDescriptors, vLapping, depthMaster, depthSlave, KMaster, KSlave, T);
 }
 
 bool Frame::isSet() const {
@@ -845,6 +844,40 @@ void Frame::ComputeBoW()
     }
 }
 
+void Frame::UndistortKeyPointsTwoView() {
+    mvKeysUn.resize(N);
+    if (mDistCoef.at<float>(0) == 0.0) {
+        auto i = 0;
+        for (auto &keypoint: mvKeysTV) {
+            mvKeysUn[i] = get<0>(keypoint);
+            i++;
+        }
+        return;
+    }
+
+    // Fill matrix with points
+    cv::Mat mat(N, 2, CV_32F);
+
+    for (int i = 0; i < N; i++) {
+        mat.at<float>(i, 0) = get<0>(mvKeysTV[i]).pt.x;
+        mat.at<float>(i, 1) = get<0>(mvKeysTV[i]).pt.y;
+    }
+
+    // Undistort points
+    mat = mat.reshape(2);
+    cv::undistortPoints(mat, mat, static_cast<Pinhole *>(mpCamera)->toK(), mDistCoef, cv::Mat(), mK);
+    mat = mat.reshape(1);
+
+    // Fill undistorted keypoint vector
+    for (int i = 0; i < N; i++) {
+        cv::KeyPoint kp = get<0>(mvKeysTV[i]);
+        kp.pt.x = mat.at<float>(i, 0);
+        kp.pt.y = mat.at<float>(i, 1);
+        mvKeysUn[i] = kp;
+    }
+
+}
+
 void Frame::UndistortKeyPoints()
 {
     if(mDistCoef.at<float>(0)==0.0)
@@ -1081,6 +1114,27 @@ void Frame::ComputeStereoMatches()
     }
 }
 
+void Frame::ComputeStereoFromRGBDTwoView() {
+    mvuRight = vector<float>(N, -1);
+    mvDepth = vector<float>(N, -1);
+    mvKeys.resize(N);
+
+    for (int i = 0; i < N; i++) {
+        auto const &kp = mvKeysTV[i];
+        auto const &kpU = mvKeysUn[i];
+
+        auto const &v = get<0>(kp).pt.y;
+        auto const &u = get<0>(kp).pt.x;
+
+        auto const d = get<1>(kp);
+        mvKeys[i] = get<0>(kp);
+
+        if (d > 0) {
+            mvDepth[i] = d;
+            mvuRight[i] = kpU.pt.x - mbf / d;
+        }
+    }
+}
 
 void Frame::ComputeStereoFromRGBD(const cv::Mat &imDepth)
 {

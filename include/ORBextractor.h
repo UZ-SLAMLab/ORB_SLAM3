@@ -60,9 +60,9 @@ public:
                     cv::OutputArray _descriptors, std::vector<int> &vLappingArea);
 
     int operator()(cv::InputArray _imageMaster, cv::InputArray _imageSlave, cv::InputArray _mask,
-                   std::vector<cv::KeyPoint> &_keypoints, cv::OutputArray _descriptors,
-                   std::vector<int> &vLappingArea, cv::InputArray _depthSlave, const cv::Mat &KMaster,
-                   const cv::Mat &KSlave, const Eigen::Matrix4f &T);
+                   std::vector<std::tuple<cv::KeyPoint, float>> &_keypoints, cv::OutputArray _descriptors,
+                   std::vector<int> &vLappingArea, cv::InputArray _depthMaster, cv::InputArray _depthSlave,
+                   const cv::Mat &KMaster, const cv::Mat &KSlave, const Eigen::Matrix4f &T);
 
     int inline GetLevels(){
         return nlevels;}
