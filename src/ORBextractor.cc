@@ -1396,18 +1396,19 @@ namespace ORB_SLAM3
                     Eigen::Vector4f uvVector(keypoint.pt.x, keypoint.pt.y, 1, 1 / z);
                     Eigen::Vector4f xyzVector = z * extendedKSlaveInv * uvVector;
                     Eigen::Vector4f transformedXyzVector = T * xyzVector;
+                    auto newZ = transformedXyzVector[2];
 
-                    Eigen::Vector4f uvReprojected = 1 / z * extendedKMaster * transformedXyzVector;
+                    Eigen::Vector4f uvReprojected = 1 / newZ * extendedKMaster * transformedXyzVector;
 
                     cv::KeyPoint kp(uvReprojected[0], uvReprojected[1], keypoint.size, keypoint.angle,
                                     keypoint.response, keypoint.octave, keypoint.class_id);
 
                     if (keypoint.pt.x >= float(vLappingArea[0]) && keypoint.pt.x <= float(vLappingArea[1])) {
-                        _keypoints.at(stereoIndex) = make_tuple(kp, z);
+                        _keypoints.at(stereoIndex) = make_tuple(kp, newZ);
                         descSlave.row(i).copyTo(descriptors.row(stereoIndex));
                         stereoIndex--;
                     } else {
-                        _keypoints.at(monoIndex) = make_tuple(kp, z);
+                        _keypoints.at(monoIndex) = make_tuple(kp, newZ);
                         descSlave.row(i).copyTo(descriptors.row(monoIndex));
                         monoIndex++;
                     }
