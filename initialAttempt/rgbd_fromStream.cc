@@ -47,11 +47,11 @@ using namespace std;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
-using proto::api::robot::v1::RobotService;
-using proto::api::robot::v1::StatusRequest;
-using proto::api::robot::v1::StatusResponse;
+// using proto::api::robot::v1::RobotService;
+// using proto::api::robot::v1::StatusRequest;
+// using proto::api::robot::v1::StatusResponse;
 using proto::api::component::camera::v1::CameraService;
-using proto::api::component::camera::v1::RenderFrameRequest;
+// using proto::api::component::camera::v1::RenderFrameRequest;
 using proto::api::component::camera::v1::GetFrameRequest;
 using proto::api::component::camera::v1::GetFrameResponse;
 
@@ -131,7 +131,9 @@ cv::Mat im,depth, rawData;
       GetFrameRequest requestGet;
       GetFrameResponse responseGet;
       requestGet.set_mime_type("image/both");
-      requestGet.set_name("r-vg2105m05.combined");
+      // requestGet.set_name("r-vg2105m05.combined");
+      requestGet.set_name("grandma.realsense");
+
       const Status gStatus2 = client2->GetFrame(&context2,requestGet,&responseGet);  //render_frame(&context2, request2, &response2);
       if (!gStatus2.ok()) {
         std::cout << "Status rpc failed." << gStatus2.error_code() <<  std::endl;
@@ -141,7 +143,7 @@ cv::Mat im,depth, rawData;
       frameWidth = (int) responseGet.width_px();
       frameHeight = (int) responseGet.height_px();
 
-      // cout << frameWidth << frameHeight << endl;
+      cout << frameWidth << frameHeight << endl;
 
       timeGRPC = std::chrono::steady_clock::now();
       grpcDuration = std::chrono::duration_cast<std::chrono::duration<double> >(timeGRPC - timeBegin).count();

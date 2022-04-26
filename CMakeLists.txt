@@ -33,7 +33,7 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-find_package(OpenCV 3.4.1)
+find_package(OpenCV 4.5.1)
    if(NOT OpenCV_FOUND)
       message(FATAL_ERROR "OpenCV > 3.2 not found.")
    endif()
@@ -166,7 +166,7 @@ target_link_libraries(mono_file ${PROJECT_NAME})
 #         initialAttempt/rgbd_noimu.cc)
 # target_link_libraries(no_imu_test ${PROJECT_NAME})
 
-if(EXISTS ${SRCDIR})
+if(FALSE)#if(EXISTS ${SRCDIR})
    find_package(PkgConfig REQUIRED)
 
    pkg_check_modules(GRPC REQUIRED grpc) 
