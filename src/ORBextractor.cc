@@ -1327,7 +1327,7 @@ namespace ORB_SLAM3
                     nkeypoints += 1;
                 }
             }
-            nkeypoints += (int) allMasterKeypoints[level].size();
+//            nkeypoints += (int) allMasterKeypoints[level].size();
         }
         Mat descriptors;
         if (nkeypoints == 0)
@@ -1372,23 +1372,23 @@ namespace ORB_SLAM3
 
             auto scale = mvScaleFactor[level];
             auto i = 0;
-            for (auto &keypoint: keypointsMaster) {
-                // Scale keypoint coordinates
-                if (level != 0) {
-                    keypoint.pt *= scale;
-                }
-                auto z = depth.at<float>((int) keypoint.pt.y, (int) keypoint.pt.x);
-                if (keypoint.pt.x >= float(vLappingArea[0]) && keypoint.pt.x <= float(vLappingArea[1])) {
-                    _keypoints.at(stereoIndex) = make_tuple(keypoint, z);
-                    descMaster.row(i).copyTo(descriptors.row(stereoIndex));
-                    stereoIndex--;
-                } else {
-                    _keypoints.at(monoIndex) = make_tuple(keypoint, z);
-                    descMaster.row(i).copyTo(descriptors.row(monoIndex));
-                    monoIndex++;
-                }
-                i++;
-            }
+//            for (auto &keypoint: keypointsMaster) {
+//                // Scale keypoint coordinates
+//                if (level != 0) {
+//                    keypoint.pt *= scale;
+//                }
+//                auto z = depth.at<float>((int) keypoint.pt.y, (int) keypoint.pt.x);
+//                if (keypoint.pt.x >= float(vLappingArea[0]) && keypoint.pt.x <= float(vLappingArea[1])) {
+//                    _keypoints.at(stereoIndex) = make_tuple(keypoint, z);
+//                    descMaster.row(i).copyTo(descriptors.row(stereoIndex));
+//                    stereoIndex--;
+//                } else {
+//                    _keypoints.at(monoIndex) = make_tuple(keypoint, z);
+//                    descMaster.row(i).copyTo(descriptors.row(monoIndex));
+//                    monoIndex++;
+//                }
+//                i++;
+//            }
             i = 0;
             for (auto &keypoint: keypointsSlave) {
                 auto z = depthS.at<float>((int) keypoint.pt.y, (int) keypoint.pt.x);

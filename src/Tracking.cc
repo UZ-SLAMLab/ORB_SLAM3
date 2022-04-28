@@ -712,7 +712,8 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         if (!node.empty()) {
             cv::Mat TMat;
             fSettings["TransformationMatrix"] >> TMat;
-            TMat = TMat.inv();
+//            TODO: i think this must be deleted permanently
+//            TMat = TMat.inv();
             cv::cv2eigen(TMat, T);
         }
 
