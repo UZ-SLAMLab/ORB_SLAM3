@@ -185,7 +185,11 @@ public:
     void ChangeDataset();
 
     float GetImageScale();
+
+    //VIAM ADDED
     Atlas* GetAtlas() { return mpAtlas; };
+    string GetAtlasName(){ return mStrLoadAtlasFromFile;};
+    
     
 #ifdef REGISTER_TIMES
     void InsertRectTime(double& time);

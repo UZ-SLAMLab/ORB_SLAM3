@@ -33,7 +33,7 @@ tar -xf ORBvoc.txt.tar.gz
 cd ..
 
 echo "Configuring and building ORB_SLAM3 ..."
-
+mkdir bin 
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release

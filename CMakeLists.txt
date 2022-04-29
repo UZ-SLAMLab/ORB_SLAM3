@@ -165,7 +165,10 @@ target_link_libraries(mono_file ${PROJECT_NAME})
 # add_executable(no_imu_test
 #         initialAttempt/rgbd_noimu.cc)
 # target_link_libraries(no_imu_test ${PROJECT_NAME})
-
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+add_executable(viam_main_v1
+        viam-main-dir/main_v1.cc)
+target_link_libraries(viam_main_v1 ${PROJECT_NAME})
 if(FALSE)#if(EXISTS ${SRCDIR})
    find_package(PkgConfig REQUIRED)
 
