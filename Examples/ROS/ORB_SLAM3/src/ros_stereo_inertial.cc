@@ -28,6 +28,8 @@
 #include<ros/ros.h>
 #include<cv_bridge/cv_bridge.h>
 #include<sensor_msgs/Imu.h>
+#include<nav_msgs/Odometry.h>
+#include <tf/transform_broadcaster.h>
 
 #include<opencv2/core/core.hpp>
 
@@ -35,6 +37,9 @@
 #include"../include/ImuTypes.h"
 
 using namespace std;
+
+Sophus::SE3f Tcw = {};
+nav_msgs::Odometry odom;
 
 class ImuGrabber
 {
@@ -74,26 +79,33 @@ public:
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "Stereo_Inertial");
-  ros::NodeHandle n("~");
+  ros::NodeHandle n("orb_slam3");
   ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
   bool bEqual = false;
-  if(argc < 4 || argc > 5)
+  bool bView = true;
+  if(argc < 4 || argc > 6)
   {
-    cerr << endl << "Usage: rosrun ORB_SLAM3 Stereo_Inertial path_to_vocabulary path_to_settings do_rectify [do_equalize]" << endl;
+    cerr << endl << "Usage: rosrun ORB_SLAM3 Stereo_Inertial path_to_vocabulary path_to_settings do_rectify [do_equalize] [enable_view]" << endl;
     ros::shutdown();
     return 1;
   }
 
   std::string sbRect(argv[3]);
-  if(argc==5)
+  if(argc>=5)
   {
     std::string sbEqual(argv[4]);
     if(sbEqual == "true")
       bEqual = true;
   }
+  if(argc==6)
+  {
+    std::string sbView(argv[5]);
+    if(sbView == "false")
+      bView = false;
+  }
 
   // Create SLAM system. It initializes all system threads and gets ready to process frames.
-  ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_STEREO,true);
+  ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_STEREO,bView);
 
   ImuGrabber imugb;
   ImageGrabber igb(&SLAM,&imugb,sbRect == "true",bEqual);
@@ -144,7 +156,78 @@ int main(int argc, char **argv)
 
   std::thread sync_thread(&ImageGrabber::SyncWithImu,&igb);
 
-  ros::spin();
+  ros::Rate loop_rate(80);
+
+  ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 100);
+  tf::TransformBroadcaster odom_broadcaster;
+
+  Sophus::SE3f LastTwc = {};
+
+  ros::Time current_time, last_time;
+  current_time = ros::Time::now();
+  last_time = ros::Time::now();
+
+  while (n.ok())
+  {
+    ros::spinOnce();               // check for incoming messages
+    current_time = ros::Time::now();
+
+    const Sophus::SE3f twist = Tcw * LastTwc;
+
+    //first, we'll publish the transform over tf
+    geometry_msgs::TransformStamped odom_trans;
+    odom_trans.header.stamp = current_time;
+    odom_trans.header.frame_id = "odom";
+    odom_trans.child_frame_id = "base_link";
+
+    odom_trans.transform.translation.x = Tcw.translation()[0];
+    odom_trans.transform.translation.y = Tcw.translation()[1];
+    odom_trans.transform.translation.z = Tcw.translation()[2];
+    odom_trans.transform.rotation.w = Tcw.data()[0];
+    odom_trans.transform.rotation.x = Tcw.data()[1];
+    odom_trans.transform.rotation.y = Tcw.data()[2];
+    odom_trans.transform.rotation.z = Tcw.data()[3];
+
+    //send the transform
+    odom_broadcaster.sendTransform(odom_trans);
+
+    /**
+     * This is a message object. You stuff it with data, and then publish it.
+     */
+
+
+    odom.header.stamp = current_time;
+    odom.header.frame_id = "odom";
+    odom.child_frame_id = "base_link";
+    
+    odom.pose.pose.position.x = Tcw.translation()[0];
+    odom.pose.pose.position.y = Tcw.translation()[1];
+    odom.pose.pose.position.z = Tcw.translation()[2];
+
+    odom.pose.pose.orientation.x = Tcw.so3(). unit_quaternion().x();
+    odom.pose.pose.orientation.y = Tcw.so3(). unit_quaternion().y();
+    odom.pose.pose.orientation.z = Tcw.so3(). unit_quaternion().z();
+    odom.pose.pose.orientation.w = Tcw.so3(). unit_quaternion().w();
+
+    double dt = (current_time - last_time).toSec();
+
+    odom.twist.twist.linear.x = twist.translation()[0]/dt;
+    odom.twist.twist.linear.y = twist.translation()[1]/dt;
+    odom.twist.twist.linear.z = twist.translation()[2]/dt;
+
+    /**
+     * The publish() function is how you send messages. The parameter
+     * is the message object. The type of this object must agree with the type
+     * given as a template parameter to the advertise<>() call, as was done
+     * in the constructor above.
+     */
+    odom_pub.publish(odom);
+
+    LastTwc = Tcw.inverse();
+    last_time = current_time;
+
+    loop_rate.sleep();
+  }
 
   return 0;
 }
@@ -251,6 +334,9 @@ void ImageGrabber::SyncWithImu()
           cv::Point3f acc(mpImuGb->imuBuf.front()->linear_acceleration.x, mpImuGb->imuBuf.front()->linear_acceleration.y, mpImuGb->imuBuf.front()->linear_acceleration.z);
           cv::Point3f gyr(mpImuGb->imuBuf.front()->angular_velocity.x, mpImuGb->imuBuf.front()->angular_velocity.y, mpImuGb->imuBuf.front()->angular_velocity.z);
           vImuMeas.push_back(ORB_SLAM3::IMU::Point(acc,gyr,t));
+          odom.twist.twist.angular.x = mpImuGb->imuBuf.front()->angular_velocity.x;
+          odom.twist.twist.angular.y = mpImuGb->imuBuf.front()->angular_velocity.y;
+          odom.twist.twist.angular.z = mpImuGb->imuBuf.front()->angular_velocity.z;
           mpImuGb->imuBuf.pop();
         }
       }
@@ -267,7 +353,7 @@ void ImageGrabber::SyncWithImu()
         cv::remap(imRight,imRight,M1r,M2r,cv::INTER_LINEAR);
       }
 
-      mpSLAM->TrackStereo(imLeft,imRight,tImLeft,vImuMeas);
+      Tcw = mpSLAM->TrackStereo(imLeft,imRight,tImLeft,vImuMeas);
 
       std::chrono::milliseconds tSleep(1);
       std::this_thread::sleep_for(tSleep);

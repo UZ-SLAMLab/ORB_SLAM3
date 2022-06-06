@@ -313,7 +313,9 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
             mpTracker->GrabImuData(vImuMeas[i_imu]);
 
     // std::cout << "start GrabImageStereo" << std::endl;
-    Sophus::SE3f Tcw = mpTracker->GrabImageStereo(imLeftToFeed,imRightToFeed,timestamp,filename);
+    mpTracker->GrabImageStereo(imLeftToFeed,imRightToFeed,timestamp,filename);
+    Eigen::Matrix4f M;
+    pangolin::OpenGlMatrix Twc, Ow;
 
     // std::cout << "out grabber" << std::endl;
 
@@ -321,6 +323,16 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+
+    mpMapDrawer->GetCurrentOpenGLCameraMatrix(Twc,Ow);
+
+    for (int i = 0; i<4; i++){
+        M(0,i) = Twc.m[4*i];
+        M(1,i) = Twc.m[4*i+1];
+        M(2,i) = Twc.m[4*i+2];
+        M(3,i) = Twc.m[4*i+3];
+    }
+    Sophus::SE3f Tcw(M);
 
     return Tcw;
 }
