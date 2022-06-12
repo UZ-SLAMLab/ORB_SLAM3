@@ -241,7 +241,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
 }
 
-Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
+Frame System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
     {
@@ -314,8 +314,6 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
 
     // std::cout << "start GrabImageStereo" << std::endl;
     mpTracker->GrabImageStereo(imLeftToFeed,imRightToFeed,timestamp,filename);
-    Eigen::Matrix4f M;
-    pangolin::OpenGlMatrix Twc, Ow;
 
     // std::cout << "out grabber" << std::endl;
 
@@ -324,17 +322,9 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
 
-    mpMapDrawer->GetCurrentOpenGLCameraMatrix(Twc,Ow);
+    Frame frame = mpTracker->mCurrentFrame;
 
-    for (int i = 0; i<4; i++){
-        M(0,i) = Twc.m[4*i];
-        M(1,i) = Twc.m[4*i+1];
-        M(2,i) = Twc.m[4*i+2];
-        M(3,i) = Twc.m[4*i+3];
-    }
-    Sophus::SE3f Tcw(M);
-
-    return Tcw;
+    return frame;
 }
 
 Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
