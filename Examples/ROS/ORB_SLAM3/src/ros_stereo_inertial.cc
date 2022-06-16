@@ -39,6 +39,7 @@
 using namespace std;
 
 ORB_SLAM3::Frame frame = {};
+bool initialized = false;
 
 nav_msgs::Odometry odom;
 
@@ -157,7 +158,7 @@ int main(int argc, char **argv)
 
   std::thread sync_thread(&ImageGrabber::SyncWithImu,&igb);
 
-  ros::Rate loop_rate(45);
+  ros::Rate loop_rate(200);
 
   ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 100);
   tf::TransformBroadcaster odom_broadcaster;
@@ -351,25 +352,7 @@ void ImageGrabber::SyncWithImu()
       }
 
       frame = mpSLAM->TrackStereo(imLeft,imRight,tImLeft,vImuMeas);
-
-      if(frame.imuIsPreintegrated()){
-        const Eigen::Vector3f twb1 = frame.GetImuPosition();
-        const Eigen::Matrix3f Rwb1 = frame.GetImuRotation();
-        const Eigen::Vector3f Vwb1 = frame.GetVelocity();
-        const Eigen::Vector3f Gz(0, 0, -ORB_SLAM3::IMU::GRAVITY_VALUE);
-        const float t12 = frame.mpImuPreintegratedFrame->dT;
-
-        std::cout<<"Here:"<<frame.mpImuPreintegratedFrame->JRg<<std::endl;
-        Eigen::Matrix3f Rwb2 = ORB_SLAM3::IMU::NormalizeRotation(Rwb1 * frame.mpImuPreintegratedFrame->GetDeltaRotation(frame.mImuBias));
-        std::cout<<"Here0"<<std::endl;
-        Eigen::Vector3f twb2 = twb1 + Vwb1*t12 + 0.5f*t12*t12*Gz+ Rwb1 * frame.mpImuPreintegratedFrame->GetDeltaPosition(frame.mImuBias);
-        std::cout<<"Here1"<<std::endl;
-        Eigen::Vector3f Vwb2 = Vwb1 + t12*Gz + Rwb1 * frame.mpImuPreintegratedFrame->GetDeltaVelocity(frame.mImuBias);
-        std::cout<<"Here2"<<std::endl;
-
-        frame.SetImuPoseVelocity(Rwb2,twb2,Vwb2);
-        std::cout<<"Here3"<<std::endl;
-      }
+      if(frame.imuIsPreintegrated()) initialized = true;
 
       std::chrono::milliseconds tSleep(1);
       std::this_thread::sleep_for(tSleep);
@@ -382,6 +365,27 @@ void ImuGrabber::GrabImu(const sensor_msgs::ImuConstPtr &imu_msg)
   mBufMutex.lock();
   imuBuf.push(imu_msg);
   mBufMutex.unlock();
+  if(initialized){
+  ORB_SLAM3::IMU::Preintegrated mpImuPreintegratedFromLastFrame(frame.mImuBias,frame.mImuCalib);
+  ORB_SLAM3::IMU::Point imudata(imu_msg->linear_acceleration.x,imu_msg->linear_acceleration.y,imu_msg->linear_acceleration.z,imu_msg->angular_velocity.x,imu_msg->angular_velocity.y,imu_msg->angular_velocity.z,imu_msg->header.stamp.toSec());
+  mpImuPreintegratedFromLastFrame.IntegrateNewMeasurement(imudata.a,imudata.w,imu_msg->header.stamp.toSec()-frame.mTimeStamp);
+  
+  const Eigen::Vector3f twb1 = frame.GetImuPosition();
+  const Eigen::Matrix3f Rwb1 = frame.GetImuRotation();
+  const Eigen::Vector3f Vwb1 = frame.GetVelocity();
+  const Eigen::Vector3f Gz(0, 0, -ORB_SLAM3::IMU::GRAVITY_VALUE);
+  const float t12 = mpImuPreintegratedFromLastFrame.dT;
+
+  Eigen::Matrix3f Rwb2 = ORB_SLAM3::IMU::NormalizeRotation(Rwb1 * mpImuPreintegratedFromLastFrame.GetDeltaRotation(frame.mImuBias));
+  Eigen::Vector3f twb2 = twb1 + Vwb1*t12 + 0.5f*t12*t12*Gz+ Rwb1 * mpImuPreintegratedFromLastFrame.GetDeltaPosition(frame.mImuBias);
+  Eigen::Vector3f Vwb2 = Vwb1 + t12*Gz + Rwb1 * mpImuPreintegratedFromLastFrame.GetDeltaVelocity(frame.mImuBias);
+  frame.mTimeStamp = imu_msg->header.stamp.toSec();
+  auto old = frame.GetPose().translation()[0];
+  frame.SetImuPoseVelocity(Rwb2,twb2,Vwb2);
+  odom.twist.twist.angular.x = imu_msg->angular_velocity.x;
+  odom.twist.twist.angular.y = imu_msg->angular_velocity.y;
+  odom.twist.twist.angular.z = imu_msg->angular_velocity.z;
+  }
   return;
 }
 
