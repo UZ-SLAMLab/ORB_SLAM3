@@ -43,13 +43,13 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false), mbResetActiveMap(false),
     mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
 {
-    // Output welcome message
-    cout << endl <<
-    "ORB-SLAM3 Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << endl <<
-    "ORB-SLAM2 Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << endl <<
-    "This program comes with ABSOLUTELY NO WARRANTY;" << endl  <<
-    "This is free software, and you are welcome to redistribute it" << endl <<
-    "under certain conditions. See LICENSE.txt." << endl << endl;
+    // // Output welcome message
+    // cout << endl <<
+    // "ORB-SLAM3 Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << endl <<
+    // "ORB-SLAM2 Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << endl <<
+    // "This program comes with ABSOLUTELY NO WARRANTY;" << endl  <<
+    // "This is free software, and you are welcome to redistribute it" << endl <<
+    // "under certain conditions. See LICENSE.txt." << endl << endl;
 
     cout << "Input sensor was set to: ";
 
@@ -76,7 +76,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     cv::FileNode node = fsSettings["File.version"];
     if(!node.empty() && node.isString() && node.string() == "1.0"){
-        settings_ = new Settings(strSettingsFile,mSensor);
+        settings_ = new Settings(strSettingsFile,mSensor,bUseViewer);
 
         mStrLoadAtlasFromFile = settings_->atlasLoadFile();
         mStrSaveAtlasToFile = settings_->atlasSaveFile();
@@ -549,7 +549,7 @@ void System::Shutdown()
     {
         Verbose::PrintMess("Atlas saving to file " + mStrSaveAtlasToFile, Verbose::VERBOSITY_NORMAL);
         SaveAtlas(FileType::BINARY_FILE);
-        SaveAtlas(FileType::TEXT_FILE);
+        // SaveAtlas(FileType::TEXT_FILE);
     }
 
     /*if(mpViewer)
@@ -1409,8 +1409,8 @@ void System::SaveAtlas(int type){
         // Save the current session
         mpAtlas->PreSave();
 
-        string pathSaveFileName = "./";
-        pathSaveFileName = pathSaveFileName.append(mStrSaveAtlasToFile);
+        string pathSaveFileName = mStrSaveAtlasToFile;
+        // pathSaveFileName = pathSaveFileName.append(mStrSaveAtlasToFile);
         if(type == TEXT_FILE)
         pathSaveFileName = pathSaveFileName.append("TXT");
         pathSaveFileName = pathSaveFileName.append(".osa");
@@ -1434,7 +1434,7 @@ void System::SaveAtlas(int type){
         else if(type == BINARY_FILE) // File binary
         {
             cout << "Starting to write the save binary file" << endl;
-            std::remove(pathSaveFileName.c_str());
+            cout << pathSaveFileName << endl;
             std::ofstream ofs(pathSaveFileName, std::ios::binary);
             boost::archive::binary_oarchive oa(ofs);
             oa << strVocabularyName;

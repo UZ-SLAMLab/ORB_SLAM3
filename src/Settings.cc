@@ -47,8 +47,14 @@ namespace ORB_SLAM3 {
             }
         }
         else if(!node.isReal()){
-            std::cerr << name << " parameter must be a real number, aborting..." << std::endl;
-            exit(-1);
+            if(!node.isInt()){
+                std::cerr << name << " parameter must be a real number, aborting..." << std::endl;
+                exit(-1);  
+            }else{
+                found = true;
+                return node.real();
+            }
+            
         }
         else{
             found = true;
@@ -124,7 +130,7 @@ namespace ORB_SLAM3 {
         }
     }
 
-    Settings::Settings(const std::string &configFile, const int& sensor) :
+    Settings::Settings(const std::string &configFile, const int& sensor, const bool bUseViewer) :
     bNeedToUndistort_(false), bNeedToRectify_(false), bNeedToResize1_(false), bNeedToResize2_(false) {
         sensor_ = sensor;
 
@@ -166,7 +172,7 @@ namespace ORB_SLAM3 {
 
         readORB(fSettings);
         cout << "\t-Loaded ORB settings" << endl;
-        readViewer(fSettings);
+        readViewer(fSettings,bUseViewer);
         cout << "\t-Loaded viewer settings" << endl;
         readLoadAndSave(fSettings);
         cout << "\t-Loaded Atlas settings" << endl;
@@ -433,10 +439,10 @@ namespace ORB_SLAM3 {
 
     void Settings::readRGBD(cv::FileStorage& fSettings) {
         bool found;
-
         depthMapFactor_ = readParameter<float>(fSettings,"RGBD.DepthMapFactor",found);
         thDepth_ = readParameter<float>(fSettings,"Stereo.ThDepth",found);
         b_ = readParameter<float>(fSettings,"Stereo.b",found);
+
         bf_ = b_ * calibration1_->getParameter(0);
     }
 
@@ -450,19 +456,19 @@ namespace ORB_SLAM3 {
         minThFAST_ = readParameter<int>(fSettings,"ORBextractor.minThFAST",found);
     }
 
-    void Settings::readViewer(cv::FileStorage &fSettings) {
+    void Settings::readViewer(cv::FileStorage &fSettings,const bool bUseViewer) {
         bool found;
 
-        keyFrameSize_ = readParameter<float>(fSettings,"Viewer.KeyFrameSize",found);
-        keyFrameLineWidth_ = readParameter<float>(fSettings,"Viewer.KeyFrameLineWidth",found);
-        graphLineWidth_ = readParameter<float>(fSettings,"Viewer.GraphLineWidth",found);
-        pointSize_ = readParameter<float>(fSettings,"Viewer.PointSize",found);
-        cameraSize_ = readParameter<float>(fSettings,"Viewer.CameraSize",found);
-        cameraLineWidth_ = readParameter<float>(fSettings,"Viewer.CameraLineWidth",found);
-        viewPointX_ = readParameter<float>(fSettings,"Viewer.ViewpointX",found);
-        viewPointY_ = readParameter<float>(fSettings,"Viewer.ViewpointY",found);
-        viewPointZ_ = readParameter<float>(fSettings,"Viewer.ViewpointZ",found);
-        viewPointF_ = readParameter<float>(fSettings,"Viewer.ViewpointF",found);
+        keyFrameSize_ = readParameter<float>(fSettings,"Viewer.KeyFrameSize",found,bUseViewer);
+        keyFrameLineWidth_ = readParameter<float>(fSettings,"Viewer.KeyFrameLineWidth",found,bUseViewer);
+        graphLineWidth_ = readParameter<float>(fSettings,"Viewer.GraphLineWidth",found,bUseViewer);
+        pointSize_ = readParameter<float>(fSettings,"Viewer.PointSize",found,bUseViewer);
+        cameraSize_ = readParameter<float>(fSettings,"Viewer.CameraSize",found,bUseViewer);
+        cameraLineWidth_ = readParameter<float>(fSettings,"Viewer.CameraLineWidth",found,bUseViewer);
+        viewPointX_ = readParameter<float>(fSettings,"Viewer.ViewpointX",found,bUseViewer);
+        viewPointY_ = readParameter<float>(fSettings,"Viewer.ViewpointY",found,bUseViewer);
+        viewPointZ_ = readParameter<float>(fSettings,"Viewer.ViewpointZ",found,bUseViewer);
+        viewPointF_ = readParameter<float>(fSettings,"Viewer.ViewpointF",found,bUseViewer);
         imageViewerScale_ = readParameter<float>(fSettings,"Viewer.imageViewScale",found,false);
 
          if(!found)
