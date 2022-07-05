@@ -163,17 +163,21 @@ int main(int argc, char **argv)
   ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 100);
   tf::TransformBroadcaster odom_broadcaster;
 
+  Eigen::Matrix3f rotm;
+  rotm << 0,1,0,-1,0,0,0,0,1;
+  const Eigen::Quaternionf rotq(rotm);
 
   ros::Time current_time, last_time;
   current_time = ros::Time::now();
   last_time = ros::Time::now();
+  Sophus::SE3f prevTcw;
 
   while (n.ok())
   {
     ros::spinOnce();               // check for incoming messages
     current_time = ros::Time::now();
 
-    const Sophus::SE3f Tcw = frame.GetPose();
+    const Sophus::SE3f Tcw = frame.GetPose().inverse();
 
     //first, we'll publish the transform over tf
     geometry_msgs::TransformStamped odom_trans;
@@ -181,13 +185,14 @@ int main(int argc, char **argv)
     odom_trans.header.frame_id = "odom";
     odom_trans.child_frame_id = "base_link";
 
-    odom_trans.transform.translation.x = Tcw.translation()[0];
-    odom_trans.transform.translation.y = Tcw.translation()[1];
+    odom_trans.transform.translation.x = Tcw.translation()[1];
+    odom_trans.transform.translation.y = -Tcw.translation()[0];
     odom_trans.transform.translation.z = Tcw.translation()[2];
-    odom_trans.transform.rotation.x = Tcw.so3().unit_quaternion().x();
-    odom_trans.transform.rotation.y = Tcw.so3().unit_quaternion().y();
-    odom_trans.transform.rotation.z = Tcw.so3().unit_quaternion().z();
-    odom_trans.transform.rotation.w = Tcw.so3().unit_quaternion().w();
+    const Eigen::Quaternionf rotted =  rotq*Tcw.so3().unit_quaternion();
+    odom_trans.transform.rotation.x = rotted.x();
+    odom_trans.transform.rotation.y = rotted.y();
+    odom_trans.transform.rotation.z = rotted.z();
+    odom_trans.transform.rotation.w = rotted.w();
 
     //send the transform
     odom_broadcaster.sendTransform(odom_trans);
@@ -201,20 +206,28 @@ int main(int argc, char **argv)
     odom.header.frame_id = "odom";
     odom.child_frame_id = "base_link";
     
-    odom.pose.pose.position.x = Tcw.translation()[0];
-    odom.pose.pose.position.y = Tcw.translation()[1];
+    odom.pose.pose.position.x = Tcw.translation()[1];
+    odom.pose.pose.position.y = -Tcw.translation()[0];
     odom.pose.pose.position.z = Tcw.translation()[2];
 
-    odom.pose.pose.orientation.x = Tcw.so3().unit_quaternion().x();
-    odom.pose.pose.orientation.y = Tcw.so3().unit_quaternion().y();
-    odom.pose.pose.orientation.z = Tcw.so3().unit_quaternion().z();
-    odom.pose.pose.orientation.w = Tcw.so3().unit_quaternion().w();
+    odom.pose.pose.orientation.x = rotted.x();
+    odom.pose.pose.orientation.y = rotted.y();
+    odom.pose.pose.orientation.z = rotted.z();
+    odom.pose.pose.orientation.w = rotted.w();
 
     double dt = (current_time - last_time).toSec();
+    const Sophus::SE3f diff = Tcw * prevTcw;
 
-    odom.twist.twist.linear.x = frame.GetVelocity()[0];
-    odom.twist.twist.linear.y = frame.GetVelocity()[1];
+    // odom.twist.twist.linear.x = diff.translation()[1]/dt;
+    // odom.twist.twist.linear.y = -diff.translation()[0]/dt;
+    // odom.twist.twist.linear.z = diff.translation()[2]/dt;
+    odom.twist.twist.linear.x = frame.GetVelocity()[1];
+    odom.twist.twist.linear.y = -frame.GetVelocity()[0];
     odom.twist.twist.linear.z = frame.GetVelocity()[2];
+
+    prevTcw = frame.GetPose();
+
+    last_time = current_time;
 
     /**
      * The publish() function is how you send messages. The parameter
@@ -352,7 +365,7 @@ void ImageGrabber::SyncWithImu()
       }
 
       frame = mpSLAM->TrackStereo(imLeft,imRight,tImLeft,vImuMeas);
-      if(frame.imuIsPreintegrated()) initialized = true;
+      initialized = frame.imuIsPreintegrated();
 
       std::chrono::milliseconds tSleep(1);
       std::this_thread::sleep_for(tSleep);
@@ -379,12 +392,13 @@ void ImuGrabber::GrabImu(const sensor_msgs::ImuConstPtr &imu_msg)
   Eigen::Matrix3f Rwb2 = ORB_SLAM3::IMU::NormalizeRotation(Rwb1 * mpImuPreintegratedFromLastFrame.GetDeltaRotation(frame.mImuBias));
   Eigen::Vector3f twb2 = twb1 + Vwb1*t12 + 0.5f*t12*t12*Gz+ Rwb1 * mpImuPreintegratedFromLastFrame.GetDeltaPosition(frame.mImuBias);
   Eigen::Vector3f Vwb2 = Vwb1 + t12*Gz + Rwb1 * mpImuPreintegratedFromLastFrame.GetDeltaVelocity(frame.mImuBias);
+  if(Rwb2.determinant()>0){
   frame.mTimeStamp = imu_msg->header.stamp.toSec();
-  auto old = frame.GetPose().translation()[0];
   frame.SetImuPoseVelocity(Rwb2,twb2,Vwb2);
-  odom.twist.twist.angular.x = imu_msg->angular_velocity.x;
+  }
+  odom.twist.twist.angular.x = -imu_msg->angular_velocity.z;
   odom.twist.twist.angular.y = imu_msg->angular_velocity.y;
-  odom.twist.twist.angular.z = imu_msg->angular_velocity.z;
+  odom.twist.twist.angular.z = -imu_msg->angular_velocity.x;
   }
   return;
 }
