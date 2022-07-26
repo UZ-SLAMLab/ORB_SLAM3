@@ -1401,6 +1401,32 @@ void System::InsertTrackTime(double& time)
 }
 #endif
 
+// NOTE: might not be save to call while orbslam is mapping.
+void System::SaveAtlasAsOsaWithTimestamp(string path) {
+    std::time_t t = std::time(nullptr);
+    char timestamp[100];
+    std::strftime(timestamp, sizeof(timestamp), "%FT%H_%M_%S", std::gmtime(&t));
+    // Save the current session
+    mpAtlas->PreSave();
+
+    string pathSaveFileName = path;
+    pathSaveFileName = pathSaveFileName.append(timestamp);
+    pathSaveFileName = pathSaveFileName.append(".osa");
+
+    string strVocabularyChecksum = CalculateCheckSum(mStrVocabularyFilePath,TEXT_FILE);
+    std::size_t found = mStrVocabularyFilePath.find_last_of("/\\");
+    string strVocabularyName = mStrVocabularyFilePath.substr(found+1);
+
+    cout << "Starting to write the save binary file" << endl;
+    cout << pathSaveFileName << endl;
+    std::ofstream ofs(pathSaveFileName, std::ios::binary);
+    boost::archive::binary_oarchive oa(ofs);
+    oa << strVocabularyName;
+    oa << strVocabularyChecksum;
+    oa << mpAtlas;
+    cout << "End to write save binary file" << endl;
+}
+
 void System::SaveAtlas(int type){
     if(!mStrSaveAtlasToFile.empty())
     {
