@@ -1410,6 +1410,7 @@ void System::SaveAtlasAsOsaWithTimestamp(string path) {
     mpAtlas->PreSave();
 
     string pathSaveFileName = path;
+    pathSaveFileName = pathSaveFileName.append("atlas_");
     pathSaveFileName = pathSaveFileName.append(timestamp);
     pathSaveFileName = pathSaveFileName.append(".osa");
 
