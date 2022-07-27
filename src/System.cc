@@ -1450,9 +1450,10 @@ bool System::LoadAtlas(int type)
     string strFileVoc, strVocChecksum;
     bool isRead = false;
 
-    string pathLoadFileName = "./";
-    pathLoadFileName = pathLoadFileName.append(mStrLoadAtlasFromFile);
-    pathLoadFileName = pathLoadFileName.append(".osa");
+    // string pathLoadFileName = "./";
+    // pathLoadFileName = pathLoadFileName.append(mStrLoadAtlasFromFile);
+    string pathLoadFileName = mStrLoadAtlasFromFile;
+    pathLoadFileName = mStrLoadAtlasFromFile.append(".osa");
 
     if(type == TEXT_FILE) // File text
     {
