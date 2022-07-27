@@ -1425,7 +1425,7 @@ void System::SaveAtlasAsOsaWithTimestamp(string path) {
     oa << strVocabularyName;
     oa << strVocabularyChecksum;
     oa << mpAtlas;
-    cout << "End to write save binary file" << endl;
+    cout << "Done with saving the binary file" << endl;
 }
 
 void System::SaveAtlas(int type){
