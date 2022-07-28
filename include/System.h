@@ -189,7 +189,7 @@ public:
     //VIAM ADDED
     Atlas* GetAtlas() { return mpAtlas; };
     string GetAtlasName(){ return mStrLoadAtlasFromFile;};
-    void SaveAtlasAsOsaWithTimestamp(string path);
+    void SaveAtlasAsOsaWithTimestamp(string pathSaveFileName);
     
     
 #ifdef REGISTER_TIMES
