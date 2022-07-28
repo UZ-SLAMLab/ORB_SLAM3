@@ -1,8 +1,8 @@
 # VIAM NOTES
 when downloading on a linux computer with rtk(not a pi) I had to remove brew from my PATH to get some dependencies to work. In addition I had to remove ncurses and libtiff from brew. added them back afterwards but there is 100% a more correct way to do this. Also need to change which version of some packages(like openCV) is being used in CMakeLists.txt
 
-## setup Pangolin(includes eigen)
-```
+## setup Pangolin (includes eigen)
+```bash
 git clone --recursive https://github.com/stevenlovegrove/Pangolin.git
 cd Pangolin 
 ./scripts/install_prerequisites.sh recommended
@@ -12,16 +12,16 @@ make -j4
 sudo make install
 ```
 ## setup openCV
-```
+```bash
 sudo apt install libopencv-dev
 ```
 ## setup Eigen3
-```
+```bash
 sudo apt install libeigen3-dev
 ```
 
 ## (semi optional) Python3 - use for some post processing with ground truth data(like vicon)
-```
+```bash
 sudo apt install libpython3.7-dev
 sudo apt install python3-pip
 pip3 install --upgrade pip
@@ -29,7 +29,7 @@ pip3 install numpy
 pip3 install matplotlib
 ```
 # OTHER STUFF 
-```
+```bash
 sudo apt install libssl-dev 
 sudo apt-get install libboost-all-dev
 ```
