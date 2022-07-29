@@ -1401,7 +1401,6 @@ void System::InsertTrackTime(double& time)
 }
 #endif
 
-// NOTE: might not be save to call while orbslam is mapping.
 void System::SaveAtlasAsOsaWithTimestamp(string pathSaveFileName) {
     string strVocabularyChecksum = CalculateCheckSum(mStrVocabularyFilePath,TEXT_FILE);
     std::size_t found = mStrVocabularyFilePath.find_last_of("/\\");
