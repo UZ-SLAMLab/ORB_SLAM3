@@ -23,6 +23,8 @@
 #include "Pinhole.h"
 #include "KannalaBrandt8.h"
 
+#include <boost/archive/binary_oarchive.hpp>
+
 namespace ORB_SLAM3
 {
 
@@ -350,6 +352,19 @@ void Atlas::PostLoad()
         numMP += pMi->GetAllMapPoints().size();
     }
     mvpBackupMaps.clear();
+}
+
+void Atlas::SaveAtlas(string pathSaveFileName, string strVocabularyName, string strVocabularyChecksum) {
+    lock_guard<mutex> lock(mMutexAtlas);
+    this->PreSave();
+    cout << pathSaveFileName << endl;
+    std::ofstream ofs(pathSaveFileName, std::ios::binary);
+    boost::archive::binary_oarchive oa(ofs);
+    oa << strVocabularyName;
+    oa << strVocabularyChecksum;
+    // TODO: Verify that writing out `this` behaves as expected by loading
+    // a saved map.
+    oa << this;
 }
 
 void Atlas::SetKeyFrameDababase(KeyFrameDatabase* pKFDB)

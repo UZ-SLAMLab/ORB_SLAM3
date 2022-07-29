@@ -126,6 +126,7 @@ public:
     // Function for garantee the correction of serialization of this object
     void PreSave();
     void PostLoad();
+    void SaveAtlas(string pathSaveFileName, string strVocabularyName, string strVocabularyChecksum);
 
     map<long unsigned int, KeyFrame*> GetAtlasKeyframes();
 
