@@ -33,10 +33,13 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-find_package(OpenCV 4.5.1)
-   if(NOT OpenCV_FOUND)
-      message(FATAL_ERROR "OpenCV > 3.2 not found.")
-   endif()
+find_package(OpenCV 4)
+if(NOT OpenCV_FOUND)
+  find_package(OpenCV 3.2)
+  if(NOT OpenCV_FOUND)
+    message(FATAL_ERROR "OpenCV > 3.2 not found.")
+  endif()
+endif()
 
 MESSAGE("OPENCV VERSION:")
 MESSAGE(${OpenCV_VERSION})
@@ -125,6 +128,7 @@ ${Pangolin_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 -lboost_serialization
+-lboost_filesystem
 -lcrypto
 )
 
@@ -136,17 +140,28 @@ if(realsense2_FOUND)
     target_link_libraries(${PROJECT_NAME}
     ${realsense2_LIBRARY}
     )
+    
 endif()
 
 
 # Build examples
 
 
-
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+      add_executable(rec_realsense
+         initialAttempt/record_realsense.cc)
+      target_link_libraries(rec_realsense ${PROJECT_NAME})
+      
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
 add_executable(mono_file
         initialAttempt/mono_fromFiles.cc)
 target_link_libraries(mono_file ${PROJECT_NAME})
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+      add_executable(rgbd_fromFiles
+         initialAttempt/rgbd_fromFiles.cc)
+      target_link_libraries(rgbd_fromFiles ${PROJECT_NAME})
+
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
 # add_executable(no_imu_test
 #         initialAttempt/rgbd_noimu.cc)
@@ -161,7 +176,7 @@ if(FALSE)#if(EXISTS ${SRCDIR})
 
    pkg_check_modules(GRPC REQUIRED grpc) 
    pkg_check_modules(GRPCPP REQUIRED grpc++)
-   pkg_check_modules(PROTOBUF REQUIRED protobuf)
+   pkg_check_modules(PROTOBUF REQUIRED protobuf=3.21.4)
 
    set(SOURCES ${SRCDIR}/proto/api/robot/v1/robot.grpc.pb.cc ${SRCDIR}/proto/api/robot/v1/robot.pb.cc)
    set(SOURCES ${SOURCES} ${SRCDIR}/proto/api/component/camera/v1/camera.grpc.pb.cc ${SRCDIR}/proto/api/component/camera/v1/camera.pb.cc)

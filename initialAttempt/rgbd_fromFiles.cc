@@ -22,16 +22,19 @@
 #include<chrono>
 
 #include<opencv2/core/core.hpp>
-
+#include <boost/filesystem.hpp>
 #include<System.h>
 
 using namespace std;
-
+using namespace boost::filesystem;
 // void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageFilenamesRGB,
 //                 vector<string> &vstrImageFilenamesD, vector<double> &vTimestamps);
-
-void LoadImages(const string &strPathRGB, const string &strPathD, const string &strPathTimes,
+double readTimeFromFilename(string filename);
+void LoadImages(const string &path_to_data,
                 vector<string> &vstrImageFilenamesRGB, vector<string> &vstrImageFilenamesD, vector<double> &vTimeStamps);
+std::vector<std::string> listFilesInDirectoryForCamera(
+    std::string data_directory, std::string extension,
+    std::string camera_name);
 int main(int argc, char **argv)
 {
     
@@ -61,7 +64,7 @@ int main(int argc, char **argv)
  	
 	string pathCam0 = pathSeq + "/rgb";
 	string pathCam1 = pathSeq + "/depth";
-    LoadImages(pathCam0, pathCam1, strAssociationFilename, vstrImageFilenamesRGB, vstrImageFilenamesD, vTimestamps);
+    LoadImages(pathSeq, vstrImageFilenamesRGB, vstrImageFilenamesD, vTimestamps);
     // Check consistency in the number of images and depthmaps
     int nImages = vstrImageFilenamesRGB.size();
     if(vstrImageFilenamesRGB.empty())
@@ -98,6 +101,7 @@ int main(int argc, char **argv)
         imRGB = cv::imread(vstrImageFilenamesRGB[ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
         imD = cv::imread(vstrImageFilenamesD[ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
         double tframe = vTimestamps[ni];
+        cout << tframe << "  color:" << vstrImageFilenamesRGB[ni] << endl;
 
         if(imRGB.empty())
         {
@@ -233,32 +237,62 @@ int main(int argc, char **argv)
 //         }
 //     }
 // }
-void LoadImages(const string &strPathRGB, const string &strPathD, const string &strPathTimes,
+void LoadImages(const string &path_to_data,
                 vector<string> &vstrImageFilenamesRGB, vector<string> &vstrImageFilenamesD, vector<double> &vTimeStamps)
 {
-    ifstream fTimes;
-    fTimes.open(strPathTimes.c_str());
     vTimeStamps.reserve(5000);
     vstrImageFilenamesRGB.reserve(5000);
     vstrImageFilenamesD.reserve(5000);
-    while(!fTimes.eof())
-    {
-        string s;
-        getline(fTimes,s);
-        if(!s.empty())
-        {
-            stringstream ss;
-            ss << s;
-            vstrImageFilenamesRGB.push_back(strPathRGB + "/" + ss.str());
-            vstrImageFilenamesD.push_back(strPathD + "/" + ss.str());
-            double t;
-            string timestring = s.substr(0, s.find_last_of("."));
-	    std::string::size_type sz;  
-	    // cout << timestring << endl;
-        //     timestring >> t;
-	    t = std::stod(timestring,&sz);
-            vTimeStamps.push_back(t);
-
-        }
+    double tstart = -1;
+    std::vector<std::string> files =
+            listFilesInDirectoryForCamera(path_to_data + "/rgb", ".png", "color");
+    double fileTimeStart = readTimeFromFilename(files[0].substr(
+                            files[0].find("_data_") + 6));
+    for (int i = 0; i < files.size(); i++){
+        double timeStamp = readTimeFromFilename(files[i].substr(
+                            files[i].find("_data_") + 6)) -
+                        fileTimeStart;
+        std::string colorName = path_to_data + "/rgb/"  + files[i] + ".png";
+        std::string depthName = path_to_data + "/depth/"  + files[i] + ".png";
+        vstrImageFilenamesRGB.push_back(colorName);
+        vstrImageFilenamesD.push_back(depthName);
+        vTimeStamps.push_back(timeStamp);
     }
 }
+
+// Converts UTC time string to a double value.
+double readTimeFromFilename(string filename) {
+    std::string::size_type sz;
+    // Create a stream which we will use to parse the string
+    std::istringstream ss(filename);
+
+    // Create a tm object to store the parsed date and time.
+    std::tm dt = {0};
+
+    // Now we read from buffer using get_time manipulator
+    // and formatting the input appropriately.
+    ss >> std::get_time(&dt, "%Y-%m-%dT%H_%M_%SZ");
+    double sub_sec =
+        (double)std::stof(filename.substr(filename.find(".")), &sz);
+    time_t thisTime = std::mktime(&dt);
+
+    double myTime = (double)thisTime + sub_sec;
+    return myTime;
+}
+
+std::vector<std::string> listFilesInDirectoryForCamera(
+    std::string data_directory, std::string extension,
+    std::string camera_name) {
+    std::vector<std::string> file_paths;
+    std::string currFile;
+    for (const auto &entry : directory_iterator(data_directory)) {
+        currFile = (entry.path()).stem().string();
+        if (camera_name == currFile.substr(0, currFile.find("_data_"))) {
+            
+            file_paths.push_back(currFile);
+        }
+    }
+    sort(file_paths.begin(), file_paths.end());
+    return file_paths;
+}
+

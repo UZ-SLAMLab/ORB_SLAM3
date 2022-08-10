@@ -24,6 +24,7 @@
 #include <chrono>
 #include <ctime>
 #include <sstream>
+#include <sys/time.h>
 
 #include <condition_variable>
 
@@ -99,12 +100,15 @@ static rs2_option get_sensor_option(const rs2::sensor& sensor)
 
 int main(int argc, char **argv) {
 
-    if (argc < 3 || argc > 4) {
-        cerr << endl
-             << "Usage: ./rgbd_realsense_test path_to_vocabulary path_to_settings (trajectory_file_name)"
-             << endl;
-        return 1;
-    }
+    // if (argc < 3 || argc > 4) {
+    //     cerr << endl
+    //          << "Usage: ./rgbd_realsense_test path_to_vocabulary path_to_settings (trajectory_file_name)"
+    //          << endl;
+    //     return 1;
+    // }
+    string data_path = string(argv[1]);
+    string vocab = data_path + "/config/ORBvoc.txt";
+    string settings = data_path + "/config/color_data_2022-08-04T18_54_55.1147.yaml";
 
     string file_name,file_nameTraj,file_nameKey;
     bool bFileName = false;
@@ -158,7 +162,7 @@ int main(int argc, char **argv) {
             // }
             if (index == 2){
                 // RGB camera
-                sensor.set_option(RS2_OPTION_EXPOSURE,80.f);
+                // sensor.set_option(RS2_OPTION_EXPOSURE,80.f);
                 
             }
 
@@ -175,11 +179,12 @@ int main(int argc, char **argv) {
     rs2::config cfg;
     
     // RGB stream
-    cfg.enable_stream(RS2_STREAM_COLOR,1280, 720, RS2_FORMAT_RGB8, 30);
+    cfg.enable_stream(RS2_STREAM_COLOR,1280, 720, RS2_FORMAT_RGB8);
 
     // Depth stream
     // cfg.enable_stream(RS2_STREAM_INFRARED, 1, 640, 480, RS2_FORMAT_Y8, 30);
-    cfg.enable_stream(RS2_STREAM_DEPTH,1024, 768, RS2_FORMAT_Z16, 30);
+    cfg.enable_stream(RS2_STREAM_DEPTH,1024, 768, RS2_FORMAT_Z16);
+    
 
     // IMU stream
     cfg.enable_stream(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F); //, 250); // 63
@@ -289,6 +294,7 @@ int main(int argc, char **argv) {
 
 
     rs2::stream_profile cam_stream = pipe_profile.get_stream(RS2_STREAM_COLOR);
+    auto depth_stream = pipe_profile.get_stream(RS2_STREAM_DEPTH);
 
 
 
@@ -305,11 +311,13 @@ int main(int argc, char **argv) {
     std::cout << " Coeff = " << intrinsics_cam.coeffs[0] << ", " << intrinsics_cam.coeffs[1] << ", " <<
     intrinsics_cam.coeffs[2] << ", " << intrinsics_cam.coeffs[3] << ", " << intrinsics_cam.coeffs[4] << ", " << std::endl;
     std::cout << " Model = " << intrinsics_cam.model << std::endl;
+    rs2_extrinsics e = depth_stream.get_extrinsics_to(cam_stream);
+    std::cout << "Baseline = "<< e.translation[0] << std::endl;
 
 std::cout << "wait for a minute" << std::endl;
-	std::this_thread::sleep_for(std::chrono::milliseconds(30000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD, false, 0, file_name);
+    ORB_SLAM3::System SLAM(vocab,settings,ORB_SLAM3::System::RGBD, false, 0, file_name);
     float imageScale = SLAM.GetImageScale();
     
     double timestamp;
@@ -360,30 +368,30 @@ std::cout << "wait for a minute" << std::endl;
         depthCV.convertTo(depthCV_8U,CV_8U,0.01);
         cv::imshow("depth image", depthCV_8U);*/
 
-        if(imageScale != 1.f)
-        {
-#ifdef REGISTER_TIMES
-    // #ifdef COMPILEDWITHC11
-            std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
-    // #else
-    //         std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
-    // #endif
-#endif
-            int width = im.cols * imageScale;
-            int height = im.rows * imageScale;
-            cv::resize(im, im, cv::Size(width, height));
-            cv::resize(depth, depth, cv::Size(width, height));
+//         if(imageScale != 1.f)
+//         {
+// #ifdef REGISTER_TIMES
+//     // #ifdef COMPILEDWITHC11
+//             std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
+//     // #else
+//     //         std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
+//     // #endif
+// #endif
+//             int width = im.cols * imageScale;
+//             int height = im.rows * imageScale;
+//             cv::resize(im, im, cv::Size(width, height));
+//             cv::resize(depth, depth, cv::Size(width, height));
 
-#ifdef REGISTER_TIMES
-    // #ifdef COMPILEDWITHC11
-            std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
-    // #else
-    //         std::chrono::monotonic_clock::time_point t_End_Resize = std::chrono::monotonic_clock::now();
-    // #endif
-            t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
-            SLAM.InsertResizeTime(t_resize);
-#endif
-        }
+// #ifdef REGISTER_TIMES
+//     // #ifdef COMPILEDWITHC11
+//             std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
+//     // #else
+//     //         std::chrono::monotonic_clock::time_point t_End_Resize = std::chrono::monotonic_clock::now();
+//     // #endif
+//             t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
+//             SLAM.InsertResizeTime(t_resize);
+// #endif
+//         }
 
 #ifdef REGISTER_TIMES
     // #ifdef COMPILEDWITHC11
@@ -395,15 +403,34 @@ std::cout << "wait for a minute" << std::endl;
         // Pass the image to the SLAM system
         // SLAM.TrackRGBD(im, depth, timestamp); //, vImuMeas); depthCV
 
-        std::string filenameRGB ("officePics4/rgb/");
-        std::string filenameDEPTH ("officePics4/depth/");
+        std::string filenameRGB = data_path + "/data/rgb/";
+        std::string filenameDEPTH = data_path + "/data/depth/";
         
-        timeNow = std::chrono::steady_clock::now();
-        timestamp = std::chrono::duration_cast<std::chrono::duration<double> >(timeNow - timeStart).count();
-        std::string timeString = to_string(timestamp);
-        std::replace(timeString.begin(), timeString.end(), ':', '_');
-        filenameRGB += timeString + ".png";
-        filenameDEPTH += timeString + ".png"; 
+        char timestampVIAM[100];
+        //     std::strftime(timestampVIAM, sizeof(timestampVIAM), "%FT%H_%M_%S", std::gmtime(&t));
+        
+        // double millisecondTime  = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        // double sec_since_epoch = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        // int currMillis = millisecondTime - sec_since_epoch*1000;
+        struct tm* tm_info;
+        struct timeval tv;
+            gettimeofday(&tv, NULL);
+
+            int millisec = lrint(tv.tv_usec/1000.0); // Round to nearest millisec
+            if (millisec>=1000) { // Allow for rounding up to nearest second
+                millisec -=1000;
+                tv.tv_sec++;
+            }
+
+            tm_info = localtime(&tv.tv_sec);
+
+            strftime(timestampVIAM, sizeof(timestampVIAM), "%FT%H_%M_%S", tm_info);
+            printf("%s.%03d\n", timestampVIAM, millisec);
+
+		std::string millisString = std::to_string(millisec);
+
+        filenameRGB += "color_data_" + string(timestampVIAM) + "." + millisString + ".png";
+        filenameDEPTH += "color_data_"+ string(timestampVIAM) + "." + millisString + ".png"; 
         cv::imwrite(filenameRGB,im);
         cv::imwrite(filenameDEPTH,depth);
         // return 0;
@@ -422,8 +449,8 @@ std::cout << "wait for a minute" << std::endl;
     cout << "System shutdown!\n";
     if(!b_continue_session){
         SLAM.Shutdown();
-        SLAM.SaveTrajectoryEuRoC(file_nameTraj);
-        SLAM.SaveKeyFrameTrajectoryEuRoC(file_nameKey);
+        // SLAM.SaveTrajectoryEuRoC(file_nameTraj);
+        // SLAM.SaveKeyFrameTrajectoryEuRoC(file_nameKey);
     }
     cout << "Yo Shutting" << endl;
     cout << "use 'ls -tr | tee -a ../Out_file.txt' in the rgb folder to make the timestamps file" << endl;
