@@ -141,16 +141,17 @@ if(realsense2_FOUND)
     ${realsense2_LIBRARY}
     )
     
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+    add_executable(rec_realsense
+       initialAttempt/record_realsense.cc)
+    target_link_libraries(rec_realsense ${PROJECT_NAME})
 endif()
 
 
 # Build examples
 
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
-      add_executable(rec_realsense
-         initialAttempt/record_realsense.cc)
-      target_link_libraries(rec_realsense ${PROJECT_NAME})
+
       
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/initialAttempt)
 add_executable(mono_file
