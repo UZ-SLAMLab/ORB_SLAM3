@@ -172,6 +172,10 @@ add_executable(stereo_euroc
         Examples/Stereo/stereo_euroc.cc)
 target_link_libraries(stereo_euroc ${PROJECT_NAME})
 
+add_executable(stereo_mimir
+        Examples/Stereo/stereo_mimir.cc)
+target_link_libraries(stereo_mimir ${PROJECT_NAME})
+
 add_executable(stereo_tum_vi
         Examples/Stereo/stereo_tum_vi.cc)
 target_link_libraries(stereo_tum_vi ${PROJECT_NAME})
@@ -201,6 +205,10 @@ add_executable(mono_euroc
         Examples/Monocular/mono_euroc.cc)
 target_link_libraries(mono_euroc ${PROJECT_NAME})
 
+add_executable(mono_mimir
+        Examples/Monocular/mono_mimir.cc)
+target_link_libraries(mono_mimir ${PROJECT_NAME})
+
 add_executable(mono_tum_vi
         Examples/Monocular/mono_tum_vi.cc)
 target_link_libraries(mono_tum_vi ${PROJECT_NAME})
@@ -221,6 +229,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular-Iner
 add_executable(mono_inertial_euroc
         Examples/Monocular-Inertial/mono_inertial_euroc.cc)
 target_link_libraries(mono_inertial_euroc ${PROJECT_NAME})
+
+add_executable(mono_inertial_mimir
+        Examples/Monocular-Inertial/mono_inertial_mimir.cc)
+target_link_libraries(mono_inertial_mimir ${PROJECT_NAME})
 
 add_executable(mono_inertial_tum_vi
         Examples/Monocular-Inertial/mono_inertial_tum_vi.cc)
