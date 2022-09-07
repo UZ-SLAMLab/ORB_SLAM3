@@ -42,8 +42,6 @@ MESSAGE("OPENCV VERSION:")
 MESSAGE(${OpenCV_VERSION})
 
 find_package(Eigen3 3.1.0 REQUIRED)
-set(Pangolin_DIR ${PROJECT_SOURCE_DIR}/../Pangolin/build)
-
 find_package(Pangolin REQUIRED)
 
 include_directories(
