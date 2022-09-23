@@ -70,10 +70,10 @@ int main(int argc, char **argv)
         string pathSeq(argv[(2*seq) + 3]);
         string pathTimeStamps(argv[(2*seq) + 4]);
 
-        string pathCam0 = pathSeq + "/auv0/rgb/cam0/data";
+        string pathcam0 = pathSeq + "/auv0/rgb/cam0/data";
         string pathCam1 = pathSeq + "/auv0/rgb/cam1/data";
 
-        LoadImages(pathCam0, pathCam1, pathTimeStamps, vstrImageLeft[seq], vstrImageRight[seq], vTimestampsCam[seq]);
+        LoadImages(pathcam0, pathCam1, pathTimeStamps, vstrImageLeft[seq], vstrImageRight[seq], vTimestampsCam[seq]);
         cout << "LOADED!" << endl;
 
         nImages[seq] = vstrImageLeft[seq].size();

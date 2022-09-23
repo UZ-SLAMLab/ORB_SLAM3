@@ -82,10 +82,10 @@ int main(int argc, char *argv[])
         string pathSeq(argv[(2*seq) + 3]);
         string pathTimeStamps(argv[(2*seq) + 4]);
 
-        string pathCam0 = pathSeq + "/auv0/rgb/cam0/data";
+        string pathcam2 = pathSeq + "/auv0/rgb/cam2/data";
         string pathImu = pathSeq + "/auv0/imu0/data.csv";
 
-        LoadImages(pathCam0, pathTimeStamps, vstrImageFilenames[seq], vTimestampsCam[seq]);
+        LoadImages(pathcam2, pathTimeStamps, vstrImageFilenames[seq], vTimestampsCam[seq]);
         cout << "LOADED!" << endl;
 
         cout << "Loading IMU for sequence " << seq << "...";

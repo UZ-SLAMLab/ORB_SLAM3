@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     if(argc < 5)
     {
         cerr << endl << "Usage: ./mono_Mimir path_to_vocabulary path_to_settings path_to_sequence_folder_1 path_to_times_file_1 (path_to_image_folder_2 path_to_times_file_2 ... path_to_image_folder_N path_to_times_file_N) (trajectory_file_name)" << endl;
-        cerr << endl << "Example: ./Examples/Monocular/mono_mimir /home/olaya/dev/ORB_SLAM3/Vocabulary/ORBvoc.txt /home/olaya/dev/ORB_SLAM3/Examples/Monocular/MIMIR.yaml /home/olaya/Datasets/MIMIR/SeaFloor/track0/auv0/rgb/cam0/data /home/olaya/Datasets/MIMIR/SeaFloor/track0/auv0/ORB_timestamps.txt seafloor_track1.txt" << endl;
+        cerr << endl << "Example: ./Examples/Monocular/mono_mimir /home/olaya/dev/ORB_SLAM3/Vocabulary/ORBvoc.txt /home/olaya/dev/ORB_SLAM3/Examples/Monocular/MIMIR.yaml /home/olaya/Datasets/MIMIR/SeaFloor/track0/auv0/rgb/cam2/data /home/olaya/Datasets/MIMIR/SeaFloor/track0/auv0/ORB_timestamps.txt seafloor_cam2_track0.txt" << endl;
         return 1;
     }
 
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     for (seq = 0; seq<num_seq; seq++)
     {
         cout << "Loading images for sequence " << seq << "...";
-        LoadImages(string(argv[(2*seq)+3]) + "/auv0/rgb/cam2/data", string(argv[(2*seq)+4]), vstrImageFilenames[seq], vTimestampsCam[seq]);
+        LoadImages(string(argv[(2*seq)+3]), string(argv[(2*seq)+4]), vstrImageFilenames[seq], vTimestampsCam[seq]);
         cout << "LOADED!" << endl;
 
         nImages[seq] = vstrImageFilenames[seq].size();
