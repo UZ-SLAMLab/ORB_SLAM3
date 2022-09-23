@@ -7,7 +7,13 @@ The [Changelog](https://github.com/UZ-SLAMLab/ORB_SLAM3/blob/master/Changelog.md
 
 ORB-SLAM3 is the first real-time SLAM library able to perform **Visual, Visual-Inertial and Multi-Map SLAM** with **monocular, stereo and RGB-D** cameras, using **pin-hole and fisheye** lens models. In all sensor configurations, ORB-SLAM3 is as robust as the best systems available in the literature, and significantly more accurate. 
 
-We provide examples to run ORB-SLAM3 in the [EuRoC dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) using stereo or monocular, with or without IMU, and in the [TUM-VI dataset](https://vision.in.tum.de/data/datasets/visual-inertial-dataset) using fisheye stereo or monocular, with or without IMU. Videos of some example executions can be found at [ORB-SLAM3 channel](https://www.youtube.com/channel/UCXVt-kXG6T95Z4tVaYlU80Q).
+We provide examples to run ORB-SLAM3 in the datasets:
+  - [EuRoC](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) using stereo or monocular, with or without IMU.
+  - [TUM-VI](https://vision.in.tum.de/data/datasets/visual-inertial-dataset) using fisheye stereo or monocular, with or without IMU. 
+  - [MIMIR-UW](https://github.com/remaro-network/MIMIR-UW) using stereo or monocular, without IMU.  
+
+Videos of some example executions can be found at [ORB-SLAM3 channel](https://www.youtube.com/channel/UCXVt-kXG6T95Z4tVaYlU80Q).
+
 
 This software is based on [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) developed by [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2)).
 
@@ -143,6 +149,23 @@ Execute the following script to process sequences and compute the RMS ATE:
 ./tum_vi_examples
 ```
 
+# 7. MIMIR-UW Examples
+[MIMIR-UW](https://github.com/remaro-network/MIMIR-UW) was recorded with three cameras comprising an stereo set and a downward-looking camera, and an inertial sensor. 
+
+1. Download the sequences following the structure detailed in the dataset's readme.
+
+2. For easy execution of MIMIR-UW, we provide two executable files for mono (`run_mono.sh`) and stereo (`run_stereo.sh`). Open the scripts and change the directories to the dataset to the directory in which you have downloading and uncompressed them.
+
+3. Execute the scripts as:
+```
+./run_mono <environment_name> <track_name> <camera_name>
+```
+For example:
+```
+./run_mono SeaFloor track0 cam0
+```
+
+
 ## Evaluation
 In TUM-VI ground truth is only available in the room where all sequences start and end. As a result the error measures the drift at the end of the sequence. 
 
@@ -151,7 +174,7 @@ Execute the following script to process sequences and compute the RMS ATE:
 ./tum_vi_eval_examples
 ```
 
-# 7. ROS Examples
+# 8. ROS Examples
 
 ### Building the nodes for mono, mono-inertial, stereo, stereo-inertial and RGB-D
 Tested with ROS Melodic and ubuntu 18.04.
@@ -228,8 +251,8 @@ Once ORB-SLAM3 has loaded the vocabulary, press space in the rosbag tab.
   rosrun rosbag fastrebag.py dataset-room1_512_16.bag dataset-room1_512_16_small_chunks.bag
   ```
 
-# 8. Running time analysis
+# 9. Running time analysis
 A flag in `include\Config.h` activates time measurements. It is necessary to uncomment the line `#define REGISTER_TIMES` to obtain the time stats of one execution which is shown at the terminal and stored in a text file(`ExecTimeMean.txt`).
 
-# 9. Calibration
+# 10. Calibration
 You can find a tutorial for visual-inertial calibration and a detailed description of the contents of valid configuration files at  `Calibration_Tutorial.pdf`
