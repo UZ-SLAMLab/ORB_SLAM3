@@ -395,6 +395,7 @@ namespace ORB_SLAM3
     void Viewer::RequestFinish()
     {
         unique_lock<mutex> lock(mMutexFinish);
+        std::cout << "Viewer : Finish Requested" << std::endl;
         mbFinishRequested = true;
     }
 

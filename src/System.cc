@@ -545,27 +545,32 @@ namespace ORB_SLAM3
 
         mpLocalMapper->RequestFinish();
         mpLoopCloser->RequestFinish();
-        /*if(mpViewer)
+
+        // ======================================================================================================
+        // opened these parts to prevent segmentation fault at viewer-> "pangolin::FinishFrame();"
+        if (mpViewer)
         {
             mpViewer->RequestFinish();
-            while(!mpViewer->isFinished())
+            while (!mpViewer->isFinished())
                 usleep(5000);
-        }*/
+        }
 
-        // Wait until all thread have effectively stopped
-        /*while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
-        {
-            if(!mpLocalMapper->isFinished())
-                cout << "mpLocalMapper is not finished" << endl;*/
-        /*if(!mpLoopCloser->isFinished())
-            cout << "mpLoopCloser is not finished" << endl;
-        if(mpLoopCloser->isRunningGBA()){
-            cout << "mpLoopCloser is running GBA" << endl;
-            cout << "break anyway..." << endl;
-            break;
-        }*/
-        /*usleep(5000);
-    }*/
+        // // Wait until all thread have effectively stopped
+        // while (!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
+        // {
+        //     if (!mpLocalMapper->isFinished())
+        //         cout << "mpLocalMapper is not finished" << endl;
+        //     if (!mpLoopCloser->isFinished())
+        //         cout << "mpLoopCloser is not finished" << endl;
+        //     if (mpLoopCloser->isRunningGBA())
+        //     {
+        //         cout << "mpLoopCloser is running GBA" << endl;
+        //         cout << "break anyway..." << endl;
+        //         break;
+        //     }
+        //     usleep(5000);
+        // }
+        // ====================================================================================================
 
         // if (!mStrSaveAtlasToFile.empty())
         // {

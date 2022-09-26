@@ -2514,6 +2514,7 @@ void LoopClosing::RequestFinish()
 {
     unique_lock<mutex> lock(mMutexFinish);
     // cout << "LC: Finish requested" << endl;
+    std::cout << "LoopClosing : Finish Requested" << std::endl;
     mbFinishRequested = true;
 }
 
