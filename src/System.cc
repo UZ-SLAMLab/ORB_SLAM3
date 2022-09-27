@@ -79,7 +79,9 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         settings_ = new Settings(strSettingsFile,mSensor,bUseViewer);
 
         mStrLoadAtlasFromFile = settings_->atlasLoadFile();
+        boost::erase_all(mStrLoadAtlasFromFile,"\"");
         mStrSaveAtlasToFile = settings_->atlasSaveFile();
+        boost::erase_all(mStrSaveAtlasToFile,"\"");
 
         cout << (*settings_) << endl;
     }
@@ -1415,7 +1417,7 @@ void System::SaveAtlas(int type){
 
         // Save the current session
         mpAtlas->PreSave();
-
+        
         string pathSaveFileName = mStrSaveAtlasToFile;
         // pathSaveFileName = pathSaveFileName.append(mStrSaveAtlasToFile);
         if(type == TEXT_FILE)
