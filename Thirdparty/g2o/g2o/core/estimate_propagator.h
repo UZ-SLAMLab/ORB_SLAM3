@@ -34,10 +34,16 @@
 #include <set>
 #include <limits>
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__APPLE__)
 #include <unordered_map>
 #else
 #include <tr1/unordered_map>
+#endif
+
+#if defined(_MSC_VER) || defined(__APPLE__)
+using namespace std;
+#else
+using namespace std::tr1;
 #endif
 
 namespace g2o {
@@ -135,7 +141,7 @@ namespace g2o {
           size_t operator ()(const OptimizableGraph::Vertex* v) const { return v->id();}
       };
 
-      typedef std::tr1::unordered_map<OptimizableGraph::Vertex*, AdjacencyMapEntry, VertexIDHashFunction> AdjacencyMap;
+      typedef unordered_map<OptimizableGraph::Vertex*, AdjacencyMapEntry, VertexIDHashFunction> AdjacencyMap;
 
     public:
       EstimatePropagator(OptimizableGraph* g);
