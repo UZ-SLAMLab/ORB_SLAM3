@@ -41,9 +41,9 @@
 #endif
 
 #if defined(_MSC_VER) || defined(__APPLE__)
-using std::unordered_map;
+using UnorderedMap = std::unordered_map;
 #else
-using std::tr1::unordered_map;
+using UnorderedMap = std::tr1::unordered_map;
 #endif
 
 namespace g2o {
@@ -141,7 +141,7 @@ namespace g2o {
           size_t operator ()(const OptimizableGraph::Vertex* v) const { return v->id();}
       };
 
-      typedef unordered_map<OptimizableGraph::Vertex*, AdjacencyMapEntry, VertexIDHashFunction> AdjacencyMap;
+      typedef UnorderedMap<OptimizableGraph::Vertex*, AdjacencyMapEntry, VertexIDHashFunction> AdjacencyMap;
 
     public:
       EstimatePropagator(OptimizableGraph* g);
