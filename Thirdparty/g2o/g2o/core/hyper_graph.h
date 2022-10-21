@@ -42,9 +42,9 @@
 #endif
 
 #if defined(_MSC_VER) || defined(__APPLE__)
-using namespace std;
+using namespace std::unordered_map;
 #else
-using namespace std::tr1;
+using namespace std::tr1::unordered_map;
 #endif
 
 /** @addtogroup graph */
