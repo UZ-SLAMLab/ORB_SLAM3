@@ -41,9 +41,9 @@
 #endif
 
 #if defined(_MSC_VER) || defined(__APPLE__)
-using UnorderedMap = std::unordered_map;
+using UnorderedMap = std::unordered_map<int, MatrixType*>;
 #else
-using UnorderedMap = std::tr1::unordered_map;
+using UnorderedMap = std::tr1::unordered_map<int, MatrixType*>;
 #endif
 
 namespace g2o {
@@ -229,7 +229,7 @@ namespace g2o {
       //! rows of the matrix
       int rows() const {return _rowBlockIndices.size() ? _rowBlockIndices.back() : 0;}
 
-      typedef UnorderedMap<int, MatrixType*> SparseColumn;
+      typedef UnorderedMap SparseColumn;
 
       SparseBlockMatrixHashMap(const std::vector<int>& rowIndices, const std::vector<int>& colIndices) :
         _rowBlockIndices(rowIndices), _colBlockIndices(colIndices)

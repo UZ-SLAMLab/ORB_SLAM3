@@ -40,9 +40,9 @@
 #endif
 
 #if defined(_MSC_VER) || defined(__APPLE__)
-using UnorderedMap = std::unordered_map;
+using UnorderedMap = std::unordered_map<int, double>;
 #else
-using UnorderedMap = std::tr1::unordered_map;
+using UnorderedMap = std::tr1::unordered_map<int, double>;
 #endif
 
 namespace g2o {
@@ -55,7 +55,7 @@ namespace g2o {
       /**
        * hash struct for storing the matrix elements needed to compute the covariance
        */
-      typedef UnorderedMap<int, double>     LookupMap;
+      typedef UnorderedMap     LookupMap;
     
     public:
       MarginalCovarianceCholesky();

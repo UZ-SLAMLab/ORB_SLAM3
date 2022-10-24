@@ -42,9 +42,9 @@
 #endif
 
 #if defined(_MSC_VER) || defined(__APPLE__)
-using UnorderedMap = std::unordered_map;
+using UnorderedMap = std::unordered_map<int, Vertex*>;
 #else
-using UnorderedMap = std::tr1::unordered_map;
+using UnorderedMap = std::tr1::unordered_map<int, Vertex*>;
 #endif
 
 /** @addtogroup graph */
@@ -95,7 +95,7 @@ namespace g2o {
       typedef std::set<Edge*>                           EdgeSet;
       typedef std::set<Vertex*>                         VertexSet;
 
-      typedef UnorderedMap<int, Vertex*>               VertexIDMap;
+      typedef UnorderedMap                              VertexIDMap;
       typedef std::vector<Vertex*>                      VertexContainer;
 
       //! abstract Vertex, your types must derive from that one
