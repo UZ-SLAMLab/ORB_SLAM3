@@ -793,14 +793,16 @@ namespace ORB_SLAM3
                 Sophus::SE3f Twb = (pKF->mImuCalib.mTbc * (*lit) * Trw).inverse();
                 Eigen::Quaternionf q = Twb.unit_quaternion();
                 Eigen::Vector3f twb = Twb.translation();
-                f << setprecision(6) << 1e9 * (*lT) << " " << setprecision(9) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+                // f << setprecision(6) << 1e9 * (*lT) << " " << setprecision(9) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+                f << setprecision(6) << 1e6 * (*lT) << " " << setprecision(6) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
             }
             else
             {
                 Sophus::SE3f Twc = ((*lit) * Trw).inverse();
                 Eigen::Quaternionf q = Twc.unit_quaternion();
                 Eigen::Vector3f twc = Twc.translation();
-                f << setprecision(6) << 1e9 * (*lT) << " " << setprecision(9) << twc(0) << " " << twc(1) << " " << twc(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+                // f << setprecision(6) << 1e9 * (*lT) << " " << setprecision(9) << twc(0) << " " << twc(1) << " " << twc(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+                f << setprecision(6) << 1e6 * (*lT) << " " << setprecision(6) << twc(0) << " " << twc(1) << " " << twc(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
             }
 
             // cout << "5" << endl;
@@ -1139,14 +1141,16 @@ namespace ORB_SLAM3
                 Sophus::SE3f Twb = pKF->GetImuPose();
                 Eigen::Quaternionf q = Twb.unit_quaternion();
                 Eigen::Vector3f twb = Twb.translation();
-                f << setprecision(6) << 1e9 * pKF->mTimeStamp << " " << setprecision(9) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+                // f << setprecision(6) << 1e9 * pKF->mTimeStamp << " " << setprecision(9) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+                f << setprecision(6) << 1e6 * pKF->mTimeStamp << " " << setprecision(6) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
             }
             else
             {
                 Sophus::SE3f Twc = pKF->GetPoseInverse();
                 Eigen::Quaternionf q = Twc.unit_quaternion();
                 Eigen::Vector3f t = Twc.translation();
-                f << setprecision(6) << 1e9 * pKF->mTimeStamp << " " << setprecision(9) << t(0) << " " << t(1) << " " << t(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+                // f << setprecision(6) << 1e9 * pKF->mTimeStamp << " " << setprecision(9) << t(0) << " " << t(1) << " " << t(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+                f << setprecision(6) << 1e6 * pKF->mTimeStamp << " " << setprecision(6) << t(0) << " " << t(1) << " " << t(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
             }
         }
         f.close();
