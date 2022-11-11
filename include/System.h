@@ -231,6 +231,8 @@ namespace ORB_SLAM3
 
         std::pair<bool, bool> getLocalizationModeStates();
 
+        bool getMergeStatusFromLoopClosing();
+
 #ifdef REGISTER_TIMES
         void InsertRectTime(double &time);
         void InsertResizeTime(double &time);
@@ -306,6 +308,8 @@ namespace ORB_SLAM3
         string mStrVocabularyFilePath;
 
         Settings *settings_;
+
+        std::mutex mMutexMergeStatus;
     };
 
 } // namespace ORB_SLAM

@@ -1741,4 +1741,14 @@ namespace ORB_SLAM3
         return std::make_pair(mbActivateLocalizationMode, mbDeactivateLocalizationMode);
     }
 
+    bool System::getMergeStatusFromLoopClosing()
+    {
+        unique_lock<std::mutex> lock(mMutexMergeStatus);
+        if (mpLoopCloser)
+            return mpLoopCloser->getMergeStatus();
+
+        std::cerr << "loop closer is null ??" << std::endl;
+        return false;
+    }
+
 } // namespace ORB_SLAM

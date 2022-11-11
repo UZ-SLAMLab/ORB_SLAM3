@@ -83,6 +83,18 @@ namespace ORB_SLAM3
 
         Viewer *mpViewer;
 
+        void setMergeStatus(const bool &status_)
+        {
+            unique_lock<std::mutex> lock(mMutexMergeStatus);
+            bMergeStatus = status_;
+        }
+
+        bool getMergeStatus()
+        {
+            unique_lock<std::mutex> lock(mMutexMergeStatus);
+            return bMergeStatus;
+        }
+
 #ifdef REGISTER_TIMES
 
         vector<double> vdDataQuery_ms;
@@ -231,6 +243,9 @@ namespace ORB_SLAM3
 
         // To (de)activate LC
         bool mbActiveLC = true;
+
+        std::atomic<bool> bMergeStatus{false};
+        std::mutex mMutexMergeStatus;
 
 #ifdef REGISTER_LOOP
         string mstrFolderLoop;

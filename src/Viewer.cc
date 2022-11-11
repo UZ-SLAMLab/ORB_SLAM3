@@ -283,6 +283,12 @@ namespace ORB_SLAM3
                 std::cout << "setting localization mode via config : " << localizationModeFromConfig << std::endl;
                 localizationModeFromConfig = false; // reset to prevent clash with vierwer button later?
             }
+
+            if (bLocalizationModeFromAutoCheck && !bLocalizationMode)
+            {
+                menuLocalizationMode = bLocalizationModeFromAutoCheck;
+                std::cout << "Viewer -> setting localization mode button via config to : " << bLocalizationModeFromAutoCheck << std::endl;
+            }
             // =============================
 
             if (menuLocalizationMode && !bLocalizationMode)
@@ -458,9 +464,19 @@ namespace ORB_SLAM3
         mbStopTrack = true;
     }*/
 
-    void Viewer::SetLocalizationMode(bool val)
+    void Viewer::SetLocalizationModeFromConfig(bool val)
     {
         localizationModeFromConfig = val;
+    }
+
+    void Viewer::setLocalizationModeFromAutoCheck(const bool &state)
+    {
+        bLocalizationModeFromAutoCheck = state;
+    }
+
+    bool Viewer::getLocalizationModeFromAutoCheck()
+    {
+        return bLocalizationModeFromAutoCheck;
     }
 
 }

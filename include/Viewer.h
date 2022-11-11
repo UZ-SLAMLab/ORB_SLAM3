@@ -64,7 +64,10 @@ namespace ORB_SLAM3
 
         bool both;
 
-        void SetLocalizationMode(bool val);
+        void SetLocalizationModeFromConfig(bool val);
+
+        void setLocalizationModeFromAutoCheck(const bool &state);
+        bool getLocalizationModeFromAutoCheck();
 
     private:
         bool ParseViewerParamFile(cv::FileStorage &fSettings);
@@ -96,6 +99,7 @@ namespace ORB_SLAM3
         bool mbStopTrack;
 
         bool localizationModeFromConfig{false};
+        bool bLocalizationModeFromAutoCheck{false};
     };
 
 }
