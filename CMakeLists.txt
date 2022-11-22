@@ -209,6 +209,10 @@ add_executable(mono_mimir
         Examples/Monocular/mono_mimir.cc)
 target_link_libraries(mono_mimir ${PROJECT_NAME})
 
+add_executable(mono_aqualoc
+        Examples/Monocular/mono_aqualoc.cc)
+target_link_libraries(mono_aqualoc ${PROJECT_NAME})
+
 add_executable(mono_tum_vi
         Examples/Monocular/mono_tum_vi.cc)
 target_link_libraries(mono_tum_vi ${PROJECT_NAME})
