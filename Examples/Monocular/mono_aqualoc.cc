@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 {
     if(argc != 5)
     {
-        cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_sequence number_of_seq" << endl;
+        cerr << endl << "Usage: ./mono_aqualoc path_to_vocabulary path_to_settings path_to_sequence number_of_seq" << endl;
         return 1;
     }
 
