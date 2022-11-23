@@ -30,7 +30,7 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-find_package(OpenCV 4.4)
+find_package(OpenCV)
    if(NOT OpenCV_FOUND)
       message(FATAL_ERROR "OpenCV > 4.4 not found.")
    endif()
@@ -209,6 +209,10 @@ add_executable(mono_aqualoc
         Examples/Monocular/mono_aqualoc.cc)
 target_link_libraries(mono_aqualoc ${PROJECT_NAME})
 
+add_executable(mono_mimir
+        Examples/Monocular/mono_mimir.cc)
+target_link_libraries(mono_mimir ${PROJECT_NAME})
+
 if(realsense2_FOUND)
     add_executable(mono_realsense_t265
             Examples/Monocular/mono_realsense_t265.cc)
@@ -246,6 +250,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo-Inertia
 add_executable(stereo_inertial_euroc
         Examples/Stereo-Inertial/stereo_inertial_euroc.cc)
 target_link_libraries(stereo_inertial_euroc ${PROJECT_NAME})
+
+add_executable(stereo_mimir
+        Examples/Stereo/stereo_mimir.cc)
+target_link_libraries(stereo_mimir ${PROJECT_NAME})
 
 add_executable(stereo_inertial_tum_vi
         Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
