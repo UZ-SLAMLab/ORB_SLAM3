@@ -110,6 +110,10 @@ Directory `Examples` contains several demo programs and calibration files to run
 ```
 ./Examples/Stereo-Inertial/stereo_inertial_realsense_D435i Vocabulary/ORBvoc.txt ./Examples/Stereo-Inertial/RealSense_D435i.yaml
 ```
+Note: If you just want to try ORB-SLAM3 with your webcam, you can use the generic webcam example, which read the default webcam interface. You also need to modify the `webcam.yaml` file with your own calibration in order to get proper results.
+```
+./Examples/Monocular/mono_webcam Vocabulary/ORBvoc.txt ./Examples/Monocular/webcam.yaml
+```
 
 # 5. EuRoC Examples
 [EuRoC dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) was recorded with two pinhole cameras and an inertial sensor. We provide an example script to launch EuRoC sequences in all the sensor configurations.
