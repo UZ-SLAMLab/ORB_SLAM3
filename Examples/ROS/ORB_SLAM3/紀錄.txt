@@ -1,0 +1,12 @@
+chmod +x *.sh
+
+sudo gedit ~/.bashrc
+sudo nano /etc/hosts
+
+
+#export ROS_MASTER_URI=http://192.168.50.36:11311/
+#export ROS_MASTER_URI=http://192.168.50.162:11311/
+#export ROS_MASTER_URI=http://25.80.217.141:11311/
+#export ROS_MASTER_URI=http://127.0.0.1:11311/
+
+rosnode kill -a
