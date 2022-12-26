@@ -195,9 +195,6 @@ public:
     // Feature extractor. The right is used only in the stereo case.
     ORBextractor* mpORBextractorLeft, *mpORBextractorRight;
 
-    // Cache the image pyramid
-    vector<cv::Mat> mvImagePyramid;
-
     // Frame timestamp.
     double mTimeStamp;
 

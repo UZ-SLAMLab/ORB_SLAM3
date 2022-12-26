@@ -62,6 +62,7 @@ public:
              KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor, Settings* settings, const string &_nameSeq=std::string());
 
     ~Tracking();
+    
 
     // Parse the config file
     bool ParseCamParamFile(cv::FileStorage &fSettings);
@@ -72,6 +73,7 @@ public:
     Sophus::SE3f GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp, string filename);
     Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, string filename);
     Sophus::SE3f GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename);
+    Sophus::SE3f Trw;//sam
 
     void GrabImuData(const IMU::Point &imuMeasurement);
 
@@ -349,22 +351,13 @@ protected:
     double mTime_LocalMapTrack;
     double mTime_NewKF_Dec;
 
-    GeometricCamera *mpCamera, *mpCamera2;
+    GeometricCamera* mpCamera, *mpCamera2;
 
     int initID, lastID;
 
     Sophus::SE3f mTlr;
-    // ygz part
-    void newParameterLoader(Settings *settings);
-    bool TrackWithSparseAlignment(int nValidSearchPoints = 20,
-                                  int nValidInliner = 20);
-    vector<MapPoint *> SearchPointsInFrame(vector<MapPoint *> *mapPoints,
-                                           Frame *frame,
-                                           float viewingCosLimit = 0.5);
-    int PoseOptimizationDirect(Frame *LastFrame, Frame *CurrentFrame,
-                               vector<MapPoint *> *points,
-                               vector<MapPoint *> *outliers);
-    // ygz part
+
+    void newParameterLoader(Settings* settings);
 
 #ifdef REGISTER_LOOP
     bool Stop();

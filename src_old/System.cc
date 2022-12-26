@@ -38,6 +38,15 @@ namespace ORB_SLAM3
 
 Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
 
+/**
+ * @brief 系统的构造函数，将会启动其他的线程
+ * @param strVocFile 词袋文件所在路径
+ * @param strSettingsFile 配置文件所在路径
+ * @param sensor 传感器类型
+ * @param bUseViewer 是否使用可视化界面
+ * @param initFr initFr表示初始化帧的id,开始设置为0
+ * @param strSequence 序列名,在跟踪线程和局部建图线程用得到
+ */
 System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
                const bool bUseViewer, const int initFr, const string &strSequence):
     mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false), mbResetActiveMap(false),
@@ -54,36 +63,42 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     cout << "Input sensor was set to: ";
 
     if(mSensor==MONOCULAR)
-        cout << "Monocular" << endl;
+        cout << "Monocular" << endl;             // 单目
     else if(mSensor==STEREO)
-        cout << "Stereo" << endl;
+        cout << "Stereo" << endl;                // 双目
     else if(mSensor==RGBD)
-        cout << "RGB-D" << endl;
+        cout << "RGB-D" << endl;                 // RGBD相机   
     else if(mSensor==IMU_MONOCULAR)
-        cout << "Monocular-Inertial" << endl;
+        cout << "Monocular-Inertial" << endl;    // 单目 + imu
     else if(mSensor==IMU_STEREO)
-        cout << "Stereo-Inertial" << endl;
+        cout << "Stereo-Inertial" << endl;       // 双目 + imu
     else if(mSensor==IMU_RGBD)
-        cout << "RGB-D-Inertial" << endl;
+        cout << "RGB-D-Inertial" << endl;        // RGBD相机 + imu
 
     //Check settings file
+    // Step 2 读取配置文件
     cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
+    // 如果打开失败，就输出错误信息
     if(!fsSettings.isOpened())
     {
        cerr << "Failed to open settings file at: " << strSettingsFile << endl;
        exit(-1);
     }
 
+    // 查看配置文件版本，不同版本有不同处理方法
     cv::FileNode node = fsSettings["File.version"];
-    if(!node.empty() && node.isString() && node.string() == "1.0"){
+    if(!node.empty() && node.isString() && node.string() == "1.0")
+    {
         settings_ = new Settings(strSettingsFile,mSensor);
 
+        // 保存及加载地图的名字
         mStrLoadAtlasFromFile = settings_->atlasLoadFile();
         mStrSaveAtlasToFile = settings_->atlasSaveFile();
 
         cout << (*settings_) << endl;
     }
-    else{
+    else
+    {
         settings_ = nullptr;
         cv::FileNode node = fsSettings["System.LoadAtlasFromFile"];
         if(!node.empty() && node.isString())
@@ -98,6 +113,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         }
     }
 
+    // 是否激活回环，默认是开着的
     node = fsSettings["loopClosing"];
     bool activeLC = true;
     if(!node.empty())
@@ -107,6 +123,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     mStrVocabularyFilePath = strVocFile;
 
+    // ORBSLAM3新加的多地图管理功能，这里加载Atlas标识符
     bool loadedAtlas = false;
 
     if(mStrLoadAtlasFromFile.empty())
@@ -114,8 +131,11 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         //Load ORB Vocabulary
         cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
 
+        // 建立一个新的ORB字典
         mpVocabulary = new ORBVocabulary();
+        // 读取预训练好的ORB字典并返回成功/失败标志
         bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+        // 如果加载失败，就输出错误信息
         if(!bVocLoad)
         {
             cerr << "Wrong path to vocabulary. " << endl;
@@ -125,9 +145,11 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         cout << "Vocabulary loaded!" << endl << endl;
 
         //Create KeyFrame Database
+        // Step 4 创建关键帧数据库
         mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
 
         //Create the Atlas
+        // Step 5 创建多地图，参数0表示初始化关键帧id为0
         cout << "Initialization of Atlas from scratch " << endl;
         mpAtlas = new Atlas(0);
     }
@@ -177,29 +199,36 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         //usleep(10*1000*1000);
     }
 
-
+    // 如果是有imu的传感器类型，设置mbIsInertial = true;以后的跟踪和预积分将和这个标志有关
     if (mSensor==IMU_STEREO || mSensor==IMU_MONOCULAR || mSensor==IMU_RGBD)
         mpAtlas->SetInertialSensor();
 
+    // Step 6 依次创建跟踪、局部建图、闭环、显示线程
     //Create Drawers. These are used by the Viewer
+    // 创建用于显示帧和地图的类，由Viewer调用
     mpFrameDrawer = new FrameDrawer(mpAtlas);
     mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile, settings_);
 
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
+    // 创建跟踪线程（主线程）,不会立刻开启,会在对图像和imu预处理后在main主线程种执行
     cout << "Seq. Name: " << strSequence << endl;
     mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
                              mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, settings_, strSequence);
 
     //Initialize the Local Mapping thread and launch
+    //创建并开启local mapping线程
     mpLocalMapper = new LocalMapping(this, mpAtlas, mSensor==MONOCULAR || mSensor==IMU_MONOCULAR,
                                      mSensor==IMU_MONOCULAR || mSensor==IMU_STEREO || mSensor==IMU_RGBD, strSequence);
     mptLocalMapping = new thread(&ORB_SLAM3::LocalMapping::Run,mpLocalMapper);
     mpLocalMapper->mInitFr = initFr;
+
+    // 设置最远3D地图点的深度值，如果超过阈值，说明可能三角化不太准确，丢弃
     if(settings_)
         mpLocalMapper->mThFarPoints = settings_->thFarPoints();
     else
         mpLocalMapper->mThFarPoints = fsSettings["thFarPoints"];
+    // ? 这里有个疑问,C++中浮点型跟0比较是否用精确?
     if(mpLocalMapper->mThFarPoints!=0)
     {
         cout << "Discard points further than " << mpLocalMapper->mThFarPoints << " m from current camera" << endl;
@@ -210,10 +239,12 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     //Initialize the Loop Closing thread and launch
     // mSensor!=MONOCULAR && mSensor!=IMU_MONOCULAR
+    // 创建并开启闭环线程
     mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR, activeLC); // mSensor!=MONOCULAR);
     mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
     //Set pointers between threads
+    // 设置线程间的指针
     mpTracker->SetLocalMapper(mpLocalMapper);
     mpTracker->SetLoopClosing(mpLoopCloser);
 
@@ -226,6 +257,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     //usleep(10*1000*1000);
 
     //Initialize the Viewer thread and launch
+    // 创建并开启显示线程
     if(bUseViewer)
     //if(false) // TODO
     {
@@ -237,7 +269,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     }
 
     // Fix verbosity
-    Verbose::SetTh(Verbose::VERBOSITY_DEBUG);
+    // 打印输出中间的信息，设置为安静模式
+    Verbose::SetTh(Verbose::VERBOSITY_QUIET);
 
 }
 
@@ -396,6 +429,15 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
     return Tcw;
 }
 
+/**
+ * @brief 单目/单目VIO跟踪
+ * 
+ * @param[in] im                灰度图像
+ * @param[in] timestamp         图像时间戳
+ * @param[in] vImuMeas          上一帧到当前帧图像之间的IMU测量值
+ * @param[in] filename          调试用的文件名
+ * @return Sophus::SE3f         当前帧位姿Tcw
+ */
 Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
 
@@ -404,7 +446,7 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
         if(mbShutDown)
             return Sophus::SE3f();
     }
-
+    // 确保是单目或单目VIO模式
     if(mSensor!=MONOCULAR && mSensor!=IMU_MONOCULAR)
     {
         cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular nor Monocular-Inertial." << endl;
@@ -420,7 +462,9 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
 
     // Check mode change
     {
+        // 独占锁，主要是为了mbActivateLocalizationMode和mbDeactivateLocalizationMode不会发生混乱
         unique_lock<mutex> lock(mMutexMode);
+        // mbActivateLocalizationMode为true会关闭局部地图线程，仅跟踪模式
         if(mbActivateLocalizationMode)
         {
             mpLocalMapper->RequestStop();
@@ -430,8 +474,9 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
             {
                 usleep(1000);
             }
-
+            // 局部地图关闭以后，只进行追踪的线程，只计算相机的位姿，没有对局部地图进行更新
             mpTracker->InformOnlyTracking(true);
+            // 关闭线程可以使得别的线程得到更多的资源
             mbActivateLocalizationMode = false;
         }
         if(mbDeactivateLocalizationMode)
@@ -451,6 +496,7 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
             mbReset = false;
             mbResetActiveMap = false;
         }
+        // 如果检测到重置活动地图的标志为true,将重置地图
         else if(mbResetActiveMap)
         {
             cout << "SYSTEM-> Reseting active map in monocular case" << endl;
@@ -458,13 +504,15 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
             mbResetActiveMap = false;
         }
     }
-
+    // 如果是单目VIO模式，把IMU数据存储到队列mlQueueImuData
     if (mSensor == System::IMU_MONOCULAR)
         for(size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
             mpTracker->GrabImuData(vImuMeas[i_imu]);
 
+    // 计算相机位姿
     Sophus::SE3f Tcw = mpTracker->GrabImageMonocular(imToFeed,timestamp,filename);
 
+    // 更新跟踪状态和参数
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
@@ -521,6 +569,13 @@ void System::Shutdown()
 
     cout << "Shutdown" << endl;
 
+    if (mpViewer)
+    {
+        mpViewer->RequestFinish();
+        while (!mpViewer->isFinished())
+            usleep(5000);
+    }
+
     mpLocalMapper->RequestFinish();
     mpLoopCloser->RequestFinish();
     /*if(mpViewer)
@@ -531,22 +586,25 @@ void System::Shutdown()
     }*/
 
     // Wait until all thread have effectively stopped
-    /*while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
+    // 源代码这里注释掉了，但是不执行会有锁报错
+    while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
     {
-        if(!mpLocalMapper->isFinished())
-            cout << "mpLocalMapper is not finished" << endl;*/
-        /*if(!mpLoopCloser->isFinished())
-            cout << "mpLoopCloser is not finished" << endl;
-        if(mpLoopCloser->isRunningGBA()){
-            cout << "mpLoopCloser is running GBA" << endl;
-            cout << "break anyway..." << endl;
-            break;
-        }*/
-        /*usleep(5000);
-    }*/
+        // if(!mpLocalMapper->isFinished())
+        //     cout << "mpLocalMapper is not finished" << endl;
+        // if(!mpLoopCloser->isFinished())
+        //     cout << "mpLoopCloser is not finished" << endl;
+        // if(mpLoopCloser->isRunningGBA()){
+        //     cout << "mpLoopCloser is running GBA" << endl;
+        //     cout << "break anyway..." << endl;
+        //     break;
+        // }
+        usleep(5000);
+    }
+
 
     if(!mStrSaveAtlasToFile.empty())
     {
+        std::cout << "开始保存地图" << std::endl;
         Verbose::PrintMess("Atlas saving to file " + mStrSaveAtlasToFile, Verbose::VERBOSITY_NORMAL);
         SaveAtlas(FileType::BINARY_FILE);
     }
@@ -561,7 +619,8 @@ void System::Shutdown()
 
 }
 
-bool System::isShutDown() {
+bool System::isShutDown()
+{
     unique_lock<mutex> lock(mMutexReset);
     return mbShutDown;
 }
@@ -1400,18 +1459,27 @@ void System::InsertTrackTime(double& time)
 }
 #endif
 
-void System::SaveAtlas(int type){
+/**
+ * @brief 保存地图
+ * @param type 保存类型
+ */
+void System::SaveAtlas(int type)
+{
+    // mStrSaveAtlasToFile 如果配置文件里面没有指定，则不会保存地图
     if(!mStrSaveAtlasToFile.empty())
     {
         //clock_t start = clock();
 
         // Save the current session
+        // 1. 预保存想要保存的数据
         mpAtlas->PreSave();
 
+        // 2. 确定文件名字
         string pathSaveFileName = "./";
         pathSaveFileName = pathSaveFileName.append(mStrSaveAtlasToFile);
         pathSaveFileName = pathSaveFileName.append(".osa");
 
+        // 3. 保存词典的校验结果及名字
         string strVocabularyChecksum = CalculateCheckSum(mStrVocabularyFilePath,TEXT_FILE);
         std::size_t found = mStrVocabularyFilePath.find_last_of("/\\");
         string strVocabularyName = mStrVocabularyFilePath.substr(found+1);
@@ -1442,8 +1510,13 @@ void System::SaveAtlas(int type){
     }
 }
 
+/**
+ * @brief 加载地图
+ * @param type 保存类型
+ */
 bool System::LoadAtlas(int type)
 {
+    // 1. 加载地图文件
     string strFileVoc, strVocChecksum;
     bool isRead = false;
 
@@ -1484,9 +1557,11 @@ bool System::LoadAtlas(int type)
         isRead = true;
     }
 
+    // 2. 如果加载成功
     if(isRead)
     {
         //Check if the vocabulary is the same
+        // 校验词典是否一样
         string strInputVocabularyChecksum = CalculateCheckSum(mStrVocabularyFilePath,TEXT_FILE);
 
         if(strInputVocabularyChecksum.compare(strVocChecksum) != 0)
@@ -1496,6 +1571,7 @@ bool System::LoadAtlas(int type)
             return false; // Both are differents
         }
 
+        // 加载对应数据
         mpAtlas->SetKeyFrameDababase(mpKeyFrameDatabase);
         mpAtlas->SetORBVocabulary(mpVocabulary);
         mpAtlas->PostLoad();
@@ -1505,6 +1581,7 @@ bool System::LoadAtlas(int type)
     return false;
 }
 
+// 校验词典文件，哈希出一个值，两个哈希值一样表示是同一文件
 string System::CalculateCheckSum(string filename, int type)
 {
     string checksum = "";
