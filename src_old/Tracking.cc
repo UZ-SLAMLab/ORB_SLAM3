@@ -2654,7 +2654,7 @@ void Tracking::Track()
             mlRelativeFramePoses.push_back(mlRelativeFramePoses.back());
             mlpReferences.push_back(mlpReferences.back());
             mlFrameTimes.push_back(mlFrameTimes.back());
-            mlbLost.push_back(mState==LOST);
+            mlbLost.push_back(mState==LOST);ㄇ
         }
         //sam
         Sophus::SE3f pose=mCurrentFrame.GetPose();
