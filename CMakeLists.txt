@@ -8,14 +8,35 @@ ENDIF()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
+# for M1
+# see https://stackoverflow.com/questions/52879026/cmake-cross-compile-on-macos-adds-macos-sdk-to-isysroot-in-flags-make
+# and https://stackoverflow.com/questions/65511230/how-do-i-use-cmake-on-os-x-target-the-new-arm-m1
+# also it doesn't like march=native
+# need to run with -DCMAKE_APPLE_SILICON_PROCESSOR=arm64
+# todo do this properly
+#SET(CMAKE_C_FLAGS "-target arm64-apple-macos10.5")
+
+
+# intel
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+
+# clang doesn't like
+#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
+#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
 # MAC BOOST: brew info boost
-set(BOOST_INCLUDE /usr/local/Cellar/boost/1.80.0/include)
-set(BOOST_LIBS /usr/local/Cellar/boost/1.80.0/lib)
+# on M1, it's in /opt/homebrew/Cellar
+# todo do this properly
+set(BOOST_BASE /opt/homebrew/opt/boost)
+# on intel, it's /usr/local/opt/boost)
+set(BOOST_INCLUDE ${BOOST_BASE}/include)
+set(BOOST_LIBS ${BOOST_BASE}/lib)
+
+#set(BOOST_INCLUDE /opt/homebrew/Cellar/boost/1.80.0/include)
+#set(BOOST_LIBS /opt/homebrew/Cellar/boost/1.80.0/lib)
+#set(BOOST_INCLUDE /usr/local/Cellar/boost/1.80.0/include)
+#set(BOOST_LIBS /usr/local/Cellar/boost/1.80.0/lib)
 set(Pangolin_DIR ../Pangolin)
 
 # Check C++14 or C++0x support
@@ -48,6 +69,14 @@ find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 find_package(realsense2)
 
+
+#see https://stackoverflow.com/questions/35477940/linking-statically-openssl-crypto-library-in-cmake
+#
+#set (OPENSSL_ROOT_DIR /usr/local/opt/openssl@3)
+# on m1 it's at /opt/homebrew/opt/openssl@3
+set (OPENSSL_ROOT_DIR /opt/homebrew/opt/openssl@3)
+find_package(OpenSSL REQUIRED)
+
 include_directories(
 ${PROJECT_SOURCE_DIR}
 ${PROJECT_SOURCE_DIR}/include
@@ -55,7 +84,8 @@ ${PROJECT_SOURCE_DIR}/include/CameraModels
 ${PROJECT_SOURCE_DIR}/Thirdparty/Sophus
 ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
-/usr/local/opt/openssl@3/include
+#/usr/local/opt/openssl@3/include
+${OPENSSL_ROOT_DIR}/include
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -127,8 +157,8 @@ find_package(Boost COMPONENTS serialization REQUIRED)
 
 #see https://stackoverflow.com/questions/35477940/linking-statically-openssl-crypto-library-in-cmake
 #
-set (OPENSSL_ROOT_DIR /usr/local/opt/openssl@3)
-find_package(OpenSSL REQUIRED)
+#set (OPENSSL_ROOT_DIR /usr/local/opt/openssl@3)
+#find_package(OpenSSL REQUIRED)
 
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
@@ -140,7 +170,8 @@ ${Boost_LIBRARIES}
 #-lboost_serialization
 OpenSSL::Crypto
 #-lcrypto
-/usr/local/opt/openssl@3/lib/libssl.dylib
+#/usr/local/opt/openssl@3/lib/libssl.dylib
+${OPENSSL_ROOT_DIR}/lib/libssl.dylib
 )
 
 # If RealSense SDK is found the library is added and its examples compiled
