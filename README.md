@@ -1,6 +1,6 @@
 # Installation guide by Danis Valitov
 # 1. Installation of ORB-SLAM 3 on orange pi 4 focal
-Install all liberay dependencies.
+Install all dependencies.
 ```shell
 
 sudo add-apt-repository "deb http://security.ubuntu.com/ubuntu xenial-security main"
