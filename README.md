@@ -32,5 +32,5 @@ git checkout 3.4.1
 mkdir build
 cd build
 cmake -D CMAKE_BUILD_TYPE=Release -D WITH_CUDA=OFF -D CMAKE_INSTALL_PREFIX=/usr/local ..
-make -j 3
+make -j3
 sudo make install
