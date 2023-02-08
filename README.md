@@ -34,3 +34,19 @@ cd build
 cmake -D CMAKE_BUILD_TYPE=Release -D WITH_CUDA=OFF -D CMAKE_INSTALL_PREFIX=/usr/local ..
 make -j3
 sudo make install
+```
+---
+
+### Pangolin 0.7
+``shell
+cd ~/Dev
+wget https://github.com/stevenlovegrove/Pangolin/archive/refs/tags/v0.7.zip
+unzip v0.7.zip 
+rm  v0.7.zip 
+cd Pangolin-0.7
+mkdir build
+cd build
+cmake .. -D CMAKE_BUILD_TYPE=Release 
+make -j3 
+sudo make install
+```
