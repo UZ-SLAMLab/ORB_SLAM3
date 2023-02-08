@@ -38,7 +38,7 @@ sudo make install
 ---
 
 ### Pangolin 0.7
-``shell
+```shell
 cd ~/Dev
 wget https://github.com/stevenlovegrove/Pangolin/archive/refs/tags/v0.7.zip
 unzip v0.7.zip 
