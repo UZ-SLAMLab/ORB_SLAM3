@@ -15,7 +15,7 @@ sudo apt-get install libglew-dev libboost-all-dev libssl-dev
 
 sudo apt-get install g++  autotools-dev libicu-dev libbz2-dev
 
-sudo apt-get install libeigen3-dev libsuitesparse-dev qtdeclarative5-dev qt5-qmake libqglviewer-dev libboost-dev
+sudo apt-get install libeigen3-dev libsuitesparse-dev qtdeclarative5-dev qt5-qmake libboost-dev
 
 ```
 ---
