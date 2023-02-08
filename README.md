@@ -50,3 +50,12 @@ cmake .. -D CMAKE_BUILD_TYPE=Release
 make -j3 
 sudo make install
 ```
+---
+### ORB SLAM 3
+```shell
+cd ~/Dev
+git clone https://github.com/DanisValitov/ORB_SLAM3.git
+cd ORB_SLAM3
+chmod +x build.sh
+./build.sh
+```
