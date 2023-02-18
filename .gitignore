@@ -1,11 +1,11 @@
 # Ignore all
-*
+#*
 
 # Unignore all with extensions
-!*.*
+#!*.*
 
 # Unignore all dirs
-!*/
+#!*/
 
 CMakeLists.txt.user
 CMakeLists_modified.txt
