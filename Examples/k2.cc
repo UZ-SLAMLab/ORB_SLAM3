@@ -3,7 +3,7 @@
 #include <System.h>
 
 int main() {
-    cv::VideoCapture cap("data/ITT/GX010294.MP4");
+    cv::VideoCapture cap("data/k2/GX010294.MP4");
     if (!cap.isOpened()) {
         std::cerr << "Error opening video file" << std::endl;
         return -1;
@@ -13,7 +13,7 @@ int main() {
     int fps = cap.get(cv::CAP_PROP_FPS);
     float dT = 1.f / fps;
 
-    ORB_SLAM3::System SLAM("Vocabulary/ORBvoc.txt", "Examples/ITT/itt.yaml", ORB_SLAM3::System::MONOCULAR, true);
+    ORB_SLAM3::System SLAM("Vocabulary/ORBvoc.txt", "Examples/k2.yaml", ORB_SLAM3::System::MONOCULAR, true);
     float imageScale = SLAM.GetImageScale();
 
     cap.set(cv::CAP_PROP_POS_MSEC, (10 * 60 * 1000) + (47 * 1000));
