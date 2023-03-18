@@ -3,17 +3,18 @@ version: '3.8'
 services:
   dev:
     build: .
-    # image: lmwafer/orb-slam-3-ready:1.1-ubuntu18.04
+    image: vlados09/orb-slam-3:ubuntu18.04
     container_name: orb-slam-dev
     volumes:
-      - .:/ORB_SLAM3
+      - .:/dpds/ORB_SLAM3
       - /mnt/wslg:/mnt/wslg
       - /tmp/.X11-unix:/tmp/.X11-unix
     environment:
-      - DISPLAY=$DISPLAY
+      - DISPLAY=:0
       - WAYLAND_DISPLAY=$WAYLAND_DISPLAY 
       - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
       - PULSE_SERVER=$PULSE_SERVER
+    network_mode: host
     deploy:
       resources:
         reservations:

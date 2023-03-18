@@ -87,64 +87,9 @@ RUN echo "Installing OpenCV last version ..." && \
     make -j4 && \
     make install && \
     ldconfig
-    
-    #-[] Get ORB-SLAM 3 installation ready
-    #-? From : https://github.com/UZ-SLAMLab/ORB_SLAM3
-    #-? Another RUN command in order to free memory
+
+COPY . /dpds/ORB_SLAM3
+
 RUN echo "Getting ORB-SLAM 3 installation ready ..." && \
-    cd /dpds/ && \
-    git clone https://github.com/UZ-SLAMLab/ORB_SLAM3.git ORB_SLAM3 && \
-    
-    #-! From here, a compilation method is proposed by the repo: "chmod +x build.sh && ./build.sh"
-    #-! Such method remove some control over the image build (simultaneous jobs number, directories, OpenCV version etc.) 
-    #-! Thus evey step in build.sh has been added here
-
-    #-> Install DBoW2
-    #-? Images to bag-of-word library
-    echo "Installing 'built-in' DBoW2 ..." && \
-    cd /dpds/ORB_SLAM3/ && \
-    cd /dpds/ORB_SLAM3/Thirdparty/DBoW2/ && \
-    mkdir build && \
-    cd build/ && \
-    cmake -D CMAKE_BUILD_TYPE=Release \
-    -D CMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/ \
-    /dpds/ORB_SLAM3/Thirdparty/DBoW2/ && \
-    make -j4 && \
-
-    #-> Install g2o
-    #-? Graph optimization
-    echo "Installing 'built-in' g2o ..." && \
-    cd /dpds/ORB_SLAM3/Thirdparty/g2o/ && \
-    mkdir build && \
-    cd build/ && \
-    cmake -D CMAKE_BUILD_TYPE=Release \
-    /dpds/ORB_SLAM3/Thirdparty/g2o/ && \
-    make -j4 && \
-
-    #-> Install Sophus
-    #-? Lie groups library
-    echo "Configuring and building Thirdparty/Sophus ..." && \
-    cd /dpds/ORB_SLAM3/Thirdparty/Sophus/ && \
-    mkdir build && \
-    cd build/ && \
-    cmake -D CMAKE_BUILD_TYPE=Release \
-    /dpds/ORB_SLAM3/Thirdparty/Sophus/ && \
-    make -j4 && \
-
-    #-> Uncompress vocabulary
-    #-? ORB-SLAM 3 useful data
-    echo "Uncompressing vocabulary ..." && \
-    cd /dpds/ORB_SLAM3/ && \
-    cd Vocabulary && \
-    tar -xf ORBvoc.txt.tar.gz
-    
-    #-> Install ORB-SLAM 3
-    #-? Another RUN command in order to free memory
-RUN echo "Configuring and building ORB_SLAM3 ..." && \
     cd /dpds/ORB_SLAM3 && \
-    mkdir build && \
-    cd build/ && \
-    cmake -D CMAKE_BUILD_TYPE=Release \
-    -D CMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/ \
-    /dpds/ORB_SLAM3 && \
-    make -j4
+    ./build.sh
