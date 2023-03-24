@@ -112,7 +112,7 @@ int main(int argc, char **argv)
             if(imageScale != 1.f)
             {
 #ifdef REGISTER_TIMES
-    #ifdef COMPILEDWITHC11
+    #ifdef COMPILEDWITHC14
                 std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
     #else
                 std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
                 int height = im.rows * imageScale;
                 cv::resize(im, im, cv::Size(width, height));
 #ifdef REGISTER_TIMES
-    #ifdef COMPILEDWITHC11
+    #ifdef COMPILEDWITHC14
                 std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
     #else
                 std::chrono::monotonic_clock::time_point t_End_Resize = std::chrono::monotonic_clock::now();
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
                      <<  vstrImageFilenames[seq][ni] << endl;
                 return 1;
             }
-#ifdef COMPILEDWITHC11
+#ifdef COMPILEDWITHC14
             std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 #else
             std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
             // Pass the image to the SLAM system
             SLAM.TrackMonocular(im,tframe); // TODO change to monocular_inertial
 
-#ifdef COMPILEDWITHC11
+#ifdef COMPILEDWITHC14
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
 #else
             std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
