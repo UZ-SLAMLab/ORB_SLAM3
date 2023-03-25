@@ -2,8 +2,7 @@ version: '3.8'
 
 services:
   dev:
-    build: .
-    image: vlados09/orb-slam-3:ubuntu18.04
+    image: lmwafer/orb-slam-3-ready:1.1-ubuntu18.04
     container_name: orb-slam-dev
     volumes:
       - .:/dpds/ORB_SLAM3

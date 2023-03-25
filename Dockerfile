@@ -8,7 +8,7 @@ RUN apt-get update && \
 
     #-> Install general usage dependencies
     echo "Installing general usage dependencies ..." && \
-    apt-get install -y apt-file && \
+    apt-get install -y build-essential cmake apt-file git && \
     apt-file update && \
     apt-get install -y nano \
     pkg-config && \
@@ -33,19 +33,19 @@ RUN apt-get update && \
     libboost-filesystem-dev \
     ffmpeg \
     libavutil-dev \
-    libpng-dev && \
+    libpng-dev
 
     #-> Install Eigen 3 last version
     #-? Needs to be installed BEFORE Pangolin as it also needs Eigen
     #-> Linear algebra library
-    echo "Installing Eigen 3 last version ..." && \
+RUN echo "Installing Eigen 3 last version ..." && \
     apt-get install -y libeigen3-dev && \
    
     #-> Install Pangolin last version
     #-? 3D Vizualisation tool
     #-? From : https://cdmana.com/2021/02/20210204202321078t.html
     echo "Installing Pangolin last version ..." && \
-    cd /dpds/ && \
+    mkdir /dpds && cd /dpds/ && \
     git clone https://github.com/stevenlovegrove/Pangolin.git Pangolin && \
     cd /dpds/Pangolin/ && \
     mkdir build && \

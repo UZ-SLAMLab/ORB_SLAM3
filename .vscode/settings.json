@@ -1,8 +1,0 @@
-{
-    "cmake.sourceDirectory": "${workspaceFolder}/.",
-    "files.associations": {
-        "algorithm": "cpp",
-        "*.ipp": "cpp",
-        "bitset": "cpp"
-    }
-}
