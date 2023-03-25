@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  dev:
+    build: .
+    image: vlados09/orb-slam-3:ubuntu18.04
+    container_name: orb-slam-dev
+    volumes:
+      - .:/dpds/ORB_SLAM3
+      - /mnt/wslg:/mnt/wslg
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=:0
+      - WAYLAND_DISPLAY=$WAYLAND_DISPLAY 
+      - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+      - PULSE_SERVER=$PULSE_SERVER
+    network_mode: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command: /bin/sh -c "while sleep 1000; do :; done"
