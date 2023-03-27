@@ -34,6 +34,7 @@
 
 
 #include <System.h>
+#include <argp.h>
 
 using namespace std;
 
@@ -98,19 +99,122 @@ static rs2_option get_sensor_option(const rs2::sensor& sensor)
     return static_cast<rs2_option>(selected_sensor_option);
 }
 
-int main(int argc, char **argv) {
+/* Program documentation. */
+static char doc[] =
+  "Argp example #3 -- a program with options and arguments using argp";
 
-    if (argc < 3 || argc > 4) {
-        cerr << endl
-             << "Usage: ./mono_inertial_realsense_D455 path_to_vocabulary path_to_settings (trajectory_file_name)"
-             << endl;
-        return 1;
+/* A description of the arguments we accept. */
+static char args_doc[] = "path_to_vocabulary path_to_settings (trajectory_file_name)";
+
+/* The options we understand. */
+static struct argp_option options[] = {
+  {"verbose",   'v',    0,      0,  "Produce verbose output" },
+  {"quiet",     'q',    0,      0,  "Don't produce any output" },
+  {"log",       'l',    0,      0,  "Log data in specified bag file" },
+  {"replay",    'r',    0,      0,  "Replay data from specified rosbag file" },
+  {"bag",       'b',    "FILE", 0,  "Rosbag file" },
+  {"slam",      's',    0,      0,  "Run SLAM algorithm" },
+  {"yolo",      'y',    0,      0,  "Run yolo instance segmentation" },
+  { 0 }
+};
+
+/* Used by main to communicate with parse_opt. */
+struct arguments
+{
+  char *args[3];                /* arg1 & arg2 */
+  int quiet, verbose, log, replay, slam, yolo;
+  char *output_file, *rosbag, *vocabulary;
+};
+
+/* Parse a single option. */
+static error_t
+parse_opt (int key, char *arg, struct argp_state *state)
+{
+  /* Get the input argument from argp_parse, which we
+     know is a pointer to our arguments structure. */
+  struct arguments *arguments = static_cast<struct arguments*>(state->input);
+
+  switch (key)
+    {
+    case 'q':
+      arguments->quiet = 1;
+      arguments->verbose = 0;
+      break;
+    case 'v':
+      arguments->verbose = 1;
+      break;
+    case 'l':
+      if(arguments->replay) return ARGP_ERR_UNKNOWN;
+      arguments->log = 1;
+      break;
+    case 'r':
+      if(arguments->log) return ARGP_ERR_UNKNOWN;
+      arguments->replay = 1;
+      break;
+    case 's':
+      arguments->slam = 1;
+      break;
+    case 'y':
+      arguments->yolo = 1;
+      break;
+    case 'b':
+      arguments->rosbag = arg;
+      break;
+
+    case ARGP_KEY_ARG:
+      if (state->arg_num >= 3)
+        /* Too many arguments. */
+        argp_usage (state);
+
+      arguments->args[state->arg_num] = arg;
+
+      break;
+
+    case ARGP_KEY_END:
+      if (state->arg_num < 2)
+        /* Not enough arguments. */
+        argp_usage (state);
+      break;
+
+    default:
+      return ARGP_ERR_UNKNOWN;
     }
+  return 0;
+}
+
+/* Our argp parser. */
+static struct argp argp = { options, parse_opt, args_doc, doc };
+
+int
+main (int argc, char **argv)
+{
+    struct arguments arguments;
+
+    arguments.quiet = 0;
+    arguments.verbose = 0;
+    arguments.log = 0;
+    arguments.replay = 0;
+    arguments.slam = 0;
+    arguments.yolo = 0;
+    arguments.rosbag = "-";
+
+    argp_parse (&argp, argc, argv, 0, 0, &arguments);
+
+    printf ("ARG1 = %s\nARG2 = %s\nARG3 = %s\nROSBAG_FILE = %s\n"
+            "VERBOSE = %s\nQUIET = %s\nLOG = %s\nREPLAY = %s\nSLAM = %s\nYOLO = %s",
+            arguments.args[0], arguments.args[1], arguments.args[2],
+            arguments.rosbag,
+            arguments.verbose ? "yes" : "no",
+            arguments.quiet ? "yes" : "no",
+            arguments.log ? "yes" : "no",
+            arguments.replay ? "yes" : "no",
+            arguments.slam ? "yes" : "no",
+            arguments.yolo ? "yes" : "no");
 
     string file_name;
 
-    if (argc == 4) {
-        file_name = string(argv[argc - 1]);
+    if (arguments.args[2]) {
+        file_name = arguments.args[2];
     }
 
     struct sigaction sigIntHandler;
@@ -125,41 +229,43 @@ int main(int argc, char **argv) {
     double offset = 0; // ms
 
     rs2::context ctx;
+    //.enable_device_from_file("a.bag");
     rs2::device_list devices = ctx.query_devices();
     rs2::device selected_device;
-    if (devices.size() == 0)
+    if (devices.size() == 0 && arguments.replay == 0)
     {
-        std::cerr << "No device connected, please connect a RealSense device" << std::endl;
+        std::cerr << "No device connected, please connect a RealSense device or specify a rosbag to replay" << std::endl;
         return 0;
     }
-    else
+    else if (arguments.replay == 0)
+    {
         selected_device = devices[0];
+        std::vector<rs2::sensor> sensors = selected_device.query_sensors();
+        int index = 0;
+        // We can now iterate the sensors and print their names
+        for (rs2::sensor sensor : sensors)
+            if (sensor.supports(RS2_CAMERA_INFO_NAME)) {
+                ++index;
+                if (index == 1) {
+                    sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 1);
+                    // sensor.set_option(RS2_OPTION_AUTO_EXPOSURE_LIMIT,50000);
+                    sensor.set_option(RS2_OPTION_EMITTER_ENABLED, 1); // emitter on for depth information
+                }
+                // std::cout << "  " << index << " : " << sensor.get_info(RS2_CAMERA_INFO_NAME) << std::endl;
+                //get_sensor_option(sensor);
+                if (index == 2){
+                    // RGB camera
+                    sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE,1);
 
-    std::vector<rs2::sensor> sensors = selected_device.query_sensors();
-    int index = 0;
-    // We can now iterate the sensors and print their names
-    for (rs2::sensor sensor : sensors)
-        if (sensor.supports(RS2_CAMERA_INFO_NAME)) {
-            ++index;
-            if (index == 1) {
-                sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 1);
-                // sensor.set_option(RS2_OPTION_AUTO_EXPOSURE_LIMIT,50000);
-                sensor.set_option(RS2_OPTION_EMITTER_ENABLED, 1); // emitter on for depth information
+                    // sensor.set_option(RS2_OPTION_EXPOSURE,80.f);
+                }
+
+                if (index == 3){
+                    sensor.set_option(RS2_OPTION_ENABLE_MOTION_CORRECTION,0);
+                }
+
             }
-            // std::cout << "  " << index << " : " << sensor.get_info(RS2_CAMERA_INFO_NAME) << std::endl;
-            //get_sensor_option(sensor);
-            if (index == 2){
-                // RGB camera
-                sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE,1);
-
-                // sensor.set_option(RS2_OPTION_EXPOSURE,80.f);
-            }
-
-            if (index == 3){
-                sensor.set_option(RS2_OPTION_ENABLE_MOTION_CORRECTION,0);
-            }
-
-        }
+    }
 
     // Declare RealSense pipeline, encapsulating the actual device and sensors
     rs2::pipeline pipe;
@@ -169,16 +275,24 @@ int main(int argc, char **argv) {
     //filepath << destination << "/StreamBackup.bag";
     //cfg.enable_record_to_file(filepath.str());
 
-    // RGB stream
-    cfg.enable_stream(RS2_STREAM_COLOR,1280, 720, RS2_FORMAT_RGB8, 30);
+    if (arguments.log == 1 && arguments.rosbag != "-"){
+        cfg.enable_record_to_file(arguments.rosbag);
+    }   
+    else if (arguments.replay == 1 && arguments.rosbag != "-"){
+            cfg.enable_device_from_file(arguments.rosbag);
+    } 
+    else{
+        // RGB stream
+        cfg.enable_stream(RS2_STREAM_COLOR,1280, 720, RS2_FORMAT_RGB8, 30);
 
-    // Depth stream
-    // cfg.enable_stream(RS2_STREAM_INFRARED, 1, 640, 480, RS2_FORMAT_Y8, 30);
-    cfg.enable_stream(RS2_STREAM_DEPTH,1280, 720, RS2_FORMAT_Z16, 30);
+        // Depth stream
+        // cfg.enable_stream(RS2_STREAM_INFRARED, 1, 640, 480, RS2_FORMAT_Y8, 30);
+        cfg.enable_stream(RS2_STREAM_DEPTH,1280, 720, RS2_FORMAT_Z16, 30);
 
-    // IMU stream
-    cfg.enable_stream(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F);
-    cfg.enable_stream(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
+        // IMU stream
+        cfg.enable_stream(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F);
+        cfg.enable_stream(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
+    }
 
     // IMU callback
     std::mutex imu_mutex;
@@ -318,148 +432,149 @@ int main(int argc, char **argv) {
     intrinsics_cam.coeffs[2] << ", " << intrinsics_cam.coeffs[3] << ", " << intrinsics_cam.coeffs[4] << ", " << std::endl;
     std::cout << " Model = " << intrinsics_cam.model << std::endl;
 
+    if (arguments.slam){
+        // Create SLAM system. It initializes all system threads and gets ready to process frames.
+        ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_RGBD, true, 0, file_name);
+        float imageScale = SLAM.GetImageScale();
 
-    // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_RGBD, true, 0, file_name);
-    float imageScale = SLAM.GetImageScale();
+        double timestamp;
+        cv::Mat im, depth;
 
-    double timestamp;
-    cv::Mat im, depth;
+        // Clear IMU vectors
+        v_gyro_data.clear();
+        v_gyro_timestamp.clear();
+        v_accel_data_sync.clear();
+        v_accel_timestamp_sync.clear();
 
-    // Clear IMU vectors
-    v_gyro_data.clear();
-    v_gyro_timestamp.clear();
-    v_accel_data_sync.clear();
-    v_accel_timestamp_sync.clear();
+        double t_resize = 0.f;
+        double t_track = 0.f;
 
-    double t_resize = 0.f;
-    double t_track = 0.f;
-
-    while (!SLAM.isShutDown())
-    {
-        std::vector<rs2_vector> vGyro;
-        std::vector<double> vGyro_times;
-        std::vector<rs2_vector> vAccel;
-        std::vector<double> vAccel_times;
-        rs2::frameset fs;
+        while (!SLAM.isShutDown())
         {
-            std::unique_lock<std::mutex> lk(imu_mutex);
-            if(!image_ready)
-                cond_image_rec.wait(lk);
-
-#ifdef COMPILEDWITHC11
-            std::chrono::steady_clock::time_point time_Start_Process = std::chrono::steady_clock::now();
-#else
-            std::chrono::monotonic_clock::time_point time_Start_Process = std::chrono::monotonic_clock::now();
-#endif
-
-            fs = fsSLAM;
-
-            if(count_im_buffer>1)
-                cout << count_im_buffer -1 << " dropped frs\n";
-            count_im_buffer = 0;
-
-            while(v_gyro_timestamp.size() > v_accel_timestamp_sync.size())
+            std::vector<rs2_vector> vGyro;
+            std::vector<double> vGyro_times;
+            std::vector<rs2_vector> vAccel;
+            std::vector<double> vAccel_times;
+            rs2::frameset fs;
             {
-                int index = v_accel_timestamp_sync.size();
-                double target_time = v_gyro_timestamp[index];
+                std::unique_lock<std::mutex> lk(imu_mutex);
+                if(!image_ready)
+                    cond_image_rec.wait(lk);
 
-                rs2_vector interp_data = interpolateMeasure(target_time, current_accel_data, current_accel_timestamp, prev_accel_data, prev_accel_timestamp);
+    #ifdef COMPILEDWITHC11
+                std::chrono::steady_clock::time_point time_Start_Process = std::chrono::steady_clock::now();
+    #else
+                std::chrono::monotonic_clock::time_point time_Start_Process = std::chrono::monotonic_clock::now();
+    #endif
 
-                v_accel_data_sync.push_back(interp_data);
-                v_accel_timestamp_sync.push_back(target_time);
+                fs = fsSLAM;
+
+                if(count_im_buffer>1)
+                    cout << count_im_buffer -1 << " dropped frs\n";
+                count_im_buffer = 0;
+
+                while(v_gyro_timestamp.size() > v_accel_timestamp_sync.size())
+                {
+                    int index = v_accel_timestamp_sync.size();
+                    double target_time = v_gyro_timestamp[index];
+
+                    rs2_vector interp_data = interpolateMeasure(target_time, current_accel_data, current_accel_timestamp, prev_accel_data, prev_accel_timestamp);
+
+                    v_accel_data_sync.push_back(interp_data);
+                    v_accel_timestamp_sync.push_back(target_time);
+                }
+
+                // Copy the IMU data
+                vGyro = v_gyro_data;
+                vGyro_times = v_gyro_timestamp;
+                vAccel = v_accel_data_sync;
+                vAccel_times = v_accel_timestamp_sync;
+
+                // Image
+                timestamp = timestamp_image;
+
+                // Clear IMU vectors
+                v_gyro_data.clear();
+                v_gyro_timestamp.clear();
+                v_accel_data_sync.clear();
+                v_accel_timestamp_sync.clear();
+
+                image_ready = false;
+
             }
 
-            // Copy the IMU data
-            vGyro = v_gyro_data;
-            vGyro_times = v_gyro_timestamp;
-            vAccel = v_accel_data_sync;
-            vAccel_times = v_accel_timestamp_sync;
+            // Perform alignment here
+            auto processed = align.process(fs);
 
-            // Image
-            timestamp = timestamp_image;
+            // Trying to get both other and aligned depth frames
+            rs2::video_frame color_frame = processed.first(align_to);
+            rs2::depth_frame depth_frame = processed.get_depth_frame();
 
-            // Clear IMU vectors
-            v_gyro_data.clear();
-            v_gyro_timestamp.clear();
-            v_accel_data_sync.clear();
-            v_accel_timestamp_sync.clear();
+            im = cv::Mat(cv::Size(width_img, height_img), CV_8UC3, (void*)(color_frame.get_data()), cv::Mat::AUTO_STEP);
+            depth = cv::Mat(cv::Size(width_img, height_img), CV_16U, (void*)(depth_frame.get_data()), cv::Mat::AUTO_STEP);
 
-            image_ready = false;
+            /*cv::Mat depthCV_8U;
+            depthCV.convertTo(depthCV_8U,CV_8U,0.01);
+            cv::imshow("depth image", depthCV_8U);*/
 
+            for(int i=0; i<vGyro.size(); ++i)
+            {
+                ORB_SLAM3::IMU::Point lastPoint(vAccel[i].x, vAccel[i].y, vAccel[i].z,
+                                                vGyro[i].x, vGyro[i].y, vGyro[i].z,
+                                                vGyro_times[i]);
+                vImuMeas.push_back(lastPoint);
+            }
+
+            if(imageScale != 1.f)
+            {
+    #ifdef REGISTER_TIMES
+        #ifdef COMPILEDWITHC11
+                std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
+        #else
+                std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
+        #endif
+    #endif
+                int width = im.cols * imageScale;
+                int height = im.rows * imageScale;
+                cv::resize(im, im, cv::Size(width, height));
+                cv::resize(depth, depth, cv::Size(width, height));
+
+    #ifdef REGISTER_TIMES
+        #ifdef COMPILEDWITHC11
+                std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
+        #else
+                std::chrono::monotonic_clock::time_point t_End_Resize = std::chrono::monotonic_clock::now();
+        #endif
+                t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
+                SLAM.InsertResizeTime(t_resize);
+    #endif
+            }
+
+    #ifdef REGISTER_TIMES
+        #ifdef COMPILEDWITHC11
+            std::chrono::steady_clock::time_point t_Start_Track = std::chrono::steady_clock::now();
+        #else
+            std::chrono::monotonic_clock::time_point t_Start_Track = std::chrono::monotonic_clock::now();
+        #endif
+    #endif
+            // Pass the image to the SLAM system
+            SLAM.TrackRGBD(im, depth, timestamp, vImuMeas);
+
+    #ifdef REGISTER_TIMES
+        #ifdef COMPILEDWITHC11
+            std::chrono::steady_clock::time_point t_End_Track = std::chrono::steady_clock::now();
+        #else
+            std::chrono::monotonic_clock::time_point t_End_Track = std::chrono::monotonic_clock::now();
+        #endif
+            t_track = t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Track - t_Start_Track).count();
+            SLAM.InsertTrackTime(t_track);
+    #endif
+
+            // Clear the previous IMU measurements to load the new ones
+            vImuMeas.clear();
         }
-
-        // Perform alignment here
-        auto processed = align.process(fs);
-
-        // Trying to get both other and aligned depth frames
-        rs2::video_frame color_frame = processed.first(align_to);
-        rs2::depth_frame depth_frame = processed.get_depth_frame();
-
-        im = cv::Mat(cv::Size(width_img, height_img), CV_8UC3, (void*)(color_frame.get_data()), cv::Mat::AUTO_STEP);
-        depth = cv::Mat(cv::Size(width_img, height_img), CV_16U, (void*)(depth_frame.get_data()), cv::Mat::AUTO_STEP);
-
-        /*cv::Mat depthCV_8U;
-        depthCV.convertTo(depthCV_8U,CV_8U,0.01);
-        cv::imshow("depth image", depthCV_8U);*/
-
-        for(int i=0; i<vGyro.size(); ++i)
-        {
-            ORB_SLAM3::IMU::Point lastPoint(vAccel[i].x, vAccel[i].y, vAccel[i].z,
-                                            vGyro[i].x, vGyro[i].y, vGyro[i].z,
-                                            vGyro_times[i]);
-            vImuMeas.push_back(lastPoint);
-        }
-
-        if(imageScale != 1.f)
-        {
-#ifdef REGISTER_TIMES
-    #ifdef COMPILEDWITHC11
-            std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
-    #else
-            std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
-    #endif
-#endif
-            int width = im.cols * imageScale;
-            int height = im.rows * imageScale;
-            cv::resize(im, im, cv::Size(width, height));
-            cv::resize(depth, depth, cv::Size(width, height));
-
-#ifdef REGISTER_TIMES
-    #ifdef COMPILEDWITHC11
-            std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
-    #else
-            std::chrono::monotonic_clock::time_point t_End_Resize = std::chrono::monotonic_clock::now();
-    #endif
-            t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
-            SLAM.InsertResizeTime(t_resize);
-#endif
-        }
-
-#ifdef REGISTER_TIMES
-    #ifdef COMPILEDWITHC11
-        std::chrono::steady_clock::time_point t_Start_Track = std::chrono::steady_clock::now();
-    #else
-        std::chrono::monotonic_clock::time_point t_Start_Track = std::chrono::monotonic_clock::now();
-    #endif
-#endif
-        // Pass the image to the SLAM system
-        SLAM.TrackRGBD(im, depth, timestamp, vImuMeas);
-
-#ifdef REGISTER_TIMES
-    #ifdef COMPILEDWITHC11
-        std::chrono::steady_clock::time_point t_End_Track = std::chrono::steady_clock::now();
-    #else
-        std::chrono::monotonic_clock::time_point t_End_Track = std::chrono::monotonic_clock::now();
-    #endif
-        t_track = t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Track - t_Start_Track).count();
-        SLAM.InsertTrackTime(t_track);
-#endif
-
-        // Clear the previous IMU measurements to load the new ones
-        vImuMeas.clear();
+        cout << "System shutdown!\n";
     }
-    cout << "System shutdown!\n";
 }
 
 rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams)
