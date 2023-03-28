@@ -275,13 +275,7 @@ main (int argc, char **argv)
     //filepath << destination << "/StreamBackup.bag";
     //cfg.enable_record_to_file(filepath.str());
 
-    if (arguments.log == 1 && arguments.rosbag != "-"){
-        cfg.enable_record_to_file(arguments.rosbag);
-    }   
-    else if (arguments.replay == 1 && arguments.rosbag != "-"){
-            cfg.enable_device_from_file(arguments.rosbag);
-    } 
-    else{
+    if (arguments.replay == 0){
         // RGB stream
         cfg.enable_stream(RS2_STREAM_COLOR,1280, 720, RS2_FORMAT_RGB8, 30);
 
@@ -292,7 +286,15 @@ main (int argc, char **argv)
         // IMU stream
         cfg.enable_stream(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F);
         cfg.enable_stream(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
+
+        if (arguments.log == 1 && arguments.rosbag != "-"){
+            cfg.enable_record_to_file(arguments.rosbag);
+        }   
+
     }
+    else if (arguments.rosbag != "-"){
+        cfg.enable_device_from_file(arguments.rosbag);
+    } 
 
     // IMU callback
     std::mutex imu_mutex;
