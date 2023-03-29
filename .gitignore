@@ -7,6 +7,9 @@
 # Unignore all dirs
 !*/
 
+*.bag
+.vscode/
+
 CMakeLists.txt.user
 CMakeLists_modified.txt
 

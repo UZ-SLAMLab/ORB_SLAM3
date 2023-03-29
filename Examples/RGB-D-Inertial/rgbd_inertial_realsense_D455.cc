@@ -108,21 +108,23 @@ static char args_doc[] = "path_to_vocabulary path_to_settings (trajectory_file_n
 
 /* The options we understand. */
 static struct argp_option options[] = {
-  {"verbose",   'v',    0,      0,  "Produce verbose output" },
   {"quiet",     'q',    0,      0,  "Don't produce any output" },
   {"log",       'l',    0,      0,  "Log data in specified bag file" },
   {"replay",    'r',    0,      0,  "Replay data from specified rosbag file" },
   {"bag",       'b',    "FILE", 0,  "Rosbag file" },
   {"slam",      's',    0,      0,  "Run SLAM algorithm" },
+  {"outfile",   'o',    "FILE", 0,  "SLAM algorithm outfile" },
+  {"vocabulary",'v',    "FILE", 0,  "Vocabulary file for SLAM algorithm" },
   {"yolo",      'y',    0,      0,  "Run yolo instance segmentation" },
+  {"nogui",     'g',    0,      0,  "Run without GUI" },
   { 0 }
 };
 
 /* Used by main to communicate with parse_opt. */
 struct arguments
 {
-  char *args[3];                /* arg1 & arg2 */
-  int quiet, verbose, log, replay, slam, yolo;
+  char *args[1];                /* arg1 & arg2 */
+  int quiet, log, replay, slam, yolo, gui;
   char *output_file, *rosbag, *vocabulary;
 };
 
@@ -138,10 +140,6 @@ parse_opt (int key, char *arg, struct argp_state *state)
     {
     case 'q':
       arguments->quiet = 1;
-      arguments->verbose = 0;
-      break;
-    case 'v':
-      arguments->verbose = 1;
       break;
     case 'l':
       if(arguments->replay) return ARGP_ERR_UNKNOWN;
@@ -160,9 +158,18 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case 'b':
       arguments->rosbag = arg;
       break;
+    case 'o':
+      arguments->output_file = arg;
+      break;
+    case 'v':
+      arguments->vocabulary = arg;
+      break;
+    case 'g':
+      arguments->gui = 0;
+      break;
 
     case ARGP_KEY_ARG:
-      if (state->arg_num >= 3)
+      if (state->arg_num > 1)
         /* Too many arguments. */
         argp_usage (state);
 
@@ -171,7 +178,7 @@ parse_opt (int key, char *arg, struct argp_state *state)
       break;
 
     case ARGP_KEY_END:
-      if (state->arg_num < 2)
+      if (state->arg_num < 1)
         /* Not enough arguments. */
         argp_usage (state);
       break;
@@ -191,30 +198,34 @@ main (int argc, char **argv)
     struct arguments arguments;
 
     arguments.quiet = 0;
-    arguments.verbose = 0;
     arguments.log = 0;
     arguments.replay = 0;
     arguments.slam = 0;
     arguments.yolo = 0;
+    arguments.gui = 1;
     arguments.rosbag = "-";
+    arguments.output_file = "-";
+    arguments.vocabulary = "-";
 
     argp_parse (&argp, argc, argv, 0, 0, &arguments);
 
-    printf ("ARG1 = %s\nARG2 = %s\nARG3 = %s\nROSBAG_FILE = %s\n"
-            "VERBOSE = %s\nQUIET = %s\nLOG = %s\nREPLAY = %s\nSLAM = %s\nYOLO = %s",
-            arguments.args[0], arguments.args[1], arguments.args[2],
+    printf ("CONFIGURATION_FILE = %s\nROSBAG_FILE = %s\nOUTPUT_FILE = %s\nVOCABULARY_FILE = %s\n"
+            "QUIET = %s\nLOG = %s\nREPLAY = %s\nSLAM = %s\nYOLO = %s\nGUI = %s\n",
+            arguments.args[0],
             arguments.rosbag,
-            arguments.verbose ? "yes" : "no",
+            arguments.output_file,
+            arguments.vocabulary,
             arguments.quiet ? "yes" : "no",
             arguments.log ? "yes" : "no",
             arguments.replay ? "yes" : "no",
             arguments.slam ? "yes" : "no",
-            arguments.yolo ? "yes" : "no");
+            arguments.yolo ? "yes" : "no",
+            arguments.gui ? "yes" : "no");
 
     string file_name;
 
-    if (arguments.args[2]) {
-        file_name = arguments.args[2];
+    if (arguments.output_file != "-") {
+        file_name = arguments.output_file;
     }
 
     struct sigaction sigIntHandler;
@@ -276,6 +287,7 @@ main (int argc, char **argv)
     //cfg.enable_record_to_file(filepath.str());
 
     if (arguments.replay == 0){
+
         // RGB stream
         cfg.enable_stream(RS2_STREAM_COLOR,1280, 720, RS2_FORMAT_RGB8, 30);
 
@@ -287,13 +299,9 @@ main (int argc, char **argv)
         cfg.enable_stream(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F);
         cfg.enable_stream(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
 
-        if (arguments.log == 1 && arguments.rosbag != "-"){
-            cfg.enable_record_to_file(arguments.rosbag);
-        }   
-
     }
     else if (arguments.rosbag != "-"){
-        cfg.enable_device_from_file(arguments.rosbag);
+        cfg.enable_device_from_file(arguments.rosbag, false);
     } 
 
     // IMU callback
@@ -340,7 +348,8 @@ main (int argc, char **argv)
         if(rs2::frameset fs = frame.as<rs2::frameset>())
         {
             count_im_buffer++;
-
+            rs2::playback playback = pipe.get_active_profile().get_device();
+            //std::cout<<playback.get_position()<<"/"<<playback.get_duration()<<endl;
             double new_timestamp_image = fs.get_timestamp()*1e-3;
             if(abs(timestamp_image-new_timestamp_image)<0.001){
                 count_im_buffer--;
@@ -404,6 +413,9 @@ main (int argc, char **argv)
         }
     };
 
+    if (arguments.log == 1 && arguments.rosbag != "-"){
+        cfg.enable_record_to_file(arguments.rosbag);
+    }   
 
     pipe_profile = pipe.start(cfg, imu_callback);
 
@@ -434,9 +446,11 @@ main (int argc, char **argv)
     intrinsics_cam.coeffs[2] << ", " << intrinsics_cam.coeffs[3] << ", " << intrinsics_cam.coeffs[4] << ", " << std::endl;
     std::cout << " Model = " << intrinsics_cam.model << std::endl;
 
-    if (arguments.slam){
+    if (arguments.slam)
+    {
         // Create SLAM system. It initializes all system threads and gets ready to process frames.
-        ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_RGBD, true, 0, file_name);
+        std::cout<<arguments.vocabulary<<" "<<arguments.args[0]<<std::endl;
+        ORB_SLAM3::System SLAM(arguments.vocabulary, arguments.args[0],ORB_SLAM3::System::IMU_RGBD, true, 0, file_name);
         float imageScale = SLAM.GetImageScale();
 
         double timestamp;
@@ -452,7 +466,9 @@ main (int argc, char **argv)
         double t_track = 0.f;
 
         while (!SLAM.isShutDown())
-        {
+        {   
+            std::cout<<"test inside while\n";
+            
             std::vector<rs2_vector> vGyro;
             std::vector<double> vGyro_times;
             std::vector<rs2_vector> vAccel;
@@ -461,6 +477,7 @@ main (int argc, char **argv)
             {
                 std::unique_lock<std::mutex> lk(imu_mutex);
                 if(!image_ready)
+                    std::cout<<"test inside wait\n";
                     cond_image_rec.wait(lk);
 
     #ifdef COMPILEDWITHC11
@@ -575,6 +592,7 @@ main (int argc, char **argv)
             // Clear the previous IMU measurements to load the new ones
             vImuMeas.clear();
         }
+        pipe.stop();
         cout << "System shutdown!\n";
     }
 }
@@ -594,12 +612,10 @@ rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams)
         {
             if (!color_stream_found){         //Prefer color
                 align_to = profile_stream;
-                cout<<"test"<<endl;
             }
             if (profile_stream == RS2_STREAM_COLOR)
             {
                 color_stream_found = true;
-                cout<< "COLOR FOUND"<<endl;
             }
         }
         else
