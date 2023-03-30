@@ -1520,21 +1520,32 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
 Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, string filename)
 {
     mImGray = imRGB;
+    mImColor = imRGB;
     cv::Mat imDepth = imD;
 
     if(mImGray.channels()==3)
     {
         if(mbRGB)
+        {
             cvtColor(mImGray,mImGray,cv::COLOR_RGB2GRAY);
+        }
         else
+        
             cvtColor(mImGray,mImGray,cv::COLOR_BGR2GRAY);
+            cvtColor(mImColor,mImColor,cv::COLOR_BGR2RGB);
+        }
     }
     else if(mImGray.channels()==4)
     {
         if(mbRGB)
+        {
             cvtColor(mImGray,mImGray,cv::COLOR_RGBA2GRAY);
+        }
         else
+        {
             cvtColor(mImGray,mImGray,cv::COLOR_BGRA2GRAY);
+            cvtColor(mImColor,mImColor,cv::COLOR_BGRA2RGB);
+        }
     }
 
     if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)

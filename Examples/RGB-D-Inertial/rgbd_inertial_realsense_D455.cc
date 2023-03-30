@@ -467,8 +467,6 @@ main (int argc, char **argv)
 
         while (!SLAM.isShutDown())
         {   
-            std::cout<<"test inside while\n";
-            
             std::vector<rs2_vector> vGyro;
             std::vector<double> vGyro_times;
             std::vector<rs2_vector> vAccel;
@@ -477,7 +475,6 @@ main (int argc, char **argv)
             {
                 std::unique_lock<std::mutex> lk(imu_mutex);
                 if(!image_ready)
-                    std::cout<<"test inside wait\n";
                     cond_image_rec.wait(lk);
 
     #ifdef COMPILEDWITHC11
