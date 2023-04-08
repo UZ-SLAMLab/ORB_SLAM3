@@ -503,26 +503,36 @@ main (int argc, char **argv)
     intrinsics_cam.coeffs[2] << ", " << intrinsics_cam.coeffs[3] << ", " << intrinsics_cam.coeffs[4] << ", " << std::endl;
     std::cout << " Model = " << intrinsics_cam.model << std::endl;
 
-    if (arguments.slam)
+    float imageScale;
+    ORB_SLAM3::System* pSLAM;
+
+    if(arguments.slam)
     {
         // Create SLAM system. It initializes all system threads and gets ready to process frames.
-        ORB_SLAM3::System SLAM(arguments.vocabulary, arguments.args[0],ORB_SLAM3::System::IMU_RGBD, arguments.gui, 0, file_name);
-        float imageScale = SLAM.GetImageScale();
+        pSLAM = new ORB_SLAM3::System(arguments.vocabulary, arguments.args[0],ORB_SLAM3::System::IMU_RGBD, arguments.gui, 0, file_name);
+        imageScale = pSLAM->GetImageScale();
+    }
+    else
+    {
+        imageScale = 1.f;
+    }
+    double timestamp;
+    cv::Mat im, depth;
 
-        double timestamp;
-        cv::Mat im, depth;
+    // Clear IMU vectors
+    v_gyro_data.clear();
+    v_gyro_timestamp.clear();
+    v_accel_data_sync.clear();
+    v_accel_timestamp_sync.clear();
 
-        // Clear IMU vectors
-        v_gyro_data.clear();
-        v_gyro_timestamp.clear();
-        v_accel_data_sync.clear();
-        v_accel_timestamp_sync.clear();
+    double t_resize = 0.f;
+    double t_track = 0.f;
 
-        double t_resize = 0.f;
-        double t_track = 0.f;
-
-        while (!SLAM.isShutDown())
-        {   
+        //while (!SLAM.isShutDown())
+        //{   
+    while (b_continue_session)
+    {       
+        /*
             if(!b_continue_session){
                 // Stop all threads
                 SLAM.Shutdown();
@@ -531,158 +541,121 @@ main (int argc, char **argv)
                 SLAM.SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
                 break;
             }
-            std::vector<rs2_vector> vGyro;
-            std::vector<double> vGyro_times;
-            std::vector<rs2_vector> vAccel;
-            std::vector<double> vAccel_times;
-            rs2::frameset fs;
+            */
+        std::vector<rs2_vector> vGyro;
+        std::vector<double> vGyro_times;
+        std::vector<rs2_vector> vAccel;
+        std::vector<double> vAccel_times;
+        rs2::frameset fs;
+        {
+            std::unique_lock<std::mutex> lk(imu_mutex);
+            if(!image_ready)
+                cond_image_rec.wait(lk);
+                
+            std::chrono::steady_clock::time_point time_Start_Process = std::chrono::steady_clock::now();
+
+            fs = fsSLAM;
+
+            if(count_im_buffer>1)
+                cout << count_im_buffer -1 << " dropped frs\n";
+            count_im_buffer = 0;
+
+            while(v_gyro_timestamp.size() > v_accel_timestamp_sync.size())
             {
-                std::unique_lock<std::mutex> lk(imu_mutex);
-                if(!image_ready)
-                    cond_image_rec.wait(lk);
+                int index = v_accel_timestamp_sync.size();
+                double target_time = v_gyro_timestamp[index];
 
-    #ifdef COMPILEDWITHC11
-                std::chrono::steady_clock::time_point time_Start_Process = std::chrono::steady_clock::now();
-    #else
-                std::chrono::monotonic_clock::time_point time_Start_Process = std::chrono::monotonic_clock::now();
-    #endif
+                rs2_vector interp_data = interpolateMeasure(target_time, current_accel_data, current_accel_timestamp, prev_accel_data, prev_accel_timestamp);
 
-                fs = fsSLAM;
-
-                if(count_im_buffer>1)
-                    cout << count_im_buffer -1 << " dropped frs\n";
-                count_im_buffer = 0;
-
-                while(v_gyro_timestamp.size() > v_accel_timestamp_sync.size())
-                {
-                    int index = v_accel_timestamp_sync.size();
-                    double target_time = v_gyro_timestamp[index];
-
-                    rs2_vector interp_data = interpolateMeasure(target_time, current_accel_data, current_accel_timestamp, prev_accel_data, prev_accel_timestamp);
-
-                    v_accel_data_sync.push_back(interp_data);
-                    v_accel_timestamp_sync.push_back(target_time);
-                }
-
-                // Copy the IMU data
-                vGyro = v_gyro_data;
-                vGyro_times = v_gyro_timestamp;
-                vAccel = v_accel_data_sync;
-                vAccel_times = v_accel_timestamp_sync;
-
-                // Image
-                timestamp = timestamp_image;
-
-                // Clear IMU vectors
-                v_gyro_data.clear();
-                v_gyro_timestamp.clear();
-                v_accel_data_sync.clear();
-                v_accel_timestamp_sync.clear();
-
-                image_ready = false;
-
+                v_accel_data_sync.push_back(interp_data);
+                v_accel_timestamp_sync.push_back(target_time);
             }
 
-            // Perform alignment here
-            auto processed = align.process(fs);
+            // Copy the IMU data
+            vGyro = v_gyro_data;
+            vGyro_times = v_gyro_timestamp;
+            vAccel = v_accel_data_sync;
+            vAccel_times = v_accel_timestamp_sync;
 
-            // Trying to get both other and aligned depth frames
-            rs2::video_frame color_frame = processed.first(align_to);
-            rs2::depth_frame depth_frame = processed.get_depth_frame();
+            // Image
+            timestamp = timestamp_image;
 
-            im = cv::Mat(cv::Size(width_img, height_img), CV_8UC3, (void*)(color_frame.get_data()), cv::Mat::AUTO_STEP);
-            depth = cv::Mat(cv::Size(width_img, height_img), CV_16U, (void*)(depth_frame.get_data()), cv::Mat::AUTO_STEP);
+            // Clear IMU vectors
+            v_gyro_data.clear();
+            v_gyro_timestamp.clear();
+            v_accel_data_sync.clear();
+            v_accel_timestamp_sync.clear();
 
-            /*cv::Mat depthCV_8U;
-            depthCV.convertTo(depthCV_8U,CV_8U,0.01);
-            cv::imshow("depth image", depthCV_8U);*/
+            image_ready = false;
 
-            for(int i=0; i<vGyro.size(); ++i)
-            {
-                ORB_SLAM3::IMU::Point lastPoint(vAccel[i].x, vAccel[i].y, vAccel[i].z,
-                                                vGyro[i].x, vGyro[i].y, vGyro[i].z,
-                                                vGyro_times[i]);
-                vImuMeas.push_back(lastPoint);
-            }
+        }
 
-            if(imageScale != 1.f)
-            {
+        // Perform alignment here
+        auto processed = align.process(fs);
+
+        // Trying to get both other and aligned depth frames
+        rs2::video_frame color_frame = processed.first(align_to);
+        rs2::depth_frame depth_frame = processed.get_depth_frame();
+
+        im = cv::Mat(cv::Size(width_img, height_img), CV_8UC3, (void*)(color_frame.get_data()), cv::Mat::AUTO_STEP);
+        depth = cv::Mat(cv::Size(width_img, height_img), CV_16U, (void*)(depth_frame.get_data()), cv::Mat::AUTO_STEP);
+
+        for(int i=0; i<vGyro.size(); ++i)
+        {
+            ORB_SLAM3::IMU::Point lastPoint(vAccel[i].x, vAccel[i].y, vAccel[i].z,
+                                            vGyro[i].x, vGyro[i].y, vGyro[i].z,
+                                            vGyro_times[i]);
+            vImuMeas.push_back(lastPoint);
+        }
+
+        if(imageScale != 1.f)
+        {
     #ifdef REGISTER_TIMES
-        #ifdef COMPILEDWITHC11
-                std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
-        #else
-                std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
-        #endif
+            std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
     #endif
-                int width = im.cols * imageScale;
-                int height = im.rows * imageScale;
-                cv::resize(im, im, cv::Size(width, height));
-                cv::resize(depth, depth, cv::Size(width, height));
+            int width = im.cols * imageScale;
+            int height = im.rows * imageScale;
+            cv::resize(im, im, cv::Size(width, height));
+            cv::resize(depth, depth, cv::Size(width, height));
 
     #ifdef REGISTER_TIMES
-        #ifdef COMPILEDWITHC11
-                std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
-        #else
-                std::chrono::monotonic_clock::time_point t_End_Resize = std::chrono::monotonic_clock::now();
-        #endif
-                t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
-                SLAM.InsertResizeTime(t_resize);
+            std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
+            t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
+            pSLAM->InsertResizeTime(t_resize);
     #endif
-            }
+        }
 
     #ifdef REGISTER_TIMES
-        #ifdef COMPILEDWITHC11
-            std::chrono::steady_clock::time_point t_Start_Track = std::chrono::steady_clock::now();
-        #else
-            std::chrono::monotonic_clock::time_point t_Start_Track = std::chrono::monotonic_clock::now();
-        #endif
+        std::chrono::steady_clock::time_point t_Start_Track = std::chrono::steady_clock::now();
     #endif
+        if (arguments.slam && !pSLAM->isShutDown())
+        {
             // Pass the image to the SLAM system
-            SLAM.TrackRGBD(im, depth, timestamp, vImuMeas);
+            pSLAM->TrackRGBD(im, depth, timestamp, vImuMeas);
 
     #ifdef REGISTER_TIMES
-        #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t_End_Track = std::chrono::steady_clock::now();
-        #else
-            std::chrono::monotonic_clock::time_point t_End_Track = std::chrono::monotonic_clock::now();
-        #endif
             t_track = t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Track - t_Start_Track).count();
-            SLAM.InsertTrackTime(t_track);
+            pSLAM->InsertTrackTime(t_track);
     #endif
+        }
 
             // Clear the previous IMU measurements to load the new ones
             vImuMeas.clear();
+        if(arguments.slam && pSLAM->isShutDown()){
+            b_continue_session = false;
         }
-        pipe.stop();
-        cout << "System shutdown!\n";
     }
-    else
+    if(arguments.slam && !pSLAM->isShutDown())
     {
-        while(b_continue_session)
-        {
-            rs2::frameset fs;
-            {
-                std::unique_lock<std::mutex> lk(imu_mutex);
-                if(!image_ready)
-                    cond_image_rec.wait(lk);
-
-    #ifdef COMPILEDWITHC11
-                std::chrono::steady_clock::time_point time_Start_Process = std::chrono::steady_clock::now();
-    #else
-                std::chrono::monotonic_clock::time_point time_Start_Process = std::chrono::monotonic_clock::now();
-    #endif
-
-                fs = fsSLAM;
-
-                if(count_im_buffer>1)
-                    cout << count_im_buffer -1 << " dropped frs\n";
-                count_im_buffer = 0;
-
-            }
-        }
-        pipe.stop();
-        cout << "System shutdown!\n";
+        // Stop all threads
+        pSLAM->Shutdown();
+        // Save camera trajectory
+        pSLAM->SaveTrajectoryEuRoC("CameraTrajectory.txt");
+        pSLAM->SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
     }
+    pipe.stop();
+    cout << "System shutdown!\n";
 }
 
 rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams)
