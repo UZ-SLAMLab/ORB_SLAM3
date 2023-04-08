@@ -1530,7 +1530,7 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
             cvtColor(mImGray,mImGray,cv::COLOR_RGB2GRAY);
         }
         else
-        
+        {
             cvtColor(mImGray,mImGray,cv::COLOR_BGR2GRAY);
             cvtColor(mImColor,mImColor,cv::COLOR_BGR2RGB);
         }

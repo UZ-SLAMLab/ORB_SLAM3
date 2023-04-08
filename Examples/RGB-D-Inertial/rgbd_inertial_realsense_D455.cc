@@ -23,7 +23,9 @@
 #include <fstream>
 #include <chrono>
 #include <ctime>
+#include <string>
 #include <sstream>
+#include <filesystem>
 
 #include <condition_variable>
 
@@ -43,7 +45,6 @@ bool b_continue_session;
 void exit_loop_handler(int s){
     cout << "Finishing session" << endl;
     b_continue_session = false;
-
 }
 
 rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams);
@@ -283,25 +284,44 @@ main (int argc, char **argv)
 
     // Create a configuration for configuring the pipeline with a non default profile
     rs2::config cfg;
-    //filepath << destination << "/StreamBackup.bag";
-    //cfg.enable_record_to_file(filepath.str());
 
-    if (arguments.replay == 0){
+    cv::FileStorage fSettings(arguments.args[0], cv::FileStorage::READ);
+    cv::FileNode node;
+    float configWidth, configHeight, configFps;
+    node = fSettings["Camera.width"];
+    if(!node.empty())
+        configWidth = node.real();
+    node = fSettings["Camera.height"];
+    if(!node.empty())
+        configHeight = node.real();
+    node = fSettings["Camera.fps"];
+    if(!node.empty())
+        configFps = node.real();
 
+    if (arguments.replay == 0)
+    {
         // RGB stream
-        cfg.enable_stream(RS2_STREAM_COLOR,1280, 720, RS2_FORMAT_RGB8, 30);
+        cfg.enable_stream(RS2_STREAM_COLOR, configWidth, configHeight, RS2_FORMAT_RGB8, configFps);
 
         // Depth stream
-        // cfg.enable_stream(RS2_STREAM_INFRARED, 1, 640, 480, RS2_FORMAT_Y8, 30);
-        cfg.enable_stream(RS2_STREAM_DEPTH,1280, 720, RS2_FORMAT_Z16, 30);
+        cfg.enable_stream(RS2_STREAM_DEPTH, configWidth, configHeight, RS2_FORMAT_Z16, configFps);
 
         // IMU stream
         cfg.enable_stream(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F);
         cfg.enable_stream(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
 
     }
-    else if (arguments.rosbag != "-"){
-        cfg.enable_device_from_file(arguments.rosbag, false);
+    else if (arguments.rosbag != "-")
+    {
+        if(std::filesystem::exists(arguments.rosbag) && std::filesystem::is_regular_file(arguments.rosbag))
+        {
+            cfg.enable_device_from_file(arguments.rosbag, true);
+        }
+        else
+        {
+            std::cout << "provided rosbag file does not exist" << std::endl;
+            return -1;
+        }
     } 
 
     // IMU callback
@@ -414,7 +434,38 @@ main (int argc, char **argv)
     };
 
     if (arguments.log == 1 && arguments.rosbag != "-"){
-        cfg.enable_record_to_file(arguments.rosbag);
+        std::string rosbag = arguments.rosbag;
+        std::string destination;
+        std::cout << rosbag.ends_with(".bag") << std::endl;
+        if(rosbag.ends_with(".bag"))
+        {
+            if(std::filesystem::exists(rosbag) && std::filesystem::is_regular_file(rosbag))
+            {
+                std::cout << "overwriting existing file" << std::endl;
+            }
+            destination = rosbag;
+        }
+        else
+        {   
+            destination = rosbag + "/acq_" + std::to_string(std::time(NULL));
+            if(std::filesystem::exists(destination) && std::filesystem::is_directory(destination))
+            {
+                std::cout << "There is another directory for the current timestamp, wtf, good luck debugging that" << std::endl;
+                return -1;
+            }
+            else {
+                if(!std::filesystem::create_directories(destination))
+                {
+                    std::cout << "Could not create directory, check system configuration" << std::endl;
+                    return -1;
+                }
+                else
+                {
+                    destination = destination + "/StreamBackup.bag";
+                }
+            }
+        }
+        cfg.enable_record_to_file(destination);
     }   
 
     pipe_profile = pipe.start(cfg, imu_callback);
@@ -442,6 +493,12 @@ main (int argc, char **argv)
     std::cout << " cy = " << intrinsics_cam.ppy << std::endl;
     std::cout << " height = " << intrinsics_cam.height << std::endl;
     std::cout << " width = " << intrinsics_cam.width << std::endl;
+
+    if(configWidth != width_img || configHeight != height_img){
+        std::cout << "mismatch between config file and stream frame sizes, aborting" << std::endl;
+        return -1;
+    }
+
     std::cout << " Coeff = " << intrinsics_cam.coeffs[0] << ", " << intrinsics_cam.coeffs[1] << ", " <<
     intrinsics_cam.coeffs[2] << ", " << intrinsics_cam.coeffs[3] << ", " << intrinsics_cam.coeffs[4] << ", " << std::endl;
     std::cout << " Model = " << intrinsics_cam.model << std::endl;
@@ -449,8 +506,7 @@ main (int argc, char **argv)
     if (arguments.slam)
     {
         // Create SLAM system. It initializes all system threads and gets ready to process frames.
-        std::cout<<arguments.vocabulary<<" "<<arguments.args[0]<<std::endl;
-        ORB_SLAM3::System SLAM(arguments.vocabulary, arguments.args[0],ORB_SLAM3::System::IMU_RGBD, true, 0, file_name);
+        ORB_SLAM3::System SLAM(arguments.vocabulary, arguments.args[0],ORB_SLAM3::System::IMU_RGBD, arguments.gui, 0, file_name);
         float imageScale = SLAM.GetImageScale();
 
         double timestamp;
@@ -467,6 +523,14 @@ main (int argc, char **argv)
 
         while (!SLAM.isShutDown())
         {   
+            if(!b_continue_session){
+                // Stop all threads
+                SLAM.Shutdown();
+                // Save camera trajectory
+                SLAM.SaveTrajectoryEuRoC("CameraTrajectory.txt");
+                SLAM.SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
+                break;
+            }
             std::vector<rs2_vector> vGyro;
             std::vector<double> vGyro_times;
             std::vector<rs2_vector> vAccel;
@@ -588,6 +652,33 @@ main (int argc, char **argv)
 
             // Clear the previous IMU measurements to load the new ones
             vImuMeas.clear();
+        }
+        pipe.stop();
+        cout << "System shutdown!\n";
+    }
+    else
+    {
+        while(b_continue_session)
+        {
+            rs2::frameset fs;
+            {
+                std::unique_lock<std::mutex> lk(imu_mutex);
+                if(!image_ready)
+                    cond_image_rec.wait(lk);
+
+    #ifdef COMPILEDWITHC11
+                std::chrono::steady_clock::time_point time_Start_Process = std::chrono::steady_clock::now();
+    #else
+                std::chrono::monotonic_clock::time_point time_Start_Process = std::chrono::monotonic_clock::now();
+    #endif
+
+                fs = fsSLAM;
+
+                if(count_im_buffer>1)
+                    cout << count_im_buffer -1 << " dropped frs\n";
+                count_im_buffer = 0;
+
+            }
         }
         pipe.stop();
         cout << "System shutdown!\n";

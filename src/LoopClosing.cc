@@ -982,7 +982,7 @@ void LoopClosing::CorrectLoop()
         unique_lock<mutex> lock(mMutexGBA);
         mbStopGBA = true;
 
-        mnFullBAIdx++;
+        mnFullBAIdx = true;
 
         if(mpThreadGBA)
         {
@@ -1233,7 +1233,7 @@ void LoopClosing::MergeLocal()
         unique_lock<mutex> lock(mMutexGBA);
         mbStopGBA = true;
 
-        mnFullBAIdx++;
+        mnFullBAIdx = true;
 
         if(mpThreadGBA)
         {
@@ -1806,7 +1806,7 @@ void LoopClosing::MergeLocal2()
         unique_lock<mutex> lock(mMutexGBA);
         mbStopGBA = true;
 
-        mnFullBAIdx++;
+        mnFullBAIdx = true;
 
         if(mpThreadGBA)
         {

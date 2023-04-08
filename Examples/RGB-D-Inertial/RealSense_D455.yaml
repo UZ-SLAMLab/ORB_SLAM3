@@ -30,9 +30,14 @@ Camera1.p2: 0.0
 Camera.width: 1280
 Camera.height: 720
 
+#Camera.width: 848
+#Camera.height: 480
+
 # Camera frames per second
 # Parameter configured 7/12
 Camera.fps: 30
+
+#Camera.fps: 60
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 # Parameter configured 7/12
