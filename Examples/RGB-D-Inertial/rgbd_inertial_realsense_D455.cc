@@ -315,7 +315,7 @@ main (int argc, char **argv)
     {
         if(std::filesystem::exists(arguments.rosbag) && std::filesystem::is_regular_file(arguments.rosbag))
         {
-            cfg.enable_device_from_file(arguments.rosbag, true);
+            cfg.enable_device_from_file(arguments.rosbag, false);
         }
         else
         {
@@ -364,7 +364,6 @@ main (int argc, char **argv)
     auto imu_callback = [&](const rs2::frame& frame)
     {
         std::unique_lock<std::mutex> lock(imu_mutex);
-
         if(rs2::frameset fs = frame.as<rs2::frameset>())
         {
             count_im_buffer++;
@@ -550,8 +549,14 @@ main (int argc, char **argv)
         {
             std::unique_lock<std::mutex> lk(imu_mutex);
             if(!image_ready)
-                cond_image_rec.wait(lk);
-                
+            {
+                cond_image_rec.wait_for(lk, std::chrono::seconds(1));
+                if(!image_ready)
+                {
+                    std::cout<<"stream interrupted for more than 1 second, break"<<std::endl;
+                    break;
+                }
+            }   
             std::chrono::steady_clock::time_point time_Start_Process = std::chrono::steady_clock::now();
 
             fs = fsSLAM;
