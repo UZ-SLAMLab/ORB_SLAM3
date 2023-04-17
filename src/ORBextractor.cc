@@ -60,6 +60,7 @@
 #include <iostream>
 
 #include "ORBextractor.h"
+#include "ORBAccel.h"
 
 
 using namespace cv;
@@ -1083,6 +1084,7 @@ namespace ORB_SLAM3
             computeOrbDescriptor(keypoints[i], image, &pattern[0], descriptors.ptr((int)i));
     }
 
+#ifdef _SOFTWARE_
     int ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
                                   OutputArray _descriptors, std::vector<int> &vLappingArea)
     {
@@ -1166,6 +1168,149 @@ namespace ORB_SLAM3
         //cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints" << endl;
         return monoIndex;
     }
+#else
+    int ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
+                                  OutputArray _descriptors, std::vector<int> &vLappingArea)
+    {
+        //cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
+        if(_image.empty())
+            return -1;
+
+        Mat image = _image.getMat();
+        assert(image.type() == CV_8UC1);
+
+        // Pre-compute the scale pyramid
+        ComputePyramid(image);
+
+        vector<vector<KeyPoint>> allKeypoints;
+        allKeypoints.resize(nlevels);
+
+        vector<vector<uint8_t>> allDescriptors;
+        allDescriptors.resize(nlevels);
+
+        Mat descriptors;
+        int nkeypoints = 0;
+        _keypoints.clear();
+
+        //Modified for speeding up stereo fisheye matching
+        int monoIndex = 0, stereoIndex = nkeypoints-1;
+
+        Buffer in_buffer(image.cols * image.rows);
+        cout << "init inBuffer" << endl;
+        Buffer out_buffer(MAX_OUTPUT_LENGTH*OUTPUT_BYTES);
+        cout << "init outBuffer" << endl;
+        MMIO kernel(ORB_BASE);
+        MMIO dma_mmio(DMA_BASE);
+        cout << "init MMIO" << endl;
+        DMA dma(&dma_mmio);
+        cout << "init DMA" << endl;
+
+        for (int level = 0; level < nlevels; ++level)
+        {
+            Mat workingMat = mvImagePyramid[level].clone();
+            cout << "level: " << level << ", size: " << workingMat.rows << "x" << workingMat.cols << endl;
+            int length = workingMat.rows * workingMat.cols;
+            in_buffer.copy(workingMat.data, length);
+            dma.sendchannel.transfer(&in_buffer);
+            cout << "dma.sendchannel.transfer" << endl;
+            dma.recvchannel.transfer(&out_buffer);
+            cout << "dma.recvchannel.transfer" << endl;
+            kernel.write(ORB_HEIGHT, workingMat.rows);
+            kernel.write(ORB_WIDTH, workingMat.cols);
+            kernel.write(ORB_THRESHOLD, 40);
+            kernel.write(ORB_START, 0x1);
+            cout << "config kernel" << endl;
+            dma.sendchannel.wait();
+            dma.recvchannel.wait();
+            int nkeypointsLevel = kernel.read(ORB_RETURN);
+            cout << "number of freatures: " << nkeypointsLevel << endl;
+
+            nkeypoints += nkeypointsLevel;
+
+            if(nkeypointsLevel==0)
+                continue;
+            
+            vector<KeyPoint>& keypoints = allKeypoints[level];
+            keypoints.resize(nkeypointsLevel);
+
+            vector<uint8_t>& descLevel = allDescriptors[level];
+            descLevel.resize(nkeypointsLevel * 32);
+            int idesc = 0;
+
+            for (int ikp = 0; ikp < nkeypointsLevel; ikp++) {
+                unsigned x, y;
+                unsigned x_high = out_buffer.ptr[ikp*OUTPUT_BYTES + 35];
+                unsigned x_low = out_buffer.ptr[ikp*OUTPUT_BYTES + 34];
+                unsigned y_high = out_buffer.ptr[ikp*OUTPUT_BYTES + 33];
+                unsigned y_low = out_buffer.ptr[ikp*OUTPUT_BYTES + 32];
+                x = ((x_high << 8 & 0xFF00) | (x_low & 0x00FF));
+                y = ((y_high << 8 & 0xFF00) | (y_low & 0x00FF));
+                keypoints[ikp].pt.x = x;
+                keypoints[ikp].pt.y = y;
+                for (int k = 0; k < 32; k++) {
+                    // desc.at<uint8_t>(ikp, k) = out_buffer.ptr[ikp*OUTPUT_BYTES + k];
+                    descLevel[idesc] = (out_buffer.ptr[ikp*OUTPUT_BYTES + k]);
+                    idesc ++;
+                }
+            }
+        }
+
+        if( nkeypoints == 0 )
+            _descriptors.release();
+        else
+        {
+            _descriptors.create(nkeypoints, 32, CV_8U);
+            descriptors = _descriptors.getMat();
+        }
+
+        for (int level = 0; level < nlevels; ++level)
+        {
+            vector<uint8_t>& descLevel = allDescriptors[level];
+            int levelSize = descLevel.size();
+            Mat desc = cv::Mat(levelSize, 32, CV_8U);
+            for (int i = 0; i < levelSize; i++) {
+                for (int j = 0; j < 32; j++) {
+                    desc.at<uint8_t>(i, j) = descLevel[i*levelSize + j];
+                }
+            }
+
+            float scale = mvScaleFactor[level]; //getScale(level, firstLevel, scaleFactor);
+            int i = 0;
+            vector<KeyPoint>& keypoints = allKeypoints[level];
+            for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
+                         keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint){
+
+                // Scale keypoint coordinates
+                if (level != 0){
+                    keypoint->pt *= scale;
+                }
+
+                if(keypoint->pt.x >= vLappingArea[0] && keypoint->pt.x <= vLappingArea[1]){
+                    _keypoints.at(stereoIndex) = (*keypoint);
+                    desc.row(i).copyTo(descriptors.row(stereoIndex));
+                    stereoIndex--;
+                }
+                else{
+                    _keypoints.at(monoIndex) = (*keypoint);
+                    desc.row(i).copyTo(descriptors.row(monoIndex));
+                    monoIndex++;
+                }
+                i++;
+            }
+        }
+
+
+        cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints" << endl;
+
+        in_buffer.free();
+        out_buffer.free();
+        kernel.~MMIO();
+        dma_mmio.~MMIO();
+        dma.~DMA();
+        return monoIndex;
+    }
+#endif
+
 
     void ORBextractor::ComputePyramid(cv::Mat image)
     {
