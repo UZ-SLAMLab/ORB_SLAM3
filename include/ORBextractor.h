@@ -22,7 +22,7 @@
 #include <vector>
 #include <list>
 #include <opencv2/opencv.hpp>
-
+#include "ORBAccel.h"
 
 namespace ORB_SLAM3
 {
@@ -49,7 +49,7 @@ public:
     ORBextractor(int nfeatures, float scaleFactor, int nlevels,
                  int iniThFAST, int minThFAST);
 
-    ~ORBextractor(){}
+    ~ORBextractor();
 
     // Compute the ORB features and descriptors on an image.
     // ORB are dispersed on the image using an octree.
@@ -106,6 +106,11 @@ protected:
     std::vector<float> mvInvScaleFactor;    
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
+
+    DMA dma;
+    MMIO kernel;
+    Buffer inBuffer;
+    Buffer outBuffer;
 };
 
 } //namespace ORB_SLAM

@@ -85,8 +85,6 @@ _SDMAChannel::_SDMAChannel(MMIO* mmio, int width, int tx_rx, int dre) {
 	start();
 }
 
-_SDMAChannel::~_SDMAChannel() {}
-
 bool _SDMAChannel::running() {
 	// true if DMA engine is running
 	return ((_mmio->read(_offset + 4) & 0x01) == 0x00);
@@ -162,18 +160,20 @@ void _SDMAChannel::wait() {
 
 DMA::DMA() {}
 
-DMA::DMA(MMIO* mmio) {
-	_mmio = mmio;
-	sendchannel = _SDMAChannel(mmio, M_AXI_MM2S_DATA_WIDTH >> 3, DMA_TYPE_TX, MM2S_DRE);
-	recvchannel = _SDMAChannel(mmio, M_AXI_S2MM_DATA_WIDTH >> 3, DMA_TYPE_RX, S2MM_DRE);
+DMA::DMA(unsigned addr) {
+	_mmio = MMIO(addr);
+	sendchannel = _SDMAChannel(&_mmio, M_AXI_MM2S_DATA_WIDTH >> 3, DMA_TYPE_TX, MM2S_DRE);
+	recvchannel = _SDMAChannel(&_mmio, M_AXI_S2MM_DATA_WIDTH >> 3, DMA_TYPE_RX, S2MM_DRE);
 }
 
-DMA::~DMA() {}
-
 unsigned DMA::read(unsigned offset) {
-	return _mmio->read(offset);
+	return _mmio.read(offset);
 }
 
 void DMA::write(unsigned offset, unsigned value) {
-	_mmio->write(offset, value);
+	_mmio.write(offset, value);
+}
+
+void DMA::close() {
+	_mmio.close();
 }

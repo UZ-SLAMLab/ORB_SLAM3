@@ -3,20 +3,22 @@
 #ifndef _ORBACCEL_H_
 #define _ORBACCEL_H_
 
-#define ORB_BASE 0xA0010000
-#define ORB_START 0x00
-#define ORB_HEIGHT 0x18
-#define ORB_WIDTH 0x20
-#define ORB_THRESHOLD 0x28
-#define ORB_RETURN 0x10
-#define OUTPUT_BYTES 36
+#define ORB_BASE        0xA0010000
+#define ORB_START       0x00
+#define ORB_RETURN      0x10
+#define ORB_HEIGHT      0x18
+#define ORB_WIDTH       0x20
+#define ORB_HEIGHT_NEW  0x28
+#define ORB_WIDTH_NEW   0x30
+#define ORB_THRESHOLD   0x38
+#define OUTPUT_BYTES    36
 #define MAX_OUTPUT_LENGTH 100000
 
-#define DMA_BASE 0xA0000000
-#define MM2S_DMACR 0x00
-#define MM2S_DMASR 0x04
-#define S2MM_DMACR 0x30
-#define S2MM_DMASR 0x34
+#define DMA_BASE    0xA0000000
+#define MM2S_DMACR  0x00
+#define MM2S_DMASR  0x04
+#define S2MM_DMACR  0x30
+#define S2MM_DMASR  0x34
 
 #define MAX_LENGTH_WIDTH 26
 #define DMA_TYPE_TX 1
@@ -63,7 +65,6 @@ class _SDMAChannel {
     public:
         _SDMAChannel();
         _SDMAChannel(MMIO* mmio, int width, int tx_rx, int dre);
-        ~_SDMAChannel();
         void start();
 		bool running();
 		bool idle();
@@ -88,14 +89,14 @@ class _SDMAChannel {
 class DMA {
     public:
         DMA();
-        DMA(MMIO* mmio);
-        ~DMA();
+        DMA(unsigned addr);
         unsigned read(unsigned offset);
         void write(unsigned offset, unsigned value);
+        void close();
 		_SDMAChannel sendchannel;
 		_SDMAChannel recvchannel;
 	private:
-		MMIO* _mmio;
+		MMIO _mmio;
 };
 
 #endif

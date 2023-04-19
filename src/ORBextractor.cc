@@ -467,6 +467,18 @@ namespace ORB_SLAM3
             umax[v] = v0;
             ++v0;
         }
+
+        dma = DMA(DMA_BASE);
+        kernel = MMIO(ORB_BASE);
+        inBuffer = Buffer(1920*1080);
+        outBuffer = Buffer(MAX_OUTPUT_LENGTH*OUTPUT_BYTES);
+    }
+
+    ORBextractor::~ORBextractor() {
+        dma.close();
+        kernel.close();
+        inBuffer.free();
+        outBuffer.free();
     }
 
     static void computeOrientation(const Mat& image, vector<KeyPoint>& keypoints, const vector<int>& umax)
@@ -1180,7 +1192,7 @@ namespace ORB_SLAM3
         assert(image.type() == CV_8UC1);
 
         // Pre-compute the scale pyramid
-        ComputePyramid(image);
+        // ComputePyramid(image);
 
         vector<vector<KeyPoint>> allKeypoints;
         allKeypoints.resize(nlevels);
@@ -1195,35 +1207,43 @@ namespace ORB_SLAM3
         //Modified for speeding up stereo fisheye matching
         int monoIndex = 0, stereoIndex = nkeypoints-1;
 
-        Buffer in_buffer(image.cols * image.rows);
-        cout << "init inBuffer" << endl;
-        Buffer out_buffer(MAX_OUTPUT_LENGTH*OUTPUT_BYTES);
-        cout << "init outBuffer" << endl;
-        MMIO kernel(ORB_BASE);
-        MMIO dma_mmio(DMA_BASE);
-        cout << "init MMIO" << endl;
-        DMA dma(&dma_mmio);
-        cout << "init DMA" << endl;
+        // Buffer inBuffer(image.cols * image.rows);
+        // cout << "init input Buffer" << endl;
+        // Buffer outBuffer(MAX_OUTPUT_LENGTH*OUTPUT_BYTES);
+        // cout << "init output Buffer" << endl;
+        // MMIO kernel(ORB_BASE);
+        // MMIO dma_mmio(DMA_BASE);
+        // cout << "init MMIO" << endl;
+        // DMA dma(&dma_mmio);
+        // cout << "init DMA" << endl;
+
+        int height = image.rows;
+        int width = image.cols;
+        inBuffer.copy(image.data, height*width);
 
         for (int level = 0; level < nlevels; ++level)
         {
-            Mat workingMat = mvImagePyramid[level].clone();
-            cout << "level: " << level << ", size: " << workingMat.rows << "x" << workingMat.cols << endl;
-            int length = workingMat.rows * workingMat.cols;
-            in_buffer.copy(workingMat.data, length);
-            dma.sendchannel.transfer(&in_buffer);
-            cout << "dma.sendchannel.transfer" << endl;
-            dma.recvchannel.transfer(&out_buffer);
-            cout << "dma.recvchannel.transfer" << endl;
-            kernel.write(ORB_HEIGHT, workingMat.rows);
-            kernel.write(ORB_WIDTH, workingMat.cols);
+            int height_new = height * mvInvScaleFactor[level];
+            int width_new = width * mvInvScaleFactor[level];
+            cout << dec << "level: " << level << ", size: " << height_new << " x " << width_new << endl;
+            
+            dma.sendchannel.transfer(&inBuffer);
+            dma.recvchannel.transfer(&outBuffer);
+            kernel.write(ORB_HEIGHT, height);
+            kernel.write(ORB_WIDTH, width);
+            kernel.write(ORB_HEIGHT_NEW, height_new);
+            kernel.write(ORB_WIDTH_NEW, width_new);
             kernel.write(ORB_THRESHOLD, 40);
             kernel.write(ORB_START, 0x1);
-            cout << "config kernel" << endl;
             dma.sendchannel.wait();
             dma.recvchannel.wait();
-            int nkeypointsLevel = kernel.read(ORB_RETURN);
-            cout << "number of freatures: " << nkeypointsLevel << endl;
+            int nkeypointsReturn = kernel.read(ORB_RETURN);
+            cout << dec << "number of freatures extracted: " << nkeypointsReturn << endl;
+
+            int nkeypointsLevel = nkeypointsReturn;
+            if (nkeypointsLevel > mnFeaturesPerLevel[level]) {
+                nkeypointsLevel = mnFeaturesPerLevel[level];
+            }
 
             nkeypoints += nkeypointsLevel;
 
@@ -1239,17 +1259,16 @@ namespace ORB_SLAM3
 
             for (int ikp = 0; ikp < nkeypointsLevel; ikp++) {
                 unsigned x, y;
-                unsigned x_high = out_buffer.ptr[ikp*OUTPUT_BYTES + 35];
-                unsigned x_low = out_buffer.ptr[ikp*OUTPUT_BYTES + 34];
-                unsigned y_high = out_buffer.ptr[ikp*OUTPUT_BYTES + 33];
-                unsigned y_low = out_buffer.ptr[ikp*OUTPUT_BYTES + 32];
+                unsigned x_high = outBuffer.ptr[ikp*OUTPUT_BYTES + 35];
+                unsigned x_low = outBuffer.ptr[ikp*OUTPUT_BYTES + 34];
+                unsigned y_high = outBuffer.ptr[ikp*OUTPUT_BYTES + 33];
+                unsigned y_low = outBuffer.ptr[ikp*OUTPUT_BYTES + 32];
                 x = ((x_high << 8 & 0xFF00) | (x_low & 0x00FF));
                 y = ((y_high << 8 & 0xFF00) | (y_low & 0x00FF));
                 keypoints[ikp].pt.x = x;
                 keypoints[ikp].pt.y = y;
                 for (int k = 0; k < 32; k++) {
-                    // desc.at<uint8_t>(ikp, k) = out_buffer.ptr[ikp*OUTPUT_BYTES + k];
-                    descLevel[idesc] = (out_buffer.ptr[ikp*OUTPUT_BYTES + k]);
+                    descLevel[idesc] = (outBuffer.ptr[ikp*OUTPUT_BYTES + k]);
                     idesc ++;
                 }
             }
@@ -1259,6 +1278,7 @@ namespace ORB_SLAM3
             _descriptors.release();
         else
         {
+            _keypoints = vector<cv::KeyPoint>(nkeypoints);
             _descriptors.create(nkeypoints, 32, CV_8U);
             descriptors = _descriptors.getMat();
         }
@@ -1273,7 +1293,6 @@ namespace ORB_SLAM3
                     desc.at<uint8_t>(i, j) = descLevel[i*levelSize + j];
                 }
             }
-
             float scale = mvScaleFactor[level]; //getScale(level, firstLevel, scaleFactor);
             int i = 0;
             vector<KeyPoint>& keypoints = allKeypoints[level];
@@ -1281,9 +1300,11 @@ namespace ORB_SLAM3
                          keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint){
 
                 // Scale keypoint coordinates
-                if (level != 0){
-                    keypoint->pt *= scale;
-                }
+                keypoint->pt *= scale;
+                keypoint->size = PATCH_SIZE*mvScaleFactor[level];
+                keypoint->angle = 0;
+                keypoint->response = 40;
+                keypoint->octave = level;
 
                 if(keypoint->pt.x >= vLappingArea[0] && keypoint->pt.x <= vLappingArea[1]){
                     _keypoints.at(stereoIndex) = (*keypoint);
@@ -1295,18 +1316,12 @@ namespace ORB_SLAM3
                     desc.row(i).copyTo(descriptors.row(monoIndex));
                     monoIndex++;
                 }
+                
                 i++;
             }
         }
 
-
         cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints" << endl;
-
-        in_buffer.free();
-        out_buffer.free();
-        kernel.~MMIO();
-        dma_mmio.~MMIO();
-        dma.~DMA();
         return monoIndex;
     }
 #endif
