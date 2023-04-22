@@ -64,7 +64,7 @@ class MMIO {
 class _SDMAChannel {
     public:
         _SDMAChannel();
-        _SDMAChannel(MMIO* mmio, int width, int tx_rx, int dre);
+        _SDMAChannel(MMIO mmio, int width, int tx_rx, int dre);
         void start();
 		bool running();
 		bool idle();
@@ -75,7 +75,7 @@ class _SDMAChannel {
         void wait();
         int transferred;
     private:
-        MMIO* _mmio;
+        MMIO _mmio;
         int _interrupt;
         int _max_size;
         int _align;

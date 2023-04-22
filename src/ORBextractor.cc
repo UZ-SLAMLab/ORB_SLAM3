@@ -468,17 +468,6 @@ namespace ORB_SLAM3
             ++v0;
         }
 
-        dma = DMA(DMA_BASE);
-        kernel = MMIO(ORB_BASE);
-        inBuffer = Buffer(1920*1080);
-        outBuffer = Buffer(MAX_OUTPUT_LENGTH*OUTPUT_BYTES);
-    }
-
-    ORBextractor::~ORBextractor() {
-        dma.close();
-        kernel.close();
-        inBuffer.free();
-        outBuffer.free();
     }
 
     static void computeOrientation(const Mat& image, vector<KeyPoint>& keypoints, const vector<int>& umax)
@@ -1207,15 +1196,14 @@ namespace ORB_SLAM3
         //Modified for speeding up stereo fisheye matching
         int monoIndex = 0, stereoIndex = nkeypoints-1;
 
-        // Buffer inBuffer(image.cols * image.rows);
-        // cout << "init input Buffer" << endl;
-        // Buffer outBuffer(MAX_OUTPUT_LENGTH*OUTPUT_BYTES);
-        // cout << "init output Buffer" << endl;
-        // MMIO kernel(ORB_BASE);
-        // MMIO dma_mmio(DMA_BASE);
-        // cout << "init MMIO" << endl;
-        // DMA dma(&dma_mmio);
-        // cout << "init DMA" << endl;
+        Buffer inBuffer(image.cols * image.rows);
+        cout << "init input Buffer" << endl;
+        Buffer outBuffer(MAX_OUTPUT_LENGTH*OUTPUT_BYTES);
+        cout << "init output Buffer" << endl;
+        MMIO kernel(ORB_BASE);
+        cout << "init kernel" << endl;
+        DMA dma(DMA_BASE);
+        cout << "init DMA" << endl;
 
         int height = image.rows;
         int width = image.cols;
@@ -1274,6 +1262,8 @@ namespace ORB_SLAM3
             }
         }
 
+        cout << "ORB end" << endl;
+
         if( nkeypoints == 0 )
             _descriptors.release();
         else
@@ -1282,7 +1272,7 @@ namespace ORB_SLAM3
             _descriptors.create(nkeypoints, 32, CV_8U);
             descriptors = _descriptors.getMat();
         }
-
+        
         for (int level = 0; level < nlevels; ++level)
         {
             vector<uint8_t>& descLevel = allDescriptors[level];
@@ -1293,34 +1283,40 @@ namespace ORB_SLAM3
                     desc.at<uint8_t>(i, j) = descLevel[i*levelSize + j];
                 }
             }
+            cout << "read desc" << endl;
             float scale = mvScaleFactor[level]; //getScale(level, firstLevel, scaleFactor);
             int i = 0;
             vector<KeyPoint>& keypoints = allKeypoints[level];
-            for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
-                         keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint){
-
+            KeyPoint keypoint;
+            for (int ikp = 0; i < keypoints.size(); i++) {
                 // Scale keypoint coordinates
-                keypoint->pt *= scale;
-                keypoint->size = PATCH_SIZE*mvScaleFactor[level];
-                keypoint->angle = 0;
-                keypoint->response = 40;
-                keypoint->octave = level;
-
-                if(keypoint->pt.x >= vLappingArea[0] && keypoint->pt.x <= vLappingArea[1]){
-                    _keypoints.at(stereoIndex) = (*keypoint);
+                keypoint = keypoints[ikp];
+                keypoint.pt *= scale;
+                keypoint.size = PATCH_SIZE*mvScaleFactor[level];
+                keypoint.angle = 0;
+                keypoint.response = 40;
+                keypoint.octave = level;
+                cout << "scale keypoint" << endl;
+                if(keypoint.pt.x >= vLappingArea[0] && keypoint.pt.x <= vLappingArea[1]){
+                    _keypoints[stereoIndex] = keypoint;
                     desc.row(i).copyTo(descriptors.row(stereoIndex));
                     stereoIndex--;
+                    cout << "stereoIndex" << endl;
                 }
                 else{
-                    _keypoints.at(monoIndex) = (*keypoint);
+                    _keypoints[monoIndex] = keypoint;
                     desc.row(i).copyTo(descriptors.row(monoIndex));
                     monoIndex++;
+                    cout << "monoIndex" << endl;
                 }
                 
                 i++;
             }
         }
-
+        inBuffer.free();
+        outBuffer.free();
+        dma.close();
+        kernel.close();
         cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints" << endl;
         return monoIndex;
     }
