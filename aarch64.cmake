@@ -13,7 +13,7 @@ set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
-set(OpenCV_DIR ${CMAKE_SYSROOT}/opt/opencv-4.4.0/lib/cmake/opencv4)
+# set(OpenCV_DIR ${CMAKE_SYSROOT}/opt/opencv-4.4.0/lib/cmake/opencv4)
 set(Pangolin_DIR ${CMAKE_SYSROOT}/opt/Pangolin/lib/cmake/Pangolin)
 # set(Pangolin_DIR /home/zhangqx/orb-slam/Pangolin-0.7/build)
 
