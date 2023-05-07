@@ -386,7 +386,7 @@ namespace ORB_SLAM3 {
         // if yes -> transform points to new eigen frame
         //if (minEigenVal < 1e-3 || minEigenVal == 0.0)
         //rankTest.setThreshold(1e-10);
-        if (rankTest.rank() == 2) {
+        if (rankTest.rank() == 2) { // TODO:  check setting threshold, and when is it rank 2
             planar = true;
             // self adjoint is faster and more accurate than general eigen solvers
             // also has closed form solution for 3x3 self-adjoint matrices
@@ -407,7 +407,7 @@ namespace ORB_SLAM3 {
 
         // if we do have covariance information
         // -> fill covariance matrix
-        if (covMats.size() == numberCorrespondences) {
+        if (covMats.size() == numberCorrespondences) { //TODO: when is it not equal, check use of COV matrix
             use_cov = true;
             int l = 0;
             for (size_t i = 0; i < numberCorrespondences; ++i) {
@@ -515,12 +515,12 @@ namespace ORB_SLAM3 {
         // 4. solve least squares
         //////////////////////////////////////
         Eigen::MatrixXd AtPA;
-        if (use_cov)
+        if (use_cov) // TODO: notice no covariance
             AtPA = A.transpose() * P * A; // setting up the full normal equations seems to be unstable
         else
             AtPA = A.transpose() * A;
 
-        Eigen::JacobiSVD<Eigen::MatrixXd> svd_A(AtPA, Eigen::ComputeFullV);
+        Eigen::JacobiSVD<Eigen::MatrixXd> svd_A(AtPA, Eigen::ComputeFullV); //TODO: Eigen::ComputeThin check
         Eigen::MatrixXd result1 = svd_A.matrixV().col(colsA - 1);
 
         ////////////////////////////////
@@ -782,8 +782,13 @@ namespace ORB_SLAM3 {
                           nullspaces[i].col(0), nullspaces[i].col(1),
                           w, T,
                           jacs);
-
                 // r
+                fjac.block<1, 6>(ii, 0) = jacs.row(0);
+
+                // s
+                fjac.block<1, 6>(ii + 1, 0) = jacs.row(1);
+
+               /* // r
                 fjac(ii, 0) = jacs(0, 0);
                 fjac(ii, 1) = jacs(0, 1);
                 fjac(ii, 2) = jacs(0, 2);
@@ -798,7 +803,7 @@ namespace ORB_SLAM3 {
 
                 fjac(ii + 1, 3) = jacs(1, 3);
                 fjac(ii + 1, 4) = jacs(1, 4);
-                fjac(ii + 1, 5) = jacs(1, 5);
+                fjac(ii + 1, 5) = jacs(1, 5);*/
 
             }
             ii += 2;
