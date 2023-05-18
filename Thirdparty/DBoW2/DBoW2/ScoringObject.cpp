@@ -17,6 +17,56 @@ using namespace DBoW2;
 // epsilon value (this is needed by the KL method)
 const double GeneralScoring::LOG_EPS = log(DBL_EPSILON); // FLT_EPSILON
 
+
+double CallKL(const BowVector &v1, const BowVector &v2)
+{ 
+  BowVector::const_iterator v1_it, v2_it;
+  const BowVector::const_iterator v1_end = v1.end();
+  const BowVector::const_iterator v2_end = v2.end();
+  
+  v1_it = v1.begin();
+  v2_it = v2.begin();
+  
+  double score = 0;
+  
+  // all the items or v are taken into account
+  
+  while(v1_it != v1_end && v2_it != v2_end)
+  {
+    const WordValue& vi = v1_it->second;
+    const WordValue& wi = v2_it->second;
+    
+    if(v1_it->first == v2_it->first)
+    {
+      if(vi != 0 && wi != 0) score += vi * log(vi/wi);
+      
+      // move v1 and v2 forward
+      ++v1_it;
+      ++v2_it;
+    }
+    else if(v1_it->first < v2_it->first)
+    {
+      // move v1 forward
+      score += vi * (log(vi) - log(DBL_EPSILON));
+      ++v1_it;
+    }
+    else
+    {
+      // move v2_it forward, do not add any score
+      v2_it = v2.lower_bound(v1_it->first);
+      // v2_it = (first element >= v1_it.id)
+    }
+  }
+  
+  // sum rest of items of v
+  for(; v1_it != v1_end; ++v1_it) 
+    if(v1_it->second != 0)
+      score += v1_it->second * (log(v1_it->second) - log(DBL_EPSILON));
+  
+  return score; // cannot be scaled
+}
+
+
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 
@@ -313,3 +363,66 @@ double DotProductScoring::score(const BowVector &v1,
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 
+double JensenShannonDivergenceScoring::score(const BowVector &v1, const BowVector &v2) const
+{ 
+  BowVector::const_iterator v1_it, v2_it;
+  
+  // build M
+
+  const BowVector::const_iterator v1_end = v1.end();
+  const BowVector::const_iterator v2_end = v2.end();
+  
+  v1_it = v1.begin();
+  v2_it = v2.begin();
+
+  BowVector m;
+
+  while(v1_it != v1_end && v2_it != v2_end)
+  {
+    const WordValue& vi = v1_it->second;
+    const WordValue& wi = v2_it->second;
+    
+    if(v1_it->first == v2_it->first)
+    {
+
+      WordId id = v1_it->first;
+      WordValue value = (vi + wi) * 0.5;
+      m.addIfNotExist(id, value);
+      // move v1 and v2 forward
+      ++v1_it;
+      ++v2_it;
+    }
+    else if(v1_it->first < v2_it->first)
+    {
+      // move v1 forward
+      WordId id = v1_it->first;
+      WordValue value = vi * 0.5;
+      m.addIfNotExist(id, value);
+      ++v1_it;
+    }
+    else
+    {
+      // move v2_it forward, do not add any score
+      v2_it = v2.lower_bound(v1_it->first);
+    }
+  }
+
+  // sum rest of items of v
+  for(; v1_it != v1_end; ++v1_it)
+  {
+      WordId id = v1_it->first;
+      WordValue value = v1_it->second * 0.5;
+      m.addIfNotExist(id, value);
+  }
+
+
+
+  // end M 
+
+  double score_1 = CallKL(v1, m);
+  double score_2 = CallKL(v2, m);
+  
+  double score = score_1 + score_2;
+  std::cout << score << std::endl;
+  return score; // cannot be scaled
+}
