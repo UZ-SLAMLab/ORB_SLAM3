@@ -53,6 +53,7 @@ enum ScoringType
   KL,
   BHATTACHARYYA,
   DOT_PRODUCT,
+  JENSEN_SHANNON
 };
 
 /// Vector of words to represent images

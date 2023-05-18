@@ -88,6 +88,9 @@ class __SCORING_CLASS(BhattacharyyaScoring, true, L1);
 /// Dot product Scoring object
 class __SCORING_CLASS(DotProductScoring, false, L1);
 
+/// Jensen–Shannon divergence Scoring object
+class __SCORING_CLASS(JensenShannonDivergenceScoring, true, L1);
+
 #undef __SCORING_CLASS
   
 } // namespace DBoW2
