@@ -423,6 +423,5 @@ double JensenShannonDivergenceScoring::score(const BowVector &v1, const BowVecto
   double score_2 = CallKL(v2, m);
   
   double score = score_1 + score_2;
-  std::cout << score << std::endl;
   return score; // cannot be scaled
 }
