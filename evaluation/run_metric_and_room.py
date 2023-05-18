@@ -204,7 +204,9 @@ def execute_room_and_metric(
         if not os.path.exists(benchmark_file):
             rows_to_add.append(["score", "room", "rmse", "mean", "median", "std", "min", "max", "sse"])
         
-        rows_to_add.append([*parse_results_file(result_path)])
+        parsed_results = parse_results_file(result_path)
+        row = [score, room, *parsed_results]
+        rows_to_add.append(row)
         logging.info(f"Writing results to {benchmark_file}")
         with open(benchmark_file, 'a') as f:
             writer = csv.writer(f)
