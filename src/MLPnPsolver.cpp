@@ -353,6 +353,7 @@ namespace ORB_SLAM3 {
     }
 
 	//MLPnP methods
+	//computePose is called in Refine and in RANSAC funcs
     void MLPnPsolver::computePose(const bearingVectors_t &f, const points_t &p, const cov3_mats_t &covMats,
                                   const std::vector<int> &indices, transformation_t &result) {
         size_t numberCorrespondences = indices.size();
@@ -385,7 +386,8 @@ namespace ORB_SLAM3 {
 
         // if yes -> transform points to new eigen frame
         //if (minEigenVal < 1e-3 || minEigenVal == 0.0)
-        //rankTest.setThreshold(1e-10);
+        rankTest.setThreshold(1e-5); //TODO: run this
+        //rankTest.setThreshold(1e-10); // didn't change
         if (rankTest.rank() == 2) { // TODO:  check setting threshold, and when is it rank 2
             planar = true;
             // self adjoint is faster and more accurate than general eigen solvers
@@ -408,6 +410,7 @@ namespace ORB_SLAM3 {
         // if we do have covariance information
         // -> fill covariance matrix
         if (covMats.size() == numberCorrespondences) { //TODO: when is it not equal, check use of COV matrix
+            // TODO: looks like numberCorrespondences is the size of input indices vector, and covMats is input
             use_cov = true;
             int l = 0;
             for (size_t i = 0; i < numberCorrespondences; ++i) {
@@ -515,7 +518,7 @@ namespace ORB_SLAM3 {
         // 4. solve least squares
         //////////////////////////////////////
         Eigen::MatrixXd AtPA;
-        if (use_cov) // TODO: notice no covariance
+        if (use_cov) // there's covariance, we chacked
             AtPA = A.transpose() * P * A; // setting up the full normal equations seems to be unstable
         else
             AtPA = A.transpose() * A;
