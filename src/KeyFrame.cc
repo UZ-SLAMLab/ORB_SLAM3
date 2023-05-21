@@ -376,6 +376,12 @@ MapPoint* KeyFrame::GetMapPoint(const size_t &idx)
     return mvpMapPoints[idx];
 }
 
+//this function loop on its map points, for each, it gets all the 
+//key frames that connected to it (called weight of each key frame). 
+//after counting all connected map points of key frames, 
+//we select the key frames that have more map points 
+//connected than the required threshold. if there are no kfs, 
+// choose the one with max weight.
 void KeyFrame::UpdateConnections(bool upParent)
 {
     map<KeyFrame*,int> KFcounter;

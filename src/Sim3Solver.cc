@@ -222,6 +222,7 @@ Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool>
     vbInliers = vector<bool>(mN1,false);
     nInliers=0;
 
+    std::cout << "there are " << N << "map points" << std::endl;
     if(N<mRansacMinInliers)
     {
         bNoMore = true;
@@ -259,7 +260,7 @@ Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool>
         }
 
         ComputeSim3(P3Dc1i,P3Dc2i);
-
+        std::cout << "iteration number: " << nCurrentIterations << std::endl;
         CheckInliers();
 
         if(mnInliersi>=mnBestInliers)
@@ -270,13 +271,16 @@ Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool>
             mBestRotation = mR12i;
             mBestTranslation = mt12i;
             mBestScale = ms12i;
+            std::cout << "if(mnInliersi>mRansacMinInliers) - mnIterations: " << mnIterations << "mRansacMaxIts: " << mRansacMaxIts << std::endl;
 
             if(mnInliersi>mRansacMinInliers)
             {
                 nInliers = mnInliersi;
-                for(int i=0; i<N; i++)
+                for(int i=0; i<N; i++){
+                std::cout << "mvnIndices1[i] " << mvnIndices1[i] << "for i=" << i << std::endl;
                     if(mvbInliersi[i])
                         vbInliers[mvnIndices1[i]] = true;
+                    }
                 bConverge = true;
                 return mBestT12;
             }
@@ -286,6 +290,8 @@ Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool>
             }
         }
     }
+    
+    std::cout << "if(mnIterations>=mRansacMaxIts) - mnIterations: " << mnIterations << "mRansacMaxIts: " << mRansacMaxIts << std::endl;
 
     if(mnIterations>=mRansacMaxIts)
         bNoMore=true;
@@ -436,6 +442,7 @@ void Sim3Solver::CheckInliers()
         else
             mvbInliersi[i]=false;
     }
+    std::cout << "mnInliersi: " << mnInliersi << std::endl;
 }
 
 Eigen::Matrix4f Sim3Solver::GetEstimatedTransformation()

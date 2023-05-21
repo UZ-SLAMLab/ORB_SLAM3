@@ -48,7 +48,7 @@ public:
     Eigen::Matrix3f GetEstimatedRotation();
     Eigen::Vector3f GetEstimatedTranslation();
     float GetEstimatedScale();
-
+    int N;
 protected:
 
     void ComputeCentroid(Eigen::Matrix3f &P, Eigen::Matrix3f &Pr, Eigen::Vector3f &C);
@@ -78,7 +78,7 @@ protected:
     std::vector<size_t> mvnMaxError1;
     std::vector<size_t> mvnMaxError2;
 
-    int N;
+    
     int mN1;
 
     // Current Estimation

@@ -12,31 +12,31 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
-# Check C++11 or C++0x support
+# Check C++14 or C++0x support
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 if(COMPILER_SUPPORTS_CXX11)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
    add_definitions(-DCOMPILEDWITHC11)
-   message(STATUS "Using flag -std=c++11.")
+   message(STATUS "Using flag -std=c++14.")
 elseif(COMPILER_SUPPORTS_CXX0X)
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
    add_definitions(-DCOMPILEDWITHC0X)
    message(STATUS "Using flag -std=c++0x.")
 else()
-   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler.")
 endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-find_package(OpenCV 4.4)
-   if(NOT OpenCV_FOUND)
-      message(FATAL_ERROR "OpenCV > 4.4 not found.")
-   endif()
+#find_package(OpenCV 4.4)
+#   if(NOT OpenCV_FOUND)
+#      message(FATAL_ERROR "OpenCV > 4.4 not found.")
+#   endif()
 
-MESSAGE("OPENCV VERSION:")
-MESSAGE(${OpenCV_VERSION})
+#MESSAGE("OPENCV VERSION:")
+#MESSAGE(${OpenCV_VERSION})
 
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
@@ -121,6 +121,54 @@ ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+#/usr/local/lib/aarch64-linux-gnu/libopencv_core.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_aruco.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_bgsegm.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_bioinspired.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_calib3d.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_ccalib.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_core.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_datasets.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_dnn_objdetect.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_dnn.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_dpm.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_face.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_features2d.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_flann.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_freetype.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_fuzzy.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_hdf.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_hfs.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_highgui.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_imgcodecs.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_img_hash.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_imgproc.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_line_descriptor.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_ml.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_objdetect.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_optflow.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_phase_unwrapping.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_photo.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_plot.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_reg.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_rgbd.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_saliency.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_sfm.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_shape.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_stereo.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_stitching.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_structured_light.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_superres.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_surface_matching.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_text.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_tracking.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_videoio.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_video.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_videostab.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_xfeatures2d.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_ximgproc.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_xobjdetect.so
+/usr/local/lib/aarch64-linux-gnu/libopencv_xphoto.so
 -lboost_serialization
 -lcrypto
 )
