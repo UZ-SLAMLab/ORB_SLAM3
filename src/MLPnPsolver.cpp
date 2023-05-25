@@ -52,6 +52,10 @@
 
 
 namespace ORB_SLAM3 {
+    this->K << F.fx, 0, F.cx,
+    0, F.fy, F.cy,
+    0, 0, 1;
+
     MLPnPsolver::MLPnPsolver(const Frame &F, const vector<MapPoint *> &vpMapPointMatches):
             mnInliersi(0), mnIterations(0), mnBestInliers(0), N(0), mpCamera(F.mpCamera){
         mvpMapPointMatches = vpMapPointMatches;
@@ -94,6 +98,45 @@ namespace ORB_SLAM3 {
         }
 
         SetRansacParameters();
+    }
+
+    // Struct for holding the output of pix2rays function
+    struct Pix2RaysResult {
+        Eigen::MatrixXd v;
+        Eigen::MatrixXd sigma_v;
+    };
+
+    // Function to convert pixel coordinates to rays
+    Pix2RaysResult pix2rays(Eigen::MatrixXd pix, Eigen::MatrixXd cov = Eigen::MatrixXd()) {
+        // Add z coordinate if not already existing (=1, on image plane)
+        if (pix.rows() == 2) {
+            Eigen::MatrixXd ones = Eigen::MatrixXd::Ones(1, pix.cols());
+            pix.conservativeResize(3, Eigen::NoChange);
+            pix.row(2) = ones;
+        }
+
+        Eigen::MatrixXd x = K.inverse() * pix;
+        Eigen::VectorXd norm_x = x.colwise().norm();
+        Eigen::MatrixXd v = x.array().colwise() / norm_x.array();
+
+        Eigen::MatrixXd sigma_v;
+
+        // If observation covariance is provided, propagate it
+        if (cov.size() == 0) {
+            sigma_v = Eigen::MatrixXd();
+        } else {
+            int nb_pts = pix.cols();
+            sigma_v = Eigen::MatrixXd::Zero(9, nb_pts);
+            Eigen::MatrixXd sigma_x = Eigen::MatrixXd::Zero(3, 3);
+
+            for (int i = 0; i < nb_pts; i++) {
+                sigma_x.block<2, 2>(0, 0) = Eigen::Map<Eigen::Matrix2d>(cov.col(i).data());
+                Eigen::MatrixXd J = Eigen::MatrixXd::Identity(3, 3) / norm_x(i) - (v.col(i) * v.col(i).transpose());
+                sigma_v.col(i) = Eigen::Map<Eigen::VectorXd>((J * sigma_x * J.transpose()).data(), 9);
+            }
+        }
+
+        return {v, sigma_v};
     }
 
     //RANSAC methods
@@ -375,6 +418,9 @@ namespace ORB_SLAM3 {
             points3v[i] = p[indices[i]];
         }
 
+        //TODO: compute covMatrix according to points matrix: points3v[i]
+        Eigen::Matrix3d covMatrix;
+
         //////////////////////////////////////
         // 1. test if we have a planar scene
         //////////////////////////////////////
@@ -386,9 +432,9 @@ namespace ORB_SLAM3 {
 
         // if yes -> transform points to new eigen frame
         //if (minEigenVal < 1e-3 || minEigenVal == 0.0)
-        rankTest.setThreshold(1e-5); //TODO: run this
+        rankTest.setThreshold(1e-5);
         //rankTest.setThreshold(1e-10); // didn't change
-        if (rankTest.rank() == 2) { // TODO:  check setting threshold, and when is it rank 2
+        if (rankTest.rank() == 2) { // TODO:  check setting threshold to lower value
             planar = true;
             // self adjoint is faster and more accurate than general eigen solvers
             // also has closed form solution for 3x3 self-adjoint matrices
@@ -409,8 +455,9 @@ namespace ORB_SLAM3 {
 
         // if we do have covariance information
         // -> fill covariance matrix
-        if (covMats.size() == numberCorrespondences) { //TODO: when is it not equal, check use of COV matrix
-            // TODO: looks like numberCorrespondences is the size of input indices vector, and covMats is input
+        covMats = pix2rays(points3v, covMatrix) // TODO: remove covmax from function sig or xhane here
+        if (covMats.size() == numberCorrespondences) { //when is it not equal, check use of COV matrix
+            //  numberCorrespondences is the size of input indices vector, and covMats is input
             use_cov = true;
             int l = 0;
             for (size_t i = 0; i < numberCorrespondences; ++i) {

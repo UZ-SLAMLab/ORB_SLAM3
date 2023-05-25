@@ -247,6 +247,8 @@ namespace ORB_SLAM3{
         vector<float> mvMaxError;
 
         GeometricCamera* mpCamera;
+
+        Eigen::Matrix3d K;
     };
 
 }
