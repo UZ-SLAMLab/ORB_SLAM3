@@ -143,7 +143,9 @@ protected:
     void MergeLocal2();
 
     void CheckObservations(set<KeyFrame*> &spKFsMap1, set<KeyFrame*> &spKFsMap2);
-
+    
+    static bool compareByValue(const std::pair<MapPoint*, int>& a, const std::pair<MapPoint*, int>& b);
+    
     void ResetIfRequested();
     bool mbResetRequested;
     bool mbResetActiveMapRequested;

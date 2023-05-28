@@ -762,7 +762,7 @@ namespace ORB_SLAM3
         return nmatches;
     }
 
-    int ORBmatcher::SearchByBoW(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &vpMatches12)
+    int ORBmatcher::SearchByBoW(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &vpMatches12, std::map<MapPoint*, int> mapPointToDistance, std::map<MapPoint*, KeyFrame*> mapPointToKeyFrame)
     {
         const vector<cv::KeyPoint> &vKeysUn1 = pKF1->mvKeysUn;
         const DBoW2::FeatureVector &vFeatVec1 = pKF1->mFeatVec;
@@ -823,10 +823,7 @@ namespace ORB_SLAM3
 
                         MapPoint* pMP2 = vpMapPoints2[idx2];
 
-                        if(vbMatched2[idx2] || !pMP2)
-                            continue;
-
-                        if(pMP2->isBad())
+                        if(vbMatched2[idx2] || !pMP2 || pMP2->isBad())
                             continue;
 
                         const cv::Mat &d2 = Descriptors2.row(idx2);
@@ -845,26 +842,26 @@ namespace ORB_SLAM3
                         }
                     }
 
-                    if(bestDist1<TH_LOW)
+                    if(bestDist1 < TH_LOW && 
+                        (static_cast<float>(bestDist1) < mfNNratio * static_cast<float>(bestDist2)))
                     {
-                        if(static_cast<float>(bestDist1)<mfNNratio*static_cast<float>(bestDist2))
-                        {
-                            vpMatches12[idx1]=vpMapPoints2[bestIdx2];
-                            vbMatched2[bestIdx2]=true;
+                        mapPointToDistance[vpMapPoints2[bestIdx2]] = bestDist1;
+                        mapPointToKeyFrame[vpMapPoints2[bestIdx2]] = pKF2;
+                        vpMatches12[idx1]=vpMapPoints2[bestIdx2]; //todo why dont we need to save from vpMapPoints1 too?
+                        vbMatched2[bestIdx2]=true;
 
-                            if(mbCheckOrientation)
-                            {
-                                float rot = vKeysUn1[idx1].angle-vKeysUn2[bestIdx2].angle;
-                                if(rot<0.0)
-                                    rot+=360.0f;
-                                int bin = round(rot*factor);
-                                if(bin==HISTO_LENGTH)
-                                    bin=0;
-                                assert(bin>=0 && bin<HISTO_LENGTH);
-                                rotHist[bin].push_back(idx1);
-                            }
-                            nmatches++;
+                        if(mbCheckOrientation)
+                        {
+                            float rot = vKeysUn1[idx1].angle-vKeysUn2[bestIdx2].angle;
+                            if(rot<0.0)
+                                rot+=360.0f;
+                            int bin = round(rot*factor);
+                            if(bin==HISTO_LENGTH)
+                                bin=0;
+                            assert(bin>=0 && bin<HISTO_LENGTH);
+                            rotHist[bin].push_back(idx1);
                         }
+                        nmatches++;
                     }
                 }
 
@@ -900,7 +897,7 @@ namespace ORB_SLAM3
                 }
             }
         }
-
+        std::cout<< "nmatches " << nmatches<< "mbCheckOrientation" << mbCheckOrientation << std::endl;
         return nmatches;
     }
 

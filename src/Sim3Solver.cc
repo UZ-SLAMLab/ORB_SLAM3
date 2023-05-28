@@ -33,15 +33,15 @@ namespace ORB_SLAM3
 
 
 Sim3Solver::Sim3Solver(KeyFrame *pKF1, KeyFrame *pKF2, const vector<MapPoint *> &vpMatched12, const bool bFixScale,
-                       vector<KeyFrame*> vpKeyFrameMatchedMP):
+                       std::map<MapPoint*, KeyFrame*> mapPointToKeyFrame):
     mnIterations(0), mnBestInliers(0), mbFixScale(bFixScale),
     pCamera1(pKF1->mpCamera), pCamera2(pKF2->mpCamera)
 {
-    bool bDifferentKFs = false;
-    if(vpKeyFrameMatchedMP.empty())
+    bool bDifferentKFs = false; //todo
+    if(mapPointToKeyFrame.empty())
     {
         bDifferentKFs = true;
-        vpKeyFrameMatchedMP = vector<KeyFrame*>(vpMatched12.size(), pKF2);
+        //vpKeyFrameMatchedMP = vector<KeyFrame*>(vpMatched12.size(), pKF2);
     }
 
     mpKF1 = pKF1;
@@ -81,8 +81,8 @@ Sim3Solver::Sim3Solver(KeyFrame *pKF1, KeyFrame *pKF2, const vector<MapPoint *> 
             if(pMP1->isBad() || pMP2->isBad())
                 continue;
 
-            if(bDifferentKFs)
-                pKFm = vpKeyFrameMatchedMP[i1];
+            if(!bDifferentKFs) 
+                pKFm = mapPointToKeyFrame[pMP2];
 
             int indexKF1 = get<0>(pMP1->GetIndexInKeyFrame(pKF1));
             int indexKF2 = get<0>(pMP2->GetIndexInKeyFrame(pKFm));
@@ -215,7 +215,7 @@ Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool>
     return Eigen::Matrix4f::Identity();
 }
 
-Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers, bool &bConverge)
+Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers, bool &bConverge, std::vector<std::pair<MapPoint*, int>> pairsPointToDistance)
 {
     bNoMore = false;
     bConverge = false;
@@ -243,7 +243,7 @@ Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool>
         nCurrentIterations++;
         mnIterations++;
 
-        vAvailableIndices = mvAllIndices;
+        /*vAvailableIndices = mvAllIndices;
 
         // Get min set of points
         for(short i = 0; i < 3; ++i)
@@ -257,7 +257,17 @@ Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool>
 
             vAvailableIndices[randi] = vAvailableIndices.back();
             vAvailableIndices.pop_back();
+        }*/
+        
+        
+        // Get min set of points
+        int startingIndex = (nCurrentIterations -1) * 3;
+        for(short i = startingIndex; i < nCurrentIterations * 3; ++i)
+        {
+            P3Dc1i.col(i - startingIndex) = mvX3Dc1[i];
+            P3Dc2i.col(i - startingIndex) = mvX3Dc2[i];
         }
+        
 
         ComputeSim3(P3Dc1i,P3Dc2i);
         std::cout << "iteration number: " << nCurrentIterations << std::endl;
