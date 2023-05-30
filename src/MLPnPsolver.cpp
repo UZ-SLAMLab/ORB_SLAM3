@@ -395,6 +395,42 @@ namespace ORB_SLAM3 {
         return false;
     }
 
+    //Funcs to get cov matrix
+    // Function to find mean.
+    float mean(float arr[], int n)
+    {
+        float sum = 0;
+        for (int i = 0; i < n; i++)
+            sum = sum + arr[i];
+        return sum / n;
+    }
+
+    // Function to find covariance.
+    float covariance(float arr1[], float arr2[], int n)
+    {
+        float sum = 0;
+        float mean_arr1 = mean(arr1, n);
+        float mean_arr2 = mean(arr2, n);
+        for (int i = 0; i < n; i++)
+            sum = sum + (arr1[i] - mean_arr1) * (arr2[i] - mean_arr2);
+        return sum / (n - 1);
+    }
+
+    // Driver function.
+    int calc_covariance(arr1, arr2)
+    {
+        //float arr1[] = { 65.21, 64.75, 65.26, 65.76, 65.96 };
+        int n = sizeof(arr1) / sizeof(arr1[0]);
+        //float arr2[] = { 67.25, 66.39, 66.12, 65.70, 66.64 };
+        int m = sizeof(arr2) / sizeof(arr2[0]);
+
+        if (m == n){
+            covMatrix = covariance(arr1, arr2, m);
+            cout << covMatrix
+        }
+        return covMatrix;
+    }
+
 	//MLPnP methods
 	//computePose is called in Refine and in RANSAC funcs
     void MLPnPsolver::computePose(const bearingVectors_t &f, const points_t &p, const cov3_mats_t &covMats,
@@ -407,6 +443,8 @@ namespace ORB_SLAM3 {
         std::vector<Eigen::MatrixXd> nullspaces(numberCorrespondences);
         Eigen::MatrixXd points3(3, numberCorrespondences);
         points_t points3v(numberCorrespondences);
+        points_t points3v_x(numberCorrespondences);
+        points_t points3v_y(numberCorrespondences);
         points4_t points4v(numberCorrespondences);
         for (size_t i = 0; i < numberCorrespondences; i++) {
             bearingVector_t f_current = f[indices[i]];
@@ -416,10 +454,14 @@ namespace ORB_SLAM3 {
                     svd_f(f_current.transpose(), Eigen::ComputeFullV);
             nullspaces[i] = svd_f.matrixV().block(0, 1, 3, 2);
             points3v[i] = p[indices[i]];
+            //getting just x,y indexes for cov matrix
+            points3v_x = points3v[i][0]
+            points3v_y = points3v[i][1]
         }
 
-        //TODO: compute covMatrix according to points matrix: points3v[i]
-        Eigen::Matrix3d covMatrix;
+        //computing covMatrix according to points matrix: points3v[i]
+        Eigen::Matrix3d covMatrix= calc_covariance(points3v_x, points3v_y)
+
 
         //////////////////////////////////////
         // 1. test if we have a planar scene
