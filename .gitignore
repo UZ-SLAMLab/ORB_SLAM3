@@ -91,3 +91,7 @@ my_settings.txt
 borrar/*
 
 */ExecMean.txt
+
+#Neta's added ignores
+Dependencies.md
+cmake-build-release/

@@ -71,6 +71,10 @@ namespace ORB_SLAM3{
 
         bool iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers, Eigen::Matrix4f &Tout);
 
+        int calc_covariance(arr1, arr2);
+        float covariance(float arr1[], float arr2[], int n);
+        float mean(float arr[], int n);
+
         //Type definitions needed by the original code
 
         /** A 3-vector of unit length used to describe landmark observations/bearings
@@ -247,6 +251,8 @@ namespace ORB_SLAM3{
         vector<float> mvMaxError;
 
         GeometricCamera* mpCamera;
+
+        Eigen::Matrix3d K;
     };
 
 }
