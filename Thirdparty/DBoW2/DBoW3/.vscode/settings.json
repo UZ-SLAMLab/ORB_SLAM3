@@ -1,0 +1,11 @@
+{
+    "cmake.debugConfig": {
+        "args": [
+            "orb",
+            "/home/codebind/DBow3/utils/images/image0.png",
+            "/home/codebind/DBow3/utils/images/image1.png",
+            "/home/codebind/DBow3/utils/images/image2.png",
+            "/home/codebind/DBow3/utils/images/image3.png"
+        ]
+    }
+}
