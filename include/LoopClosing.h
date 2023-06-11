@@ -144,7 +144,7 @@ protected:
 
     void CheckObservations(set<KeyFrame*> &spKFsMap1, set<KeyFrame*> &spKFsMap2);
     
-    static bool compareByValue(const std::pair<MapPoint*, int>& a, const std::pair<MapPoint*, int>& b);
+    static bool compareByValue(const std::pair<int, int>& a, const std::pair<int, int>& b);
     
     void ResetIfRequested();
     bool mbResetRequested;
