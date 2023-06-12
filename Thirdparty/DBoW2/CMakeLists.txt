@@ -16,7 +16,7 @@ set(HDRS_DBOW3
   DBoW3/src/DBoW3.h
   DBoW3/src/DescManip.h
   DBoW3/src/exports.h
-  DBoW3/src/FeatrureVector.h
+  DBoW3/src/FeatureVector.h
   DBoW3/src/QueryResults.h
   DBoW3/src/quicklz.h
   DBoW3/src/ScoringObject.h
