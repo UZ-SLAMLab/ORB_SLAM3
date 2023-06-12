@@ -17,6 +17,7 @@
 */
 
 #include "ViewerAR.h"
+#include "Thirdparty/DBoW2/DUtils/Random.h"
 
 #include <opencv2/highgui/highgui.hpp>
 
