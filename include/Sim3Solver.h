@@ -34,9 +34,10 @@ class Sim3Solver
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Sim3Solver(KeyFrame* pKF1, KeyFrame* pKF2, const std::vector<MapPoint*> &vpMatched12, const bool bFixScale = true,
-               const vector<KeyFrame*> vpKeyFrameMatchedMP = vector<KeyFrame*>());
-
+    Sim3Solver(KeyFrame *pKF1, KeyFrame *pKF2, const vector<MapPoint*> &mapPoints1,
+                        const vector<MapPoint *> &vpMatched12,
+                       std::map<MapPoint*, KeyFrame*> mapPointToKeyFrame, const bool bFixScale = true);
+    bool equalEigenVector(Eigen::Vector3f lastEigen, Eigen::Vector3f newEigen);
     void SetRansacParameters(double probability = 0.99, int minInliers = 6 , int maxIterations = 300);
 
     Eigen::Matrix4f find(std::vector<bool> &vbInliers12, int &nInliers);
@@ -48,7 +49,7 @@ public:
     Eigen::Matrix3f GetEstimatedRotation();
     Eigen::Vector3f GetEstimatedTranslation();
     float GetEstimatedScale();
-
+    int N;
 protected:
 
     void ComputeCentroid(Eigen::Matrix3f &P, Eigen::Matrix3f &Pr, Eigen::Vector3f &C);
@@ -78,7 +79,7 @@ protected:
     std::vector<size_t> mvnMaxError1;
     std::vector<size_t> mvnMaxError2;
 
-    int N;
+    
     int mN1;
 
     // Current Estimation
