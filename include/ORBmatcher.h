@@ -66,7 +66,7 @@ namespace ORB_SLAM3
         // Brute force constrained to ORB that belong to the same vocabulary node (at a certain level)
         // Used in Relocalisation and Loop Detection
         int SearchByBoW(KeyFrame *pKF, Frame &F, std::vector<MapPoint*> &vpMapPointMatches);
-        int SearchByBoW(KeyFrame *pKF1, KeyFrame* pKF2, std::vector<MapPoint*> &vpMatches12, std::map<int, int> &mapPointsIndexToDistance, std::vector<std::pair<MapPoint*,MapPoint*>> &mapPoint1ToMapPoint2Pairs, std::map<MapPoint*, KeyFrame*> &mapPointToKeyFrame);
+        int SearchByBoW(KeyFrame *pKF1, KeyFrame* pKF2, std::vector<MapPoint*> &vpMatches12, std::map<int, int> &mapPointsIndexToDistance, std::vector<std::pair<MapPoint*,MapPoint*>> &mapPoint1ToMapPoint2Pairs, std::map<MapPoint*, KeyFrame*> &mapPointToKeyFrame, std::set<MapPoint*> sMatchedMapPoints1, std::set<MapPoint*> sMatchedMapPoints2);
 
         // Matching for the Map Initialization (only used in the monocular case)
         int SearchForInitialization(Frame &F1, Frame &F2, std::vector<cv::Point2f> &vbPrevMatched, std::vector<int> &vnMatches12, int windowSize=10);

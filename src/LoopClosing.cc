@@ -673,13 +673,16 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
         std::vector<std::pair<MapPoint*,MapPoint*>> mapPoint1ToMapPoint2Pairs;
         std::map<MapPoint*, KeyFrame*> mapPointToKeyFrame;
         
+        std::set<MapPoint*> sMatchedMapPoints1;
+        std::set<MapPoint*> sMatchedMapPoints2;
+        
         for(int j=0; j<vpCovKFi.size(); ++j) //for cov kf
         {
             if(!vpCovKFi[j] || vpCovKFi[j]->isBad())
                 continue;
 
             //get matches by bow for our current frame with one of the cov kf of the i'th Bow Candidates
-            int num = matcherBoW.SearchByBoW(mpCurrentKF, vpCovKFi[j], vvpMatchedMPs[j], mapPointsIndexToDistance, mapPoint1ToMapPoint2Pairs, mapPointToKeyFrame); //fill the vvpMatchedMPs[j] with all matched map points of vpCovKFi[j] with mpCurrentKF
+            int num = matcherBoW.SearchByBoW(mpCurrentKF, vpCovKFi[j], vvpMatchedMPs[j], mapPointsIndexToDistance, mapPoint1ToMapPoint2Pairs, mapPointToKeyFrame, sMatchedMapPoints1, sMatchedMapPoints2); //fill the vvpMatchedMPs[j] with all matched map points of vpCovKFi[j] with mpCurrentKF
             if (num > nMostBoWNumMatches) // pick the one with max matches
             {
                 nMostBoWNumMatches = num;
@@ -687,35 +690,41 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
             }
         }
         
-        std::cout << "mapPointsIndexToDistance.size() = " << mapPointsIndexToDistance.size() << std::endl;
-        
         // Create a vector of pairs from the map
         std::vector<std::pair<int, int>> pairsPointsIndexToDistance(mapPointsIndexToDistance.begin(), mapPointsIndexToDistance.end());
 
         // Sort the vector based on the values using the custom comparator function
-        //std::sort(pairsPointsIndexToDistance.begin(), pairsPointsIndexToDistance.end(), LoopClosing::compareByValue);
+        std::sort(pairsPointsIndexToDistance.begin(), pairsPointsIndexToDistance.end(), LoopClosing::compareByValue);
 
         std::vector<MapPoint*> sortedMapPoints1ByScore;
         std::vector<MapPoint*> sortedMapPoints2ByScore;
-        std::vector<int> sortedScores;
+        int lastScore = -1;
+        int repetitions = 1;
         std::cout << "pairsPointsIndexToDistance.size = " << pairsPointsIndexToDistance.size() << std::endl;
         std::cout << "the scores: " << std::endl;
         for (const auto& [index,score] : pairsPointsIndexToDistance) {
             MapPoint* mapPoint1 = mapPoint1ToMapPoint2Pairs[index].first;
             MapPoint* mapPoint2 = mapPoint1ToMapPoint2Pairs[index].second;
-            std::cout << score << ", ";
             if(!mapPoint1 || mapPoint1->isBad() || !mapPoint2 || mapPoint2->isBad()){
                 continue;
             }
             
+            if(score == lastScore){
+                repetitions++;
+                if(repetitions == 5){
+                    break;
+                }
+            } else {
+                repetitions = 1;
+                lastScore = score;
+            }
+            
+            std::cout << score << ", ";
             numBoWMatches++;
             sortedMapPoints1ByScore.push_back(mapPoint1);
             sortedMapPoints2ByScore.push_back(mapPoint2);
         }
-        
-        std::cout<< "vpKeyFrameMatchedMP.size() " <<  vpKeyFrameMatchedMP.size() << std::endl;
-
-        //pMostBoWMatchesKF = vpCovKFi[pMostBoWMatchesKF];
+        std::cout << std::endl;
 
         if(numBoWMatches >= nBoWMatches) // TODO pick a good threshold, now nBoWMatches=20
         {
@@ -724,10 +733,8 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
             if(mpTracker->mSensor==System::IMU_MONOCULAR && !mpCurrentKF->GetMap()->GetIniertialBA2())
                 bFixedScale=false;
 
-            Sim3Solver solver = Sim3Solver(mpCurrentKF, pMostBoWMatchesKF, sortedMapPoints1ByScore, sortedMapPoints2ByScore, bFixedScale, mapPointToKeyFrame);
-            std::cout << "nBoWInliers before " << nBoWInliers << std::endl;
+            Sim3Solver solver = Sim3Solver(mpCurrentKF, pMostBoWMatchesKF, sortedMapPoints1ByScore, sortedMapPoints2ByScore, mapPointToKeyFrame, bFixedScale);
             nBoWInliers = std::max(nBoWInliers, solver.N / 4);
-            std::cout << "nBoWInliers after " << nBoWInliers << std::endl;
             solver.SetRansacParameters(0.99, nBoWInliers, 300); 
 
             bool bNoMore = false;
@@ -735,10 +742,7 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
             int nInliers;
             bool bConverge = false;
             Eigen::Matrix4f mTcm;
-            while(!bConverge && !bNoMore)
-            {
-            mTcm = solver.iterate(20,bNoMore, vbInliers, nInliers, bConverge);
-            }
+            mTcm = solver.iterate(300, bNoMore, vbInliers, nInliers, bConverge);
 
             if(bConverge)
             {

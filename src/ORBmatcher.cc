@@ -762,7 +762,7 @@ namespace ORB_SLAM3
         return nmatches;
     }
 
-    int ORBmatcher::SearchByBoW(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &vpMatches12, std::map<int, int> &mapPointsIndexToDistance, std::vector<std::pair<MapPoint*,MapPoint*>> &mapPoint1ToMapPoint2Pairs, std::map<MapPoint*, KeyFrame*> &mapPointToKeyFrame)
+    int ORBmatcher::SearchByBoW(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &vpMatches12, std::map<int, int> &mapPointsIndexToDistance, std::vector<std::pair<MapPoint*,MapPoint*>> &mapPoint1ToMapPoint2Pairs, std::map<MapPoint*, KeyFrame*> &mapPointToKeyFrame, std::set<MapPoint*> sMatchedMapPoints1, std::set<MapPoint*> sMatchedMapPoints2)
     {
         const vector<cv::KeyPoint> &vKeysUn1 = pKF1->mvKeysUn;
         const DBoW2::FeatureVector &vFeatVec1 = pKF1->mFeatVec;
@@ -845,10 +845,8 @@ namespace ORB_SLAM3
                     if(bestDist1 < TH_LOW && 
                         (static_cast<float>(bestDist1) < mfNNratio * static_cast<float>(bestDist2)))
                     {
-                        std::cout << "bestDist1 < TH_LOW " << bestDist1 << std::endl;
                         mapPoint1ToMapPoint2Pairs.push_back(std::make_pair(vpMapPoints1[idx1], vpMapPoints2[bestIdx2]));
                         mapPointsIndexToDistance[mapPoint1ToMapPoint2Pairs.size() - 1] = bestDist1;
-                        std::cout << "mapPointToDistance.size =  " << mapPoint1ToMapPoint2Pairs.size() << std::endl;
                         mapPointToKeyFrame[vpMapPoints2[bestIdx2]] = pKF2;
                         vpMatches12[idx1]=vpMapPoints2[bestIdx2]; //todo why dont we need to save from vpMapPoints1 too?
                         vbMatched2[bestIdx2]=true;
@@ -900,7 +898,6 @@ namespace ORB_SLAM3
                 }
             }
         }
-        std::cout<< "nmatches " << nmatches<< "mbCheckOrientation" << mbCheckOrientation << std::endl;
         return nmatches;
     }
 

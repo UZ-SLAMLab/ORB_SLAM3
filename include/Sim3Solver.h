@@ -35,9 +35,9 @@ class Sim3Solver
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Sim3Solver(KeyFrame *pKF1, KeyFrame *pKF2, const vector<MapPoint*> &mapPoints1,
-                        const vector<MapPoint *> &vpMatched12, const bool bFixScale,
-                       std::map<MapPoint*, KeyFrame*> mapPointToKeyFrame);
-
+                        const vector<MapPoint *> &vpMatched12,
+                       std::map<MapPoint*, KeyFrame*> mapPointToKeyFrame, const bool bFixScale = true);
+    bool equalEigenVector(Eigen::Vector3f lastEigen, Eigen::Vector3f newEigen);
     void SetRansacParameters(double probability = 0.99, int minInliers = 6 , int maxIterations = 300);
 
     Eigen::Matrix4f find(std::vector<bool> &vbInliers12, int &nInliers);
