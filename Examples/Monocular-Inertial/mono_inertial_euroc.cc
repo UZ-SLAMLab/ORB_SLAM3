@@ -275,8 +275,12 @@ void LoadImages(const string &strImagePath, const string &strPathTimes,
 
 void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro)
 {
-    ifstream fImu;
-    fImu.open(strImuPath.c_str());
+    ifstream fImu(strImuPath.c_str());
+    if (!fImu.is_open())
+    {
+        std::cout << "Error openning file: " << strImuPath << std::endl;
+        throw std::exception();
+    }
     vTimeStamps.reserve(5000);
     vAcc.reserve(5000);
     vGyro.reserve(5000);

@@ -129,7 +129,7 @@ int main(int argc, char **argv)
     cout.precision(17);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_STEREO, false);
+    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_STEREO, true);
 
     cv::Mat imLeft, imRight;
     for (seq = 0; seq<num_seq; seq++)
@@ -270,6 +270,11 @@ void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::P
 {
     ifstream fImu;
     fImu.open(strImuPath.c_str());
+    if (!fImu.is_open())
+    {
+        std::cout << "Error openning file: " << strImuPath << std::endl;
+        throw std::exception();
+    }
     vTimeStamps.reserve(5000);
     vAcc.reserve(5000);
     vGyro.reserve(5000);

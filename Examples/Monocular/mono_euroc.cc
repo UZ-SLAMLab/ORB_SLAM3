@@ -17,6 +17,7 @@
 */
 
 #include<iostream>
+#include <iomanip>
 #include<algorithm>
 #include<fstream>
 #include<chrono>
@@ -77,15 +78,14 @@ int main(int argc, char **argv)
     cout.precision(17);
 
 
-    int fps = 20;
-    float dT = 1.f/fps;
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR, false);
+    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR, true);
     float imageScale = SLAM.GetImageScale();
 
+#ifdef REGISTER_TIMES
     double t_resize = 0.f;
     double t_track = 0.f;
-
+#endif
     for (seq = 0; seq<num_seq; seq++)
     {
 
@@ -137,7 +137,9 @@ int main(int argc, char **argv)
 
             // Pass the image to the SLAM system
             // cout << "tframe = " << tframe << endl;
-            SLAM.TrackMonocular(im,tframe); // TODO change to monocular_inertial
+            Sophus::SE3f se3 = SLAM.TrackMonocular(im,tframe); // TODO change to monocular_inertial
+            std::cout << std::setprecision(3) << "Rotation: " << se3.angleX() << ", " << se3.angleY() << ", " << se3.angleZ() << " | ";
+            std::cout << std::setprecision(3) << "Transtaltion: " << se3.translation().x() << ", " << se3.translation().y() << ", " << se3.translation().z() << std::endl;
 
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -198,6 +200,19 @@ int main(int argc, char **argv)
     {
         SLAM.SaveTrajectoryEuRoC("CameraTrajectory.txt");
         SLAM.SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
+    }
+
+
+    // write tracking times:
+    std::ofstream outfile("TrackingTimes.txt");
+    if (outfile.is_open()) {
+        for (const auto& num : vTimesTrack) {
+            outfile << num << std::endl;
+        }
+        outfile.close();
+        std::cout << "File 'TrackingTimes.txt' has been written successfully." << std::endl;
+    } else {
+        std::cout << "Unable to open the file." << std::endl;
     }
 
     return 0;
