@@ -107,8 +107,6 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     mStrVocabularyFilePath = strVocFile;
 
-    bool loadedAtlas = false;
-
     if(mStrLoadAtlasFromFile.empty())
     {
         //Load ORB Vocabulary
@@ -165,8 +163,6 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
 
         //cout << "KF in DB: " << mpKeyFrameDatabase->mnNumKFs << "; words: " << mpKeyFrameDatabase->mnNumWords << endl;
-
-        loadedAtlas = true;
 
         mpAtlas->CreateNewMap();
 
@@ -670,7 +666,7 @@ void System::SaveTrajectoryEuRoC(const string &filename)
     }*/
 
     vector<Map*> vpMaps = mpAtlas->GetAllMaps();
-    int numMaxKFs = 0;
+    size_t numMaxKFs = 0;
     Map* pBiggerMap;
     std::cout << "There are " << std::to_string(vpMaps.size()) << " maps in the atlas" << std::endl;
     for(Map* pMap :vpMaps)
@@ -786,7 +782,7 @@ void System::SaveTrajectoryEuRoC(const string &filename, Map* pMap)
         return;
     }*/
 
-    int numMaxKFs = 0;
+    // int numMaxKFs = 0;
 
     vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
@@ -1060,7 +1056,7 @@ void System::SaveKeyFrameTrajectoryEuRoC(const string &filename)
 
     vector<Map*> vpMaps = mpAtlas->GetAllMaps();
     Map* pBiggerMap;
-    int numMaxKFs = 0;
+    size_t numMaxKFs = 0;
     for(Map* pMap :vpMaps)
     {
         if(pMap && pMap->GetAllKeyFrames().size() > numMaxKFs)
@@ -1328,6 +1324,22 @@ vector<MapPoint*> System::GetTrackedMapPoints()
 {
     unique_lock<mutex> lock(mMutexState);
     return mTrackedMapPoints;
+}
+
+const std::vector<MapPoint*> System::GetInliersTrackedMapPoints()
+{
+    std::vector<MapPoint*> inliers;
+    unique_lock<mutex> lock(mMutexState);
+    const std::vector<bool>& outlier = mpTracker->mCurrentFrame.mvbOutlier;
+    for(size_t i=0; i<mTrackedMapPoints.size(); i++)
+    {
+        MapPoint* pMP = mTrackedMapPoints[i];
+        if(pMP && !outlier[i])
+        {
+            inliers.push_back(pMP);
+        }
+    }
+    return inliers;
 }
 
 vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()

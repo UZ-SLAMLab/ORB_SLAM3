@@ -175,6 +175,7 @@ public:
     // You can call this right after TrackMonocular (or stereo or RGBD)
     int GetTrackingState();
     std::vector<MapPoint*> GetTrackedMapPoints();
+    const std::vector<MapPoint*> GetInliersTrackedMapPoints();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 
     // For debugging
@@ -191,6 +192,8 @@ public:
     void InsertResizeTime(double& time);
     void InsertTrackTime(double& time);
 #endif
+
+    const Settings* GetSettings() const {return settings_;};
 
 private:
 
