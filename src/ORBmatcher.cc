@@ -106,14 +106,14 @@ namespace ORB_SLAM3
                             bestDist=dist;
                             bestLevel2 = bestLevel;
                             bestLevel = (F.Nleft == -1) ? F.mvKeysUn[idx].octave
-                                                        : (idx < F.Nleft) ? F.mvKeys[idx].octave
+                                                        : (int(idx) < F.Nleft) ? F.mvKeys[idx].octave
                                                                           : F.mvKeysRight[idx - F.Nleft].octave;
                             bestIdx=idx;
                         }
                         else if(dist<bestDist2)
                         {
                             bestLevel2 = (F.Nleft == -1) ? F.mvKeysUn[idx].octave
-                                                         : (idx < F.Nleft) ? F.mvKeys[idx].octave
+                                                         : (int(idx) < F.Nleft) ? F.mvKeys[idx].octave
                                                                            : F.mvKeysRight[idx - F.Nleft].octave;
                             bestDist2=dist;
                         }
@@ -303,21 +303,21 @@ namespace ORB_SLAM3
 
                             const int dist =  DescriptorDistance(dKF,dF);
 
-                            if(realIdxF < F.Nleft && dist<bestDist1){
+                            if(int(realIdxF) < F.Nleft && dist<bestDist1){
                                 bestDist2=bestDist1;
                                 bestDist1=dist;
                                 bestIdxF=realIdxF;
                             }
-                            else if(realIdxF < F.Nleft && dist<bestDist2){
+                            else if(int(realIdxF) < F.Nleft && dist<bestDist2){
                                 bestDist2=dist;
                             }
 
-                            if(realIdxF >= F.Nleft && dist<bestDist1R){
+                            if(int(realIdxF) >= F.Nleft && dist<bestDist1R){
                                 bestDist2R=bestDist1R;
                                 bestDist1R=dist;
                                 bestIdxFR=realIdxF;
                             }
-                            else if(realIdxF >= F.Nleft && dist<bestDist2R){
+                            else if(int(realIdxF) >= F.Nleft && dist<bestDist2R){
                                 bestDist2R=dist;
                             }
                         }
@@ -332,7 +332,7 @@ namespace ORB_SLAM3
 
                             const cv::KeyPoint &kp =
                                     (!pKF->mpCamera2) ? pKF->mvKeysUn[realIdxKF] :
-                                    (realIdxKF >= pKF -> NLeft) ? pKF -> mvKeysRight[realIdxKF - pKF -> NLeft]
+                                    (int(realIdxKF) >= pKF -> NLeft) ? pKF -> mvKeysRight[realIdxKF - pKF -> NLeft]
                                                                 : pKF -> mvKeys[realIdxKF];
 
                             if(mbCheckOrientation)
@@ -362,7 +362,7 @@ namespace ORB_SLAM3
 
                                 const cv::KeyPoint &kp =
                                         (!pKF->mpCamera2) ? pKF->mvKeysUn[realIdxKF] :
-                                        (realIdxKF >= pKF -> NLeft) ? pKF -> mvKeysRight[realIdxKF - pKF -> NLeft]
+                                        (int(realIdxKF) >= pKF -> NLeft) ? pKF -> mvKeysRight[realIdxKF - pKF -> NLeft]
                                                                     : pKF -> mvKeys[realIdxKF];
 
                                 if(mbCheckOrientation)
@@ -428,10 +428,10 @@ namespace ORB_SLAM3
                                        vector<MapPoint*> &vpMatched, int th, float ratioHamming)
     {
         // Get Calibration Parameters for later projection
-        const float &fx = pKF->fx;
-        const float &fy = pKF->fy;
-        const float &cx = pKF->cx;
-        const float &cy = pKF->cy;
+        // const float &fx = pKF->fx;
+        // const float &fy = pKF->fy;
+        // const float &cx = pKF->cx;
+        // const float &cy = pKF->cy;
 
         Sophus::SE3f Tcw = Sophus::SE3f(Scw.rotationMatrix(),Scw.translation()/Scw.scale());
         Eigen::Vector3f Ow = Tcw.inverse().translation();
@@ -983,10 +983,10 @@ namespace ORB_SLAM3
                             continue;
 
                     const cv::KeyPoint &kp1 = (pKF1 -> NLeft == -1) ? pKF1->mvKeysUn[idx1]
-                                                                    : (idx1 < pKF1 -> NLeft) ? pKF1 -> mvKeys[idx1]
+                                                                    : (int(idx1) < pKF1 -> NLeft) ? pKF1 -> mvKeys[idx1]
                                                                                              : pKF1 -> mvKeysRight[idx1 - pKF1 -> NLeft];
 
-                    const bool bRight1 = (pKF1 -> NLeft == -1 || idx1 < pKF1 -> NLeft) ? false
+                    const bool bRight1 = (pKF1 -> NLeft == -1 || int(idx1) < pKF1 -> NLeft) ? false
                                                                                        : true;
 
                     const cv::Mat &d1 = pKF1->mDescriptors.row(idx1);
@@ -1018,9 +1018,9 @@ namespace ORB_SLAM3
                             continue;
 
                         const cv::KeyPoint &kp2 = (pKF2 -> NLeft == -1) ? pKF2->mvKeysUn[idx2]
-                                                                        : (idx2 < pKF2 -> NLeft) ? pKF2 -> mvKeys[idx2]
+                                                                        : (int(idx2) < pKF2 -> NLeft) ? pKF2 -> mvKeys[idx2]
                                                                                                  : pKF2 -> mvKeysRight[idx2 - pKF2 -> NLeft];
-                        const bool bRight2 = (pKF2 -> NLeft == -1 || idx2 < pKF2 -> NLeft) ? false
+                        const bool bRight2 = (pKF2 -> NLeft == -1 || int(idx2) < pKF2 -> NLeft) ? false
                                                                                            : true;
 
                         if(!bStereo1 && !bStereo2 && !pKF1->mpCamera2)
@@ -1162,10 +1162,10 @@ namespace ORB_SLAM3
             pCamera = pKF->mpCamera;
         }
 
-        const float &fx = pKF->fx;
-        const float &fy = pKF->fy;
-        const float &cx = pKF->cx;
-        const float &cy = pKF->cy;
+        // const float &fx = pKF->fx;
+        // const float &fy = pKF->fy;
+        // const float &cx = pKF->cx;
+        // const float &cy = pKF->cy;
         const float &bf = pKF->mbf;
 
         int nFused=0;
@@ -1340,10 +1340,10 @@ namespace ORB_SLAM3
     int ORBmatcher::Fuse(KeyFrame *pKF, Sophus::Sim3f &Scw, const vector<MapPoint *> &vpPoints, float th, vector<MapPoint *> &vpReplacePoint)
     {
         // Get Calibration Parameters for later projection
-        const float &fx = pKF->fx;
-        const float &fy = pKF->fy;
-        const float &cx = pKF->cx;
-        const float &cy = pKF->cy;
+        // const float &fx = pKF->fx;
+        // const float &fy = pKF->fy;
+        // const float &cx = pKF->cx;
+        // const float &cy = pKF->cy;
 
         // Decompose Scw
         Sophus::SE3f Tcw = Sophus::SE3f(Scw.rotationMatrix(),Scw.translation()/Scw.scale());
@@ -1703,8 +1703,8 @@ namespace ORB_SLAM3
                     Eigen::Vector3f x3Dw = pMP->GetWorldPos();
                     Eigen::Vector3f x3Dc = Tcw * x3Dw;
 
-                    const float xc = x3Dc(0);
-                    const float yc = x3Dc(1);
+                    // const float xc = x3Dc(0);
+                    // const float yc = x3Dc(1);
                     const float invzc = 1.0/x3Dc(2);
 
                     if(invzc<0)

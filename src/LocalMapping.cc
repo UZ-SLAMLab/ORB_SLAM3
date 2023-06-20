@@ -29,15 +29,15 @@
 
 namespace ORB_SLAM3
 {
-
 LocalMapping::LocalMapping(System* pSys, Atlas *pAtlas, const float bMonocular, bool bInertial, const string &_strSeqName):
-    mpSystem(pSys), mbMonocular(bMonocular), mbInertial(bInertial), mbResetRequested(false), mbResetRequestedActiveMap(false), mbFinishRequested(false), mbFinished(true), mpAtlas(pAtlas), bInitializing(false),
-    mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbNotStop(false), mbAcceptKeyFrames(true),
-    mIdxInit(0), mScale(1.0), mInitSect(0), mbNotBA1(true), mbNotBA2(true), mIdxIteration(0), infoInertial(Eigen::MatrixXd::Zero(9,9))
+    mScale(1.0), mInitSect(0), mIdxInit(0), mnMatchesInliers(0), mIdxIteration(0), mbNotBA1(true), mbNotBA2(true), mbBadImu(false),
+    mpSystem(pSys), mbMonocular(bMonocular), mbInertial(bInertial), mbResetRequested(false), mbResetRequestedActiveMap(false), mbFinishRequested(false), mbFinished(true), mpAtlas(pAtlas), 
+    mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbNotStop(false), mbAcceptKeyFrames(true), bInitializing(false),
+    infoInertial(Eigen::MatrixXd::Zero(9,9))
 {
-    mnMatchesInliers = 0;
+    // mnMatchesInliers = 0;
 
-    mbBadImu = false;
+    // mbBadImu = false;
 
     mTinit = 0.f;
 
@@ -115,7 +115,9 @@ void LocalMapping::Run()
             vdMPCreation_ms.push_back(timeMPCreation);
 #endif
 
+#ifdef REGISTER_TIMES
             bool b_doneLBA = false;
+#endif            
             int num_FixedKF_BA = 0;
             int num_OptKF_BA = 0;
             int num_MPs_BA = 0;
@@ -147,12 +149,16 @@ void LocalMapping::Run()
 
                         bool bLarge = ((mpTracker->GetMatchesInliers()>75)&&mbMonocular)||((mpTracker->GetMatchesInliers()>100)&&!mbMonocular);
                         Optimizer::LocalInertialBA(mpCurrentKeyFrame, &mbAbortBA, mpCurrentKeyFrame->GetMap(),num_FixedKF_BA,num_OptKF_BA,num_MPs_BA,num_edges_BA, bLarge, !mpCurrentKeyFrame->GetMap()->GetIniertialBA2());
+#ifdef REGISTER_TIMES
                         b_doneLBA = true;
+#endif
                     }
                     else
                     {
                         Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame,&mbAbortBA, mpCurrentKeyFrame->GetMap(),num_FixedKF_BA,num_OptKF_BA,num_MPs_BA,num_edges_BA);
+#ifdef REGISTER_TIMES
                         b_doneLBA = true;
+#endif
                     }
 
                 }
@@ -388,7 +394,7 @@ void LocalMapping::MapPointCulling()
 void LocalMapping::CreateNewMapPoints()
 {
     // Retrieve neighbor keyframes in covisibility graph
-    int nn = 10;
+    size_t nn = 10;
     // For stereo inertial case
     if(mbMonocular)
         nn=30;
@@ -397,7 +403,7 @@ void LocalMapping::CreateNewMapPoints()
     if (mbInertial)
     {
         KeyFrame* pKF = mpCurrentKeyFrame;
-        int count=0;
+        size_t count=0;
         while((vpNeighKFs.size()<=nn)&&(pKF->mPrevKF)&&(count++<nn))
         {
             vector<KeyFrame*>::iterator it = std::find(vpNeighKFs.begin(), vpNeighKFs.end(), pKF->mPrevKF);
@@ -422,8 +428,8 @@ void LocalMapping::CreateNewMapPoints()
     const float &fy1 = mpCurrentKeyFrame->fy;
     const float &cx1 = mpCurrentKeyFrame->cx;
     const float &cy1 = mpCurrentKeyFrame->cy;
-    const float &invfx1 = mpCurrentKeyFrame->invfx;
-    const float &invfy1 = mpCurrentKeyFrame->invfy;
+    // const float &invfx1 = mpCurrentKeyFrame->invfx;
+    // const float &invfy1 = mpCurrentKeyFrame->invfy;
 
     const float ratioFactor = 1.5f*mpCurrentKeyFrame->mfScaleFactor;
     int countStereo = 0;
@@ -475,8 +481,8 @@ void LocalMapping::CreateNewMapPoints()
         const float &fy2 = pKF2->fy;
         const float &cx2 = pKF2->cx;
         const float &cy2 = pKF2->cy;
-        const float &invfx2 = pKF2->invfx;
-        const float &invfy2 = pKF2->invfy;
+        // const float &invfx2 = pKF2->invfx;
+        // const float &invfy2 = pKF2->invfy;
 
         // Triangulate each match
         const int nmatches = vMatchedIndices.size();
@@ -966,7 +972,7 @@ void LocalMapping::KeyFrameCulling()
                     if(pMP->Observations()>thObs)
                     {
                         const int &scaleLevel = (pKF -> NLeft == -1) ? pKF->mvKeysUn[i].octave
-                                                                     : (i < pKF -> NLeft) ? pKF -> mvKeys[i].octave
+                                                                     : (int(i) < pKF -> NLeft) ? pKF -> mvKeys[i].octave
                                                                                           : pKF -> mvKeysRight[i].octave;
                         const map<KeyFrame*, tuple<int,int>> observations = pMP->GetObservations();
                         int nObs=0;
@@ -1176,7 +1182,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
         return;
 
     float minTime;
-    int nMinKF;
+    size_t nMinKF;
     if (mbMonocular)
     {
         minTime = 2.0;
@@ -1263,10 +1269,10 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
 
     mInitTime = mpTracker->mLastFrame.mTimeStamp-vpKF.front()->mTimeStamp;
 
-    std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+    // std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
     Optimizer::InertialOptimization(mpAtlas->GetCurrentMap(), mRwg, mScale, mbg, mba, mbMonocular, infoInertial, false, false, priorG, priorA);
 
-    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+    // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
     if (mScale<1e-1)
     {
@@ -1300,7 +1306,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
         mpCurrentKeyFrame->bImu = true;
     }
 
-    std::chrono::steady_clock::time_point t4 = std::chrono::steady_clock::now();
+    // std::chrono::steady_clock::time_point t4 = std::chrono::steady_clock::now();
     if (bFIBA)
     {
         if (priorA!=0.f)
@@ -1309,7 +1315,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
             Optimizer::FullInertialBA(mpAtlas->GetCurrentMap(), 100, false, mpCurrentKeyFrame->mnId, NULL, false);
     }
 
-    std::chrono::steady_clock::time_point t5 = std::chrono::steady_clock::now();
+    // std::chrono::steady_clock::time_point t5 = std::chrono::steady_clock::now();
 
     Verbose::PrintMess("Global Bundle Adjustment finished\nUpdating map ...", Verbose::VERBOSITY_NORMAL);
 
@@ -1452,14 +1458,14 @@ void LocalMapping::ScaleRefinement()
         lpKF.push_back(mpCurrentKeyFrame);
     }
 
-    const int N = vpKF.size();
+    // const int N = vpKF.size();
 
     mRwg = Eigen::Matrix3d::Identity();
     mScale=1.0;
 
-    std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+    // std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
     Optimizer::InertialOptimization(mpAtlas->GetCurrentMap(), mRwg, mScale);
-    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+    // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
     if (mScale<1e-1) // 1e-1
     {
@@ -1471,14 +1477,14 @@ void LocalMapping::ScaleRefinement()
     Sophus::SO3d so3wg(mRwg);
     // Before this line we are not changing the map
     unique_lock<mutex> lock(mpAtlas->GetCurrentMap()->mMutexMapUpdate);
-    std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+    // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
     if ((fabs(mScale-1.f)>0.002)||!mbMonocular)
     {
         Sophus::SE3f Tgw(mRwg.cast<float>().transpose(),Eigen::Vector3f::Zero());
         mpAtlas->GetCurrentMap()->ApplyScaledRotation(Tgw,mScale,true);
         mpTracker->UpdateFrameIMU(mScale,mpCurrentKeyFrame->GetImuBias(),mpCurrentKeyFrame);
     }
-    std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
+    // std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
 
     for(list<KeyFrame*>::iterator lit = mlNewKeyFrames.begin(), lend=mlNewKeyFrames.end(); lit!=lend; lit++)
     {
@@ -1487,7 +1493,7 @@ void LocalMapping::ScaleRefinement()
     }
     mlNewKeyFrames.clear();
 
-    double t_inertial_only = std::chrono::duration_cast<std::chrono::duration<double> >(t1 - t0).count();
+    // double t_inertial_only = std::chrono::duration_cast<std::chrono::duration<double> >(t1 - t0).count();
 
     // To perform pose-inertial opt w.r.t. last keyframe
     mpCurrentKeyFrame->GetMap()->IncreaseChangeIndex();
