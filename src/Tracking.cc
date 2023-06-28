@@ -82,7 +82,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
 
         if(!b_parse_cam || !b_parse_orb || !b_parse_imu)
         {
-            std::cerr << "**ERROR in the config file, the format is not correct**" << std::endl;
+            std::cerr << "**ERROR in the config file, the format is not correct, Tracking**" << std::endl;
             try
             {
                 throw -1;

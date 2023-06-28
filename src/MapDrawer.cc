@@ -37,7 +37,7 @@ MapDrawer::MapDrawer(Atlas* pAtlas, const string &strSettingPath, Settings* sett
 
         if(!is_correct)
         {
-            std::cerr << "**ERROR in the config file, the format is not correct**" << std::endl;
+            std::cerr << "**ERROR in the config file, the format is not correct, MapDrawer**" << std::endl;
             try
             {
                 throw -1;

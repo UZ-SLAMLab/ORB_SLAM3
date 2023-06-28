@@ -24,7 +24,7 @@
 #include <ctime>
 #include <sstream>
 
-#include <opencv2/core/core.hpp>
+#include<opencv2/core/core.hpp>
 
 
 #include<System.h>

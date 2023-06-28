@@ -40,7 +40,7 @@ Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer
 
         if(!is_correct)
         {
-            std::cerr << "**ERROR in the config file, the format is not correct**" << std::endl;
+            std::cerr << "**ERROR in the config file, the format is not correct, Viewer**" << std::endl;
             try
             {
                 throw -1;

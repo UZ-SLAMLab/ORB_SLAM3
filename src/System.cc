@@ -17,13 +17,12 @@
 */
 
 
-
+#include "md5.h"
 #include "System.h"
 #include "Converter.h"
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
-#include <openssl/md5.h>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -1508,8 +1507,9 @@ bool System::LoadAtlas(int type)
 string System::CalculateCheckSum(string filename, int type)
 {
     string checksum = "";
+    cout << endl << "Calculate checksum for file " << filename << endl;
 
-    unsigned char c[MD5_DIGEST_LENGTH];
+    //unsigned char c[MD5_DIGEST_LENGTH];
 
     std::ios_base::openmode flags = std::ios::in;
     if(type == BINARY_FILE) // Binary file
@@ -1522,27 +1522,16 @@ string System::CalculateCheckSum(string filename, int type)
         return checksum;
     }
 
-    MD5_CTX md5Context;
     char buffer[1024];
-
-    MD5_Init (&md5Context);
-    while ( int count = f.readsome(buffer, sizeof(buffer)))
+    MD5 md5 = MD5();
+    while (int count = f.readsome(buffer, sizeof(buffer)))
     {
-        MD5_Update(&md5Context, buffer, count);
+        md5.update(buffer, count);
     }
 
     f.close();
 
-    MD5_Final(c, &md5Context );
-
-    for(int i = 0; i < MD5_DIGEST_LENGTH; i++)
-    {
-        char aux[10];
-        sprintf(aux,"%02x", c[i]);
-        checksum = checksum + aux;
-    }
-
-    return checksum;
+    return md5.hexdigest();
 }
 
 } //namespace ORB_SLAM
