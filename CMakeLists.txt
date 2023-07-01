@@ -35,6 +35,8 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
+#Next dependencies could be required (OpenCV, Eigen3, Pangolin, Boost, openssl, OpenGL, GLEW)
+
 find_package(OpenCV 4.7)
    if(NOT OpenCV_FOUND)
       message(FATAL_ERROR "OpenCV > 4.4 not found.")
@@ -167,12 +169,34 @@ ${OPENSSL_LIBS}
 
 # Build examples
 
-#Stereo Inertial examples-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo-Inertial)
+#Monocular examples
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular)
 
-add_executable(stereo_inertial_euroc Examples/Stereo-Inertial/stereo_inertial_euroc.cc)
-target_compile_definitions(stereo_inertial_euroc PUBLIC HAVE_EIGEN HAVE_GLEW)
-target_link_libraries(stereo_inertial_euroc PUBLIC ${GLEW_LIBRARY} ${OPENGL_LIBRARIES} ${OPENSSL_LIBS} ${OpenCV_LIBS} ${PROJECT_NAME})
+add_executable(mono_tum Examples/Monocular/mono_tum.cc)
+target_compile_definitions(mono_tum PUBLIC HAVE_EIGEN HAVE_GLEW)
+target_link_libraries(mono_tum PUBLIC ${GLEW_LIBRARY} ${OPENGL_LIBRARIES} ${OPENSSL_LIBS} ${OpenCV_LIBS} ${PROJECT_NAME})
+
+add_executable(mono_kitti Examples/Monocular/mono_kitti.cc)
+target_compile_definitions(mono_kitti PUBLIC HAVE_EIGEN HAVE_GLEW)
+target_link_libraries(mono_kitti PUBLIC ${GLEW_LIBRARY} ${OPENGL_LIBRARIES} ${OPENSSL_LIBS} ${OpenCV_LIBS} ${PROJECT_NAME})
+
+add_executable(mono_euroc Examples/Monocular/mono_euroc.cc)
+target_compile_definitions(mono_euroc PUBLIC HAVE_EIGEN HAVE_GLEW)
+target_link_libraries(mono_euroc PUBLIC ${GLEW_LIBRARY} ${OPENGL_LIBRARIES} ${OPENSSL_LIBS} ${OpenCV_LIBS} ${PROJECT_NAME})
+
+add_executable(mono_tum_vi Examples/Monocular/mono_tum_vi.cc)
+target_compile_definitions(mono_tum_vi PUBLIC HAVE_EIGEN HAVE_GLEW)
+target_link_libraries(mono_tum_vi PUBLIC ${GLEW_LIBRARY} ${OPENGL_LIBRARIES} ${OPENSSL_LIBS} ${OpenCV_LIBS} ${PROJECT_NAME})
+
+#Stereo example
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo)
+
+add_executable(stereo_tum_vi Examples/Stereo/stereo_tum_vi.cc)
+target_compile_definitions(stereo_tum_vi PUBLIC HAVE_EIGEN HAVE_GLEW)
+target_link_libraries(stereo_tum_vi PUBLIC ${GLEW_LIBRARY} ${OPENGL_LIBRARIES} ${OPENSSL_LIBS} ${OpenCV_LIBS} ${PROJECT_NAME})
+
+#Stereo Inertial example
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo-Inertial)
 
 add_executable(stereo_inertial_tum_vi Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
 target_compile_definitions(stereo_inertial_tum_vi PUBLIC HAVE_EIGEN HAVE_GLEW)

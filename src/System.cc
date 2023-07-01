@@ -1504,13 +1504,13 @@ bool System::LoadAtlas(int type)
     return false;
 }
 
+/*
+I am not sure if this function works
+*/
 string System::CalculateCheckSum(string filename, int type)
 {
     string checksum = "";
     cout << endl << "Calculate checksum for file " << filename << endl;
-
-    //unsigned char c[MD5_DIGEST_LENGTH];
-
     std::ios_base::openmode flags = std::ios::in;
     if(type == BINARY_FILE) // Binary file
         flags = std::ios::in | std::ios::binary;
