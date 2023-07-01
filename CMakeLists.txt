@@ -58,6 +58,7 @@ set(OPENGL_INCLUDE /opt/homebrew/include)
 set(OPENSSL_LIB_INCLUDE /opt/homebrew/opt/openssl/include)
 set(BOOST_LIB_INCLUDE /opt/homebrew/opt/boost/include)
 
+#Pangolin include path should be changed, it is for example here:
 SET( Pangolin_LIB_INCLUDE
 /Users/serg/PycharmProjects/Pangolin/components/pango_core/include;
 /Users/serg/PycharmProjects/Pangolin/components/pango_display/include;
