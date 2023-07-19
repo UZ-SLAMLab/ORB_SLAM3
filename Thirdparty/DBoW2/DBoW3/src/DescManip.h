@@ -67,6 +67,8 @@ public:
   /**Returns the number of bytes of the descriptor
    * used for binary descriptors only*/
   static size_t getDescSizeBytes(const cv::Mat & d){return d.cols* d.elemSize();}
+
+  static std::string LegacytoString(const cv::Mat &a);
 };
 
 uint32_t DescManip::distance_8uc1(const cv::Mat &a, const cv::Mat &b){

@@ -266,6 +266,19 @@ void DescManip::fromStream(cv::Mat &m,std::istream &str){
     str.read((char*)m.ptr<char>(0),m.elemSize()*m.cols);
 }
 
+std::string DescManip::LegacytoString(const cv::Mat &a)
+{
+  stringstream ss;
+  const unsigned char *p = a.ptr<unsigned char>();
+
+  for(int i = 0; i < a.cols; ++i, ++p)
+  {
+    ss << (int)*p << " ";
+  }
+
+  return ss.str();
+}
+
 
 // --------------------------------------------------------------------------
 

@@ -306,11 +306,7 @@ public:
   void toStream(  std::ostream &str, bool compressed=true) const throw(std::exception);
   void fromStream(  std::istream &str )   throw(std::exception);
 
-  /**
-   * Loads the vocabulary from a text file
-   * @param filename
-   */
-  bool loadFromTextFile(const std::string &filename);
+  void saveToTextFile(const std::string &filename) const;
 
  protected:
 
