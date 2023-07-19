@@ -1,0 +1,36 @@
+# ===================================================================================
+#  @PROJECT_NAME@ CMake configuration file
+#
+#             ** File generated automatically, do not modify **
+#
+#  Usage from an external project:
+#    In your CMakeLists.txt, add these lines:
+#
+#    FIND_PACKAGE(@PROJECT_NAME@ REQUIRED )
+#    TARGET_LINK_LIBRARIES(MY_TARGET_NAME ${@PROJECT_NAME@_LIBS})
+#
+#    This file will define the following variables:
+#      - @PROJECT_NAME@_LIBS          : The list of libraries to links against.
+#      - @PROJECT_NAME@_LIB_DIR       : The directory where lib files are. Calling LINK_DIRECTORIES
+#                                with this path is NOT needed.
+#      - @PROJECT_NAME@_VERSION       : The  version of this PROJECT_NAME build. Example: "1.2.0"
+#      - @PROJECT_NAME@_VERSION_MAJOR : Major version part of VERSION. Example: "1"
+#      - @PROJECT_NAME@_VERSION_MINOR : Minor version part of VERSION. Example: "2"
+#      - @PROJECT_NAME@_VERSION_PATCH : Patch version part of VERSION. Example: "0"
+#
+# ===================================================================================
+INCLUDE_DIRECTORIES("@CMAKE_INSTALL_PREFIX@/include")
+SET(@PROJECT_NAME@_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/include")
+
+LINK_DIRECTORIES("@CMAKE_INSTALL_PREFIX@/@LIB_INSTALL_DIR@")
+SET(@PROJECT_NAME@_LIB_DIR "@CMAKE_INSTALL_PREFIX@/@LIB_INSTALL_DIR@")
+
+SET(@PROJECT_NAME@_LIBS @REQUIRED_LIBRARIES@ @PROJECT_NAME@@PROJECT_DLLVERSION@)
+SET(@PROJECT_NAME@_LIBRARIES @REQUIRED_LIBRARIES@ @PROJECT_NAME@@PROJECT_DLLVERSION@)
+
+SET(@PROJECT_NAME@_FOUND YES)
+SET(@PROJECT_NAME@_FOUND "YES")
+SET(@PROJECT_NAME@_VERSION        @PROJECT_VERSION@)
+SET(@PROJECT_NAME@_VERSION_MAJOR  @PROJECT_VERSION_MAJOR@)
+SET(@PROJECT_NAME@_VERSION_MINOR  @PROJECT_VERSION_MINOR@)
+SET(@PROJECT_NAME@_VERSION_PATCH  @PROJECT_VERSION_PATCH@)
