@@ -69,7 +69,7 @@ namespace ORB_SLAM3 {
         GeometricCamera* camera1() {return calibration1_;}
         GeometricCamera* camera2() {return calibration2_;}
         cv::Mat camera1DistortionCoef() {return cv::Mat(vPinHoleDistorsion1_.size(),1,CV_32F,vPinHoleDistorsion1_.data());}
-        cv::Mat camera2DistortionCoef() {return cv::Mat(vPinHoleDistorsion2_.size(),1,CV_32F,vPinHoleDistorsion1_.data());}
+        cv::Mat camera2DistortionCoef() {return cv::Mat(vPinHoleDistorsion2_.size(),1,CV_32F,vPinHoleDistorsion2_.data());}
 
         Sophus::SE3f Tlr() {return Tlr_;}
         float bf() {return bf_;}
