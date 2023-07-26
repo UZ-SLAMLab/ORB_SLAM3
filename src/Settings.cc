@@ -207,20 +207,20 @@ namespace ORB_SLAM3 {
             if(found){
                 readParameter<float>(fSettings,"Camera1.k3",found,false);
                 if(found){
-                    vPinHoleDistorsion1_.resize(5);
-                    vPinHoleDistorsion1_[4] = readParameter<float>(fSettings,"Camera1.k3",found);
+                    vPinHoleDistortion1_.resize(5);
+                    vPinHoleDistortion1_[4] = readParameter<float>(fSettings,"Camera1.k3",found);
                 }
                 else{
-                    vPinHoleDistorsion1_.resize(4);
+                    vPinHoleDistortion1_.resize(4);
                 }
-                vPinHoleDistorsion1_[0] = readParameter<float>(fSettings,"Camera1.k1",found);
-                vPinHoleDistorsion1_[1] = readParameter<float>(fSettings,"Camera1.k2",found);
-                vPinHoleDistorsion1_[2] = readParameter<float>(fSettings,"Camera1.p1",found);
-                vPinHoleDistorsion1_[3] = readParameter<float>(fSettings,"Camera1.p2",found);
+                vPinHoleDistortion1_[0] = readParameter<float>(fSettings,"Camera1.k1",found);
+                vPinHoleDistortion1_[1] = readParameter<float>(fSettings,"Camera1.k2",found);
+                vPinHoleDistortion1_[2] = readParameter<float>(fSettings,"Camera1.p1",found);
+                vPinHoleDistortion1_[3] = readParameter<float>(fSettings,"Camera1.p2",found);
             }
 
             //Check if we need to correct distortion from the images
-            if((sensor_ == System::MONOCULAR || sensor_ == System::IMU_MONOCULAR) && vPinHoleDistorsion1_.size() != 0){
+            if((sensor_ == System::MONOCULAR || sensor_ == System::IMU_MONOCULAR) && vPinHoleDistortion1_.size() != 0){
                 bNeedToUndistort_ = true;
             }
         }
@@ -296,16 +296,16 @@ namespace ORB_SLAM3 {
             if(found){
                 readParameter<float>(fSettings,"Camera2.k3",found,false);
                 if(found){
-                    vPinHoleDistorsion2_.resize(5);
-                    vPinHoleDistorsion2_[4] = readParameter<float>(fSettings,"Camera2.k3",found);
+                    vPinHoleDistortion2_.resize(5);
+                    vPinHoleDistortion2_[4] = readParameter<float>(fSettings,"Camera2.k3",found);
                 }
                 else{
-                    vPinHoleDistorsion2_.resize(4);
+                    vPinHoleDistortion2_.resize(4);
                 }
-                vPinHoleDistorsion2_[0] = readParameter<float>(fSettings,"Camera2.k1",found);
-                vPinHoleDistorsion2_[1] = readParameter<float>(fSettings,"Camera2.k2",found);
-                vPinHoleDistorsion2_[2] = readParameter<float>(fSettings,"Camera2.p1",found);
-                vPinHoleDistorsion2_[3] = readParameter<float>(fSettings,"Camera2.p2",found);
+                vPinHoleDistortion2_[0] = readParameter<float>(fSettings,"Camera2.k1",found);
+                vPinHoleDistortion2_[1] = readParameter<float>(fSettings,"Camera2.k2",found);
+                vPinHoleDistortion2_[2] = readParameter<float>(fSettings,"Camera2.p1",found);
+                vPinHoleDistortion2_[3] = readParameter<float>(fSettings,"Camera2.p2",found);
             }
         }
         else if(cameraType_ == KannalaBrandt){
@@ -542,9 +542,9 @@ namespace ORB_SLAM3 {
         }
         output << " ]" << endl;
 
-        if(!settings.vPinHoleDistorsion1_.empty()){
+        if(!settings.vPinHoleDistortion1_.empty()){
             output << "\t-Camera 1 distortion parameters: [ ";
-            for(float d : settings.vPinHoleDistorsion1_){
+            for(float d : settings.vPinHoleDistortion1_){
                 output << " " << d;
             }
             output << " ]" << endl;
@@ -564,9 +564,9 @@ namespace ORB_SLAM3 {
             }
             output << " ]" << endl;
 
-            if(!settings.vPinHoleDistorsion2_.empty()){
+            if(!settings.vPinHoleDistortion2_.empty()){
                 output << "\t-Camera 1 distortion parameters: [ ";
-                for(float d : settings.vPinHoleDistorsion2_){
+                for(float d : settings.vPinHoleDistortion2_){
                     output << " " << d;
                 }
                 output << " ]" << endl;

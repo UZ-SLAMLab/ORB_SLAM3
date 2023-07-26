@@ -68,8 +68,8 @@ namespace ORB_SLAM3 {
         CameraType cameraType() {return cameraType_;}
         GeometricCamera* camera1() {return calibration1_;}
         GeometricCamera* camera2() {return calibration2_;}
-        cv::Mat camera1DistortionCoef() {return cv::Mat(vPinHoleDistorsion1_.size(),1,CV_32F,vPinHoleDistorsion1_.data());}
-        cv::Mat camera2DistortionCoef() {return cv::Mat(vPinHoleDistorsion2_.size(),1,CV_32F,vPinHoleDistorsion2_.data());}
+        cv::Mat camera1DistortionCoef() {return cv::Mat(vPinHoleDistortion1_.size(),1,CV_32F,vPinHoleDistortion1_.data());}
+        cv::Mat camera2DistortionCoef() {return cv::Mat(vPinHoleDistortion2_.size(),1,CV_32F,vPinHoleDistortion2_.data());}
 
         Sophus::SE3f Tlr() {return Tlr_;}
         float bf() {return bf_;}
@@ -164,7 +164,7 @@ namespace ORB_SLAM3 {
          */
         GeometricCamera* calibration1_, *calibration2_;   //Camera calibration
         GeometricCamera* originalCalib1_, *originalCalib2_;
-        std::vector<float> vPinHoleDistorsion1_, vPinHoleDistorsion2_;
+        std::vector<float> vPinHoleDistortion1_, vPinHoleDistortion2_;
 
         cv::Size originalImSize_, newImSize_;
         float fps_;
