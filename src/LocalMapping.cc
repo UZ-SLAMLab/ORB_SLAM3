@@ -974,9 +974,9 @@ void LocalMapping::KeyFrameCulling()
                         const int &scaleLevel = (pKF -> NLeft == -1) ? pKF->mvKeysUn[i].octave
                                                                      : (int(i) < pKF -> NLeft) ? pKF -> mvKeys[i].octave
                                                                                           : pKF -> mvKeysRight[i].octave;
-                        const map<KeyFrame*, tuple<int,int>> observations = pMP->GetObservations();
+                        const MAP_KEY_INT_INT observations = pMP->GetObservations();
                         int nObs=0;
-                        for(map<KeyFrame*, tuple<int,int>>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+                        for(MAP_KEY_INT_INT::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
                         {
                             KeyFrame* pKFi = mit->first;
                             if(pKFi==pKF)
@@ -1338,9 +1338,9 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
     while(!lpKFtoCheck.empty())
     {
         KeyFrame* pKF = lpKFtoCheck.front();
-        const set<KeyFrame*> sChilds = pKF->GetChilds();
+        const SET_KEY_FRAME sChilds = pKF->GetChilds();
         Sophus::SE3f Twc = pKF->GetPoseInverse();
-        for(set<KeyFrame*>::const_iterator sit=sChilds.begin();sit!=sChilds.end();sit++)
+        for(SET_KEY_FRAME::const_iterator sit=sChilds.begin();sit!=sChilds.end();sit++)
         {
             KeyFrame* pChild = *sit;
             if(!pChild || pChild->isBad())

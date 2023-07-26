@@ -20,9 +20,7 @@
 #ifndef MAPPOINT_H
 #define MAPPOINT_H
 
-#include "KeyFrame.h"
 #include "Frame.h"
-#include "Map.h"
 #include "Converter.h"
 
 #include "SerializationUtils.h"
@@ -40,6 +38,11 @@ namespace ORB_SLAM3
 class KeyFrame;
 class Map;
 class Frame;
+class MapPoint;
+typedef std::map<KeyFrame*,int, bool(*)(const KeyFrame*, const KeyFrame*)> MAP_KEY_INT;
+typedef std::map<KeyFrame*,std::tuple<int,int>, bool(*)(const KeyFrame*, const KeyFrame*)> MAP_KEY_INT_INT;
+typedef std::set<MapPoint*, bool(*)(const MapPoint*, const MapPoint*)> SET_MAP_POINT;
+typedef std::set<KeyFrame*, bool(*)(const KeyFrame*, const KeyFrame*)> SET_KEY_FRAME;
 
 class MapPoint
 {
@@ -119,7 +122,7 @@ public:
 
     KeyFrame* GetReferenceKeyFrame();
 
-    std::map<KeyFrame*,std::tuple<int,int>> GetObservations();
+    MAP_KEY_INT_INT GetObservations();
     int Observations();
 
     void AddObservation(KeyFrame* pKF,int idx);
@@ -157,8 +160,13 @@ public:
 
     void PrintObservations();
 
-    void PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP);
+    void PreSave(SET_KEY_FRAME& spKF,SET_MAP_POINT& spMP);
     void PostLoad(map<long unsigned int, KeyFrame*>& mpKFid, map<long unsigned int, MapPoint*>& mpMPid);
+
+    static bool ComparePtr(const MapPoint* lhs, const MapPoint* rhs)
+    {
+        return lhs->mnId < rhs->mnId;
+    };
 
 public:
     long unsigned int mnId;
@@ -213,7 +221,7 @@ protected:
      Eigen::Vector3f mWorldPos;
 
      // Keyframes observing the point and associated index in keyframe
-     std::map<KeyFrame*,std::tuple<int,int> > mObservations;
+     MAP_KEY_INT_INT mObservations;
      // For save relation without pointer, this is necessary for save/load function
      std::map<long unsigned int, int> mBackupObservationsId1;
      std::map<long unsigned int, int> mBackupObservationsId2;
@@ -250,7 +258,6 @@ protected:
      std::mutex mMutexMap;
 
 };
-
 } //namespace ORB_SLAM
 
 #endif // MAPPOINT_H

@@ -437,7 +437,7 @@ namespace ORB_SLAM3
         Eigen::Vector3f Ow = Tcw.inverse().translation();
 
         // Set of MapPoints already found in the KeyFrame
-        set<MapPoint*> spAlreadyFound(vpMatched.begin(), vpMatched.end());
+        SET_MAP_POINT spAlreadyFound(vpMatched.begin(), vpMatched.end(), &MapPoint::ComparePtr);
         spAlreadyFound.erase(static_cast<MapPoint*>(NULL));
 
         int nmatches=0;
@@ -544,7 +544,7 @@ namespace ORB_SLAM3
         Eigen::Vector3f Ow = Tcw.inverse().translation();
 
         // Set of MapPoints already found in the KeyFrame
-        set<MapPoint*> spAlreadyFound(vpMatched.begin(), vpMatched.end());
+        SET_MAP_POINT spAlreadyFound(vpMatched.begin(), vpMatched.end(), &MapPoint::ComparePtr);
         spAlreadyFound.erase(static_cast<MapPoint*>(NULL));
 
         int nmatches=0;
@@ -1350,7 +1350,7 @@ namespace ORB_SLAM3
         Eigen::Vector3f Ow = Tcw.inverse().translation();
 
         // Set of MapPoints already found in the KeyFrame
-        const set<MapPoint*> spAlreadyFound = pKF->GetMapPoints();
+        const SET_MAP_POINT spAlreadyFound = pKF->GetMapPoints();
 
         int nFused=0;
 
@@ -1886,7 +1886,7 @@ namespace ORB_SLAM3
         return nmatches;
     }
 
-    int ORBmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const set<MapPoint*> &sAlreadyFound, const float th , const int ORBdist)
+    int ORBmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const SET_MAP_POINT &sAlreadyFound, const float th , const int ORBdist)
     {
         int nmatches = 0;
 

@@ -223,7 +223,7 @@ public:
 
     void UpdateConnections(bool upParent=true);
     void UpdateBestCovisibles();
-    std::set<KeyFrame *> GetConnectedKeyFrames();
+    SET_KEY_FRAME GetConnectedKeyFrames();
     std::vector<KeyFrame* > GetVectorCovisibleKeyFrames();
     std::vector<KeyFrame*> GetBestCovisibilityKeyFrames(const int &N);
     std::vector<KeyFrame*> GetCovisiblesByWeight(const int &w);
@@ -233,18 +233,18 @@ public:
     void AddChild(KeyFrame* pKF);
     void EraseChild(KeyFrame* pKF);
     void ChangeParent(KeyFrame* pKF);
-    std::set<KeyFrame*> GetChilds();
+    SET_KEY_FRAME GetChilds();
     KeyFrame* GetParent();
     bool hasChild(KeyFrame* pKF);
     void SetFirstConnection(bool bFirst);
 
     // Loop Edges
     void AddLoopEdge(KeyFrame* pKF);
-    std::set<KeyFrame*> GetLoopEdges();
+    SET_KEY_FRAME GetLoopEdges();
 
     // Merge Edges
     void AddMergeEdge(KeyFrame* pKF);
-    set<KeyFrame*> GetMergeEdges();
+    SET_KEY_FRAME GetMergeEdges();
 
     // MapPoint observation functions
     int GetNumberMPs();
@@ -252,7 +252,8 @@ public:
     void EraseMapPointMatch(const int &idx);
     void EraseMapPointMatch(MapPoint* pMP);
     void ReplaceMapPointMatch(const int &idx, MapPoint* pMP);
-    std::set<MapPoint*> GetMapPoints();
+    bool CheckMemValidity();
+    SET_MAP_POINT GetMapPoints();
     std::vector<MapPoint*> GetMapPointMatches();
     int TrackedMapPoints(const int &minObs);
     MapPoint* GetMapPoint(const size_t &idx);
@@ -279,7 +280,7 @@ public:
         return a>b;
     }
 
-    static bool lId(KeyFrame* pKF1, KeyFrame* pKF2){
+    static bool lId(const KeyFrame* pKF1, const KeyFrame* pKF2){
         return pKF1->mnId<pKF2->mnId;
     }
 
@@ -296,7 +297,7 @@ public:
     bool ProjectPointDistort(MapPoint* pMP, cv::Point2f &kp, float &u, float &v);
     bool ProjectPointUnDistort(MapPoint* pMP, cv::Point2f &kp, float &u, float &v);
 
-    void PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP, set<GeometricCamera*>& spCam);
+    void PreSave(SET_KEY_FRAME& spKF,SET_MAP_POINT& spMP, set<GeometricCamera*>& spCam);
     void PostLoad(map<long unsigned int, KeyFrame*>& mpKFid, map<long unsigned int, MapPoint*>& mpMPid, map<unsigned int, GeometricCamera*>& mpCamId);
 
 
@@ -457,7 +458,7 @@ protected:
     // Grid over the image to speed up feature matching
     std::vector< std::vector <std::vector<size_t> > > mGrid;
 
-    std::map<KeyFrame*,int> mConnectedKeyFrameWeights;
+    MAP_KEY_INT mConnectedKeyFrameWeights;
     std::vector<KeyFrame*> mvpOrderedConnectedKeyFrames;
     std::vector<int> mvOrderedWeights;
     // For save relation without pointer, this is necessary for save/load function
@@ -466,9 +467,9 @@ protected:
     // Spanning Tree and Loop Edges
     bool mbFirstConnection;
     KeyFrame* mpParent;
-    std::set<KeyFrame*> mspChildrens;
-    std::set<KeyFrame*> mspLoopEdges;
-    std::set<KeyFrame*> mspMergeEdges;
+    SET_KEY_FRAME mspChildrens;
+    SET_KEY_FRAME mspLoopEdges;
+    SET_KEY_FRAME mspMergeEdges;
     // For save relation without pointer, this is necessary for save/load function
     long long int mBackupParentId;
     std::vector<long unsigned int> mvBackupChildrensId;

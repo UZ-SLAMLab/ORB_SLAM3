@@ -141,7 +141,7 @@ void MapDrawer::DrawMapPoints()
     const vector<MapPoint*> &vpMPs = pActiveMap->GetAllMapPoints();
     const vector<MapPoint*> &vpRefMPs = pActiveMap->GetReferenceMapPoints();
 
-    set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
+    SET_MAP_POINT spRefMPs(vpRefMPs.begin(), vpRefMPs.end(), (&MapPoint::ComparePtr));
 
     if(vpMPs.empty())
         return;
@@ -163,7 +163,7 @@ void MapDrawer::DrawMapPoints()
     glBegin(GL_POINTS);
     glColor3f(1.0,0.0,0.0);
 
-    for(set<MapPoint*>::iterator sit=spRefMPs.begin(), send=spRefMPs.end(); sit!=send; sit++)
+    for(SET_MAP_POINT::iterator sit=spRefMPs.begin(), send=spRefMPs.end(); sit!=send; sit++)
     {
         if((*sit)->isBad())
             continue;
@@ -296,8 +296,8 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
             }
 
             // Loops
-            set<KeyFrame*> sLoopKFs = vpKFs[i]->GetLoopEdges();
-            for(set<KeyFrame*>::iterator sit=sLoopKFs.begin(), send=sLoopKFs.end(); sit!=send; sit++)
+            SET_KEY_FRAME sLoopKFs = vpKFs[i]->GetLoopEdges();
+            for(SET_KEY_FRAME::iterator sit=sLoopKFs.begin(), send=sLoopKFs.end(); sit!=send; sit++)
             {
                 if((*sit)->mnId<vpKFs[i]->mnId)
                     continue;

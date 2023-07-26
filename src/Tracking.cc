@@ -1793,7 +1793,14 @@ void Tracking::ResetFrameIMU()
 
 void Tracking::Track()
 {
-
+    {
+        // DORON: Wait for local optiomizer:
+        while(!mpLocalMapper->AcceptKeyFrames())
+        {
+            std::cout << "Waiting for local mapper to finish..." << std::endl;
+            usleep(30);
+        }
+    }
     if (bStepByStep)
     {
         std::cout << "Tracking: Waiting to the next step" << std::endl;
@@ -2571,8 +2578,7 @@ void Tracking::CreateInitialMapMonocular()
     // Update Connections
     pKFini->UpdateConnections();
     pKFcur->UpdateConnections();
-
-    std::set<MapPoint*> sMPs;
+    SET_MAP_POINT sMPs(&MapPoint::ComparePtr);
     sMPs = pKFini->GetMapPoints();
 
     // Bundle Adjustment
@@ -3457,7 +3463,7 @@ void Tracking::UpdateLocalPoints()
 void Tracking::UpdateLocalKeyFrames()
 {
     // Each map point vote for the keyframes in which it has been observed
-    map<KeyFrame*,int> keyframeCounter;
+    MAP_KEY_INT keyframeCounter(&KeyFrame::lId);
     if(!mpAtlas->isImuInitialized() || (mCurrentFrame.mnId<mnLastRelocFrameId+2))
     {
         for(int i=0; i<mCurrentFrame.N; i++)
@@ -3467,8 +3473,8 @@ void Tracking::UpdateLocalKeyFrames()
             {
                 if(!pMP->isBad())
                 {
-                    const map<KeyFrame*,tuple<int,int>> observations = pMP->GetObservations();
-                    for(map<KeyFrame*,tuple<int,int>>::const_iterator it=observations.begin(), itend=observations.end(); it!=itend; it++)
+                    const MAP_KEY_INT_INT observations = pMP->GetObservations();
+                    for(MAP_KEY_INT_INT::const_iterator it=observations.begin(), itend=observations.end(); it!=itend; it++)
                         keyframeCounter[it->first]++;
                 }
                 else
@@ -3490,8 +3496,8 @@ void Tracking::UpdateLocalKeyFrames()
                     continue;
                 if(!pMP->isBad())
                 {
-                    const map<KeyFrame*,tuple<int,int>> observations = pMP->GetObservations();
-                    for(map<KeyFrame*,tuple<int,int>>::const_iterator it=observations.begin(), itend=observations.end(); it!=itend; it++)
+                    const MAP_KEY_INT_INT observations = pMP->GetObservations();
+                    for(MAP_KEY_INT_INT::const_iterator it=observations.begin(), itend=observations.end(); it!=itend; it++)
                         keyframeCounter[it->first]++;
                 }
                 else
@@ -3511,7 +3517,7 @@ void Tracking::UpdateLocalKeyFrames()
     mvpLocalKeyFrames.reserve(3*keyframeCounter.size());
 
     // All keyframes that observe a map point are included in the local map. Also check which keyframe shares most points
-    for(map<KeyFrame*,int>::const_iterator it=keyframeCounter.begin(), itEnd=keyframeCounter.end(); it!=itEnd; it++)
+    for(MAP_KEY_INT::const_iterator it=keyframeCounter.begin(), itEnd=keyframeCounter.end(); it!=itEnd; it++)
     {
         KeyFrame* pKF = it->first;
 
@@ -3554,8 +3560,8 @@ void Tracking::UpdateLocalKeyFrames()
             }
         }
 
-        const set<KeyFrame*> spChilds = pKF->GetChilds();
-        for(set<KeyFrame*>::const_iterator sit=spChilds.begin(), send=spChilds.end(); sit!=send; sit++)
+        const SET_KEY_FRAME spChilds = pKF->GetChilds();
+        for(SET_KEY_FRAME::const_iterator sit=spChilds.begin(), send=spChilds.end(); sit!=send; sit++)
         {
             KeyFrame* pChildKF = *sit;
             if(!pChildKF->isBad())
@@ -3696,7 +3702,7 @@ bool Tracking::Relocalization()
                 mCurrentFrame.SetPose(Tcw);
                 // Tcw.copyTo(mCurrentFrame.mTcw);
 
-                set<MapPoint*> sFound;
+                SET_MAP_POINT sFound(&MapPoint::ComparePtr);
 
                 const int np = vbInliers.size();
 

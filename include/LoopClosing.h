@@ -46,7 +46,7 @@ class LoopClosing
 {
 public:
 
-    typedef pair<set<KeyFrame*>,int> ConsistentGroup;    
+    typedef pair<SET_KEY_FRAME,int> ConsistentGroup;    
     typedef map<KeyFrame*,g2o::Sim3,std::less<KeyFrame*>,
         Eigen::aligned_allocator<std::pair<KeyFrame* const, g2o::Sim3> > > KeyFrameAndPose;
 
@@ -130,7 +130,7 @@ protected:
     bool DetectCommonRegionsFromLastKF(KeyFrame* pCurrentKF, KeyFrame* pMatchedKF, g2o::Sim3 &gScw, int &nNumProjMatches,
                                             std::vector<MapPoint*> &vpMPs, std::vector<MapPoint*> &vpMatchedMPs);
     int FindMatchesByProjection(KeyFrame* pCurrentKF, KeyFrame* pMatchedKFw, g2o::Sim3 &g2oScw,
-                                set<MapPoint*> &spMatchedMPinOrigin, vector<MapPoint*> &vpMapPoints,
+                                SET_MAP_POINT &spMatchedMPinOrigin, vector<MapPoint*> &vpMapPoints,
                                 vector<MapPoint*> &vpMatchedMapPoints);
 
 
@@ -142,7 +142,7 @@ protected:
     void MergeLocal();
     void MergeLocal2();
 
-    void CheckObservations(set<KeyFrame*> &spKFsMap1, set<KeyFrame*> &spKFsMap2);
+    void CheckObservations(SET_KEY_FRAME &spKFsMap1, SET_KEY_FRAME &spKFsMap2);
 
     void ResetIfRequested();
     bool mbResetRequested;

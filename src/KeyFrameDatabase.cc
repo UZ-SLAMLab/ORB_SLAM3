@@ -21,7 +21,7 @@
 
 #include "KeyFrame.h"
 #include "Thirdparty/DBoW2/DBoW2/BowVector.h"
-
+#include "Map.h"
 #include<mutex>
 
 using namespace std;
@@ -99,7 +99,7 @@ void KeyFrameDatabase::clearMap(Map* pMap)
 
 vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float minScore)
 {
-    set<KeyFrame*> spConnectedKeyFrames = pKF->GetConnectedKeyFrames();
+    SET_KEY_FRAME spConnectedKeyFrames = pKF->GetConnectedKeyFrames();
     list<KeyFrame*> lKFsSharingWords;
 
     // Search all keyframes that share a word with current keyframes
@@ -204,7 +204,7 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
     // Return all those keyframes with a score higher than 0.75*bestScore
     float minScoreToRetain = 0.75f*bestAccScore;
 
-    set<KeyFrame*> spAlreadyAddedKF;
+    SET_KEY_FRAME spAlreadyAddedKF(&KeyFrame::lId);
     vector<KeyFrame*> vpLoopCandidates;
     vpLoopCandidates.reserve(lAccScoreAndMatch.size());
 
@@ -227,7 +227,7 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
 
 void KeyFrameDatabase::DetectCandidates(KeyFrame* pKF, float minScore,vector<KeyFrame*>& vpLoopCand, vector<KeyFrame*>& vpMergeCand)
 {
-    set<KeyFrame*> spConnectedKeyFrames = pKF->GetConnectedKeyFrames();
+    SET_KEY_FRAME spConnectedKeyFrames = pKF->GetConnectedKeyFrames();
     list<KeyFrame*> lKFsSharingWordsLoop,lKFsSharingWordsMerge;
 
     // Search all keyframes that share a word with current keyframes
@@ -344,7 +344,7 @@ void KeyFrameDatabase::DetectCandidates(KeyFrame* pKF, float minScore,vector<Key
             // Return all those keyframes with a score higher than 0.75*bestScore
             float minScoreToRetain = 0.75f*bestAccScore;
 
-            set<KeyFrame*> spAlreadyAddedKF;
+            SET_KEY_FRAME spAlreadyAddedKF(&KeyFrame::lId);
             vpLoopCand.reserve(lAccScoreAndMatch.size());
 
             for(list<pair<float,KeyFrame*> >::iterator it=lAccScoreAndMatch.begin(), itend=lAccScoreAndMatch.end(); it!=itend; it++)
@@ -432,7 +432,7 @@ void KeyFrameDatabase::DetectCandidates(KeyFrame* pKF, float minScore,vector<Key
             // Return all those keyframes with a score higher than 0.75*bestScore
             float minScoreToRetain = 0.75f*bestAccScore;
 
-            set<KeyFrame*> spAlreadyAddedKF;
+            SET_KEY_FRAME spAlreadyAddedKF(&KeyFrame::lId);
             vpMergeCand.reserve(lAccScoreAndMatch.size());
 
             for(list<pair<float,KeyFrame*> >::iterator it=lAccScoreAndMatch.begin(), itend=lAccScoreAndMatch.end(); it!=itend; it++)
@@ -468,7 +468,7 @@ void KeyFrameDatabase::DetectCandidates(KeyFrame* pKF, float minScore,vector<Key
 void KeyFrameDatabase::DetectBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &vpLoopCand, vector<KeyFrame*> &vpMergeCand, int nMinWords)
 {
     list<KeyFrame*> lKFsSharingWords;
-    set<KeyFrame*> spConnectedKF;
+    SET_KEY_FRAME spConnectedKF(&KeyFrame::lId);
 
     // Search all keyframes that share a word with current frame
     {
@@ -570,7 +570,7 @@ void KeyFrameDatabase::DetectBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &vp
 
     // Return all those keyframes with a score higher than 0.75*bestScore
     float minScoreToRetain = 0.75f*bestAccScore;
-    set<KeyFrame*> spAlreadyAddedKF;
+    SET_KEY_FRAME spAlreadyAddedKF(&KeyFrame::lId);
     vpLoopCand.reserve(lAccScoreAndMatch.size());
     vpMergeCand.reserve(lAccScoreAndMatch.size());
     for(list<pair<float,KeyFrame*> >::iterator it=lAccScoreAndMatch.begin(), itend=lAccScoreAndMatch.end(); it!=itend; it++)
@@ -604,7 +604,7 @@ bool compFirst(const pair<float, KeyFrame*> & a, const pair<float, KeyFrame*> & 
 void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &vpLoopCand, vector<KeyFrame*> &vpMergeCand, int nNumCandidates)
 {
     list<KeyFrame*> lKFsSharingWords;
-    set<KeyFrame*> spConnectedKF;
+    SET_KEY_FRAME spConnectedKF(&KeyFrame::lId);
 
     // Search all keyframes that share a word with current frame
     {
@@ -703,7 +703,7 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
 
     vpLoopCand.reserve(nNumCandidates);
     vpMergeCand.reserve(nNumCandidates);
-    set<KeyFrame*> spAlreadyAddedKF;
+    SET_KEY_FRAME spAlreadyAddedKF(&KeyFrame::lId);
     int i = 0;
     list<pair<float,KeyFrame*> >::iterator it=lAccScoreAndMatch.begin();
     while(i < lAccScoreAndMatch.size() && (vpLoopCand.size() < nNumCandidates || vpMergeCand.size() < nNumCandidates))
@@ -822,7 +822,7 @@ vector<KeyFrame*> KeyFrameDatabase::DetectRelocalizationCandidates(Frame *F, Map
 
     // Return all those keyframes with a score higher than 0.75*bestScore
     float minScoreToRetain = 0.75f*bestAccScore;
-    set<KeyFrame*> spAlreadyAddedKF;
+    SET_KEY_FRAME spAlreadyAddedKF(&KeyFrame::lId);
     vector<KeyFrame*> vpRelocCandidates;
     vpRelocCandidates.reserve(lAccScoreAndMatch.size());
     for(list<pair<float,KeyFrame*> >::iterator it=lAccScoreAndMatch.begin(), itend=lAccScoreAndMatch.end(); it!=itend; it++)
