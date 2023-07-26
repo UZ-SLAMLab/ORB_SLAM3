@@ -156,27 +156,27 @@ namespace ORB_SLAM3 {
 
         void precomputeRectificationMaps();
 
-        int sensor_;
-        CameraType cameraType_;     //Camera type
+        int sensor_ = 0;
+        CameraType cameraType_ = PinHole;
 
         /*
          * Visual stuff
          */
-        GeometricCamera* calibration1_, *calibration2_;   //Camera calibration
-        GeometricCamera* originalCalib1_, *originalCalib2_;
+        GeometricCamera* calibration1_ = nullptr, *calibration2_ = nullptr;   //Camera calibration
+        GeometricCamera* originalCalib1_ = nullptr, *originalCalib2_ = nullptr;
         std::vector<float> vPinHoleDistortion1_, vPinHoleDistortion2_;
 
         cv::Size originalImSize_, newImSize_;
-        float fps_;
-        bool bRGB_;
+        float fps_ = 1.f;
+        bool bRGB_ = false;
 
-        bool bNeedToUndistort_;
-        bool bNeedToRectify_;
-        bool bNeedToResize1_, bNeedToResize2_;
+        bool bNeedToUndistort_ = false;
+        bool bNeedToRectify_ = false;
+        bool bNeedToResize1_ = false, bNeedToResize2_ = false;
 
         Sophus::SE3f Tlr_;
-        float thDepth_;
-        float bf_, b_;
+        float thDepth_ = 60.f;
+        float bf_ = 0.f, b_ = 0.f;
 
         /*
          * Rectification stuff
@@ -187,36 +187,36 @@ namespace ORB_SLAM3 {
         /*
          * Inertial stuff
          */
-        float noiseGyro_, noiseAcc_;
-        float gyroWalk_, accWalk_;
+        float noiseGyro_ = 0.f, noiseAcc_ = 0.f;
+        float gyroWalk_ = 0.f, accWalk_ = 0.f;
         float imuFrequency_;
         Sophus::SE3f Tbc_;
-        bool insertKFsWhenLost_;
+        bool insertKFsWhenLost_ = false;
 
         /*
          * RGBD stuff
          */
-        float depthMapFactor_;
+        float depthMapFactor_ = 1.f;
 
         /*
          * ORB stuff
          */
-        int nFeatures_;
-        float scaleFactor_;
-        int nLevels_;
-        int initThFAST_, minThFAST_;
+        int nFeatures_ = 1000;
+        float scaleFactor_ = 1.f;
+        int nLevels_ = 1;
+        int initThFAST_ = 20, minThFAST_ = 7;
 
         /*
          * Viewer stuff
          */
-        float keyFrameSize_;
-        float keyFrameLineWidth_;
-        float graphLineWidth_;
-        float pointSize_;
-        float cameraSize_;
-        float cameraLineWidth_;
-        float viewPointX_, viewPointY_, viewPointZ_, viewPointF_;
-        float imageViewerScale_;
+        float keyFrameSize_ = 0.05f;
+        float keyFrameLineWidth_ = 1.f;
+        float graphLineWidth_ = 0.9f;
+        float pointSize_ = 2.f;
+        float cameraSize_ = 0.08f;
+        float cameraLineWidth_ = 3.f;
+        float viewPointX_ = 0.f, viewPointY_ = 0.f, viewPointZ_ = 0.f, viewPointF_ = 100.f;
+        float imageViewerScale_ = 1.f;
 
         /*
          * Save & load maps
@@ -226,7 +226,7 @@ namespace ORB_SLAM3 {
         /*
          * Other stuff
          */
-        float thFarPoints_;
+        float thFarPoints_ = 100.f;
 
     };
 };
