@@ -22,13 +22,20 @@ The flag was set wrong here.
 This would cause the index cannot be found properly later, and then less matched map points are collected.
 
 #### DetectNBestCandidates
+https://github.com/fishmarch/ORB_SLAM3_Fixed/blob/b66d0b7eedfb363e5bad0cee8ea12065f2d66ae8/src/KeyFrameDatabase.cc#L710-L726
+
+The iterator was not updated when the keyframe is bad.
+
 https://github.com/fishmarch/ORB_SLAM3_Fixed/blob/b66d0b7eedfb363e5bad0cee8ea12065f2d66ae8/src/KeyFrameDatabase.cc#L658-L664
 
 Only computed scores for keyframes in which the number of common words is larger than a threshold, but the scores of other keyframes may also be used later. 
 
-https://github.com/fishmarch/ORB_SLAM3_Fixed/blob/b66d0b7eedfb363e5bad0cee8ea12065f2d66ae8/src/KeyFrameDatabase.cc#L710-L726
+**Update:** But this would make this part very slow. Thus the codes are changed as following.
 
-The iterator was not updated when the keyframe is bad.
+https://github.com/fishmarch/ORB_SLAM3_Fixed/blob/d7288c62c2b3000d4aa9c5acb7f5aa83027a251d/src/KeyFrameDatabase.cc#L687-L691
+
+
+
 
 
 
