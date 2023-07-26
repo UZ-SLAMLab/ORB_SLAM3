@@ -21,7 +21,9 @@
 #include "System.h"
 #include "Converter.h"
 #include <thread>
+#ifdef USE_GRAPHICS
 #include <pangolin/pangolin.h>
+#endif
 #include <iomanip>
 #include <openssl/md5.h>
 #include <boost/serialization/base_object.hpp>
@@ -178,9 +180,10 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         mpAtlas->SetInertialSensor();
 
     //Create Drawers. These are used by the Viewer
+#ifdef USE_GRAPHICS
     mpFrameDrawer = new FrameDrawer(mpAtlas);
     mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile, settings_);
-
+#endif
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
     cout << "Seq. Name: " << strSequence << endl;
@@ -222,6 +225,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     //usleep(10*1000*1000);
 
     //Initialize the Viewer thread and launch
+#ifdef USE_GRAPHICS
     if(bUseViewer)
     //if(false) // TODO
     {
@@ -231,7 +235,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         mpLoopCloser->mpViewer = mpViewer;
         mpViewer->both = mpFrameDrawer->both;
     }
-
+#endif
     // Fix verbosity
     Verbose::SetTh(Verbose::VERBOSITY_QUIET);
 

@@ -16,7 +16,7 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#ifdef USE_GRAPHICS
 #ifndef VIEWER_H
 #define VIEWER_H
 
@@ -100,5 +100,6 @@ private:
 
 
 #endif // VIEWER_H
+#endif // USE_GRAPHICS
 	
 

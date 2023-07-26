@@ -24,7 +24,9 @@
 #include "KeyFrame.h"
 
 #include <set>
+#ifdef USE_GRAPHICS
 #include <pangolin/pangolin.h>
+#endif
 #include <mutex>
 
 #include <boost/serialization/base_object.hpp>
@@ -187,8 +189,9 @@ protected:
 
 
     // View of the map in aerial sight (for the AtlasViewer)
+#ifdef USE_GRAPHICS
     GLubyte* mThumbnail;
-
+#endif
     bool mIsInUse;
     bool mHasTumbnail;
     bool mbBad = false;
