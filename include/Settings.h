@@ -189,7 +189,7 @@ namespace ORB_SLAM3 {
          */
         float noiseGyro_ = 0.f, noiseAcc_ = 0.f;
         float gyroWalk_ = 0.f, accWalk_ = 0.f;
-        float imuFrequency_;
+        float imuFrequency_ = 0.f;
         Sophus::SE3f Tbc_;
         bool insertKFsWhenLost_ = false;
 
