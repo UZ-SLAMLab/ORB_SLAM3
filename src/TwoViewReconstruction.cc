@@ -182,7 +182,7 @@ namespace ORB_SLAM3
     void TwoViewReconstruction::FindFundamental(vector<bool> &vbMatchesInliers, float &score, Eigen::Matrix3f &F21)
     {
         // Number of putative matches
-        const int N = vbMatchesInliers.size();
+        const int N = mvMatches12.size();
 
         // Normalize coordinates
         vector<cv::Point2f> vPn1, vPn2;
