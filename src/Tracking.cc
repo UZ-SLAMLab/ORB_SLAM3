@@ -1793,14 +1793,25 @@ void Tracking::ResetFrameIMU()
 
 void Tracking::Track()
 {
+#ifdef TEST_REPEATABLE
+    // Wait for local optiomizer - FOR REPEATABILE DEBUGGING:
+    static const size_t FRAMES_COUNT_FOR_LOCAL_MAPPING(10);
     {
-        // DORON: Wait for local optiomizer:
-        while(!mpLocalMapper->AcceptKeyFrames())
+        if (mpLastKeyFrame)
         {
-            std::cout << "Waiting for local mapper to finish..." << std::endl;
-            usleep(30);
+            if (mCurrentFrame.mnId > mnLastKeyFrameId + FRAMES_COUNT_FOR_LOCAL_MAPPING)
+            {
+                mpLastKeyFrame->SetCanUpdate();
+                while(!mpLocalMapper->AcceptKeyFrames())
+                {
+                    usleep(30);
+                }
+                usleep(90);
+            }
         }
     }
+#endif // TEST_REPEATABLE
+
     if (bStepByStep)
     {
         std::cout << "Tracking: Waiting to the next step" << std::endl;

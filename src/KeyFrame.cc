@@ -22,6 +22,12 @@
 #include<mutex>
 #include "Map.h"
 
+#ifdef TEST_REPEATABLE
+static const bool INIT_CAN_UPDATE(false);
+#else
+static const bool INIT_CAN_UPDATE(true);
+#endif
+
 namespace ORB_SLAM3
 {
 
@@ -39,7 +45,7 @@ KeyFrame::KeyFrame():
         mnMaxY(0), mPrevKF(static_cast<KeyFrame*>(NULL)), mNextKF(static_cast<KeyFrame*>(NULL)), mConnectedKeyFrameWeights(&KeyFrame::lId), mbFirstConnection(true), mpParent(NULL), 
         mspChildrens(&KeyFrame::lId), mspLoopEdges(&KeyFrame::lId), mspMergeEdges(&KeyFrame::lId), mbNotErase(false),
         mbToBeErased(false), mbBad(false), mHalfBaseline(0), mbCurrentPlaceRecognition(false), mnMergeCorrectedForKF(0),
-        NLeft(0),NRight(0), mnNumberOfOpt(0), mbHasVelocity(false)
+        NLeft(0),NRight(0), mnNumberOfOpt(0), mbHasVelocity(false), mCanUpdate(INIT_CAN_UPDATE)
 {
 
 }
@@ -62,7 +68,7 @@ KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
     mbToBeErased(false), mbBad(false), mHalfBaseline(F.mb/2), mpMap(pMap), mbCurrentPlaceRecognition(false), mNameFile(F.mNameFile), mnMergeCorrectedForKF(0),
     mpCamera(F.mpCamera), mpCamera2(F.mpCamera2),
     mvLeftToRightMatch(F.mvLeftToRightMatch),mvRightToLeftMatch(F.mvRightToLeftMatch), mTlr(F.GetRelativePoseTlr()),
-    mvKeysRight(F.mvKeysRight), NLeft(F.Nleft), NRight(F.Nright), mTrl(F.GetRelativePoseTrl()), mnNumberOfOpt(0), mbHasVelocity(false)
+    mvKeysRight(F.mvKeysRight), NLeft(F.Nleft), NRight(F.Nright), mTrl(F.GetRelativePoseTrl()), mnNumberOfOpt(0), mbHasVelocity(false), mCanUpdate(INIT_CAN_UPDATE)
 {
     mnId=nNextId++;
 
@@ -212,7 +218,15 @@ void KeyFrame::UpdateBestCovisibles()
     for(MAP_KEY_INT::iterator mit=mConnectedKeyFrameWeights.begin(), mend=mConnectedKeyFrameWeights.end(); mit!=mend; mit++)
        vPairs.push_back(make_pair(mit->second,mit->first));
 
-    sort(vPairs.begin(),vPairs.end());
+    sort(vPairs.begin(),vPairs.end(), [](const std::pair<int, KeyFrame*>& a, const std::pair<int, KeyFrame*>& b) {
+        // Compare the first elements of the pairs
+        if (a.first < b.first)
+            return true;
+        else if (a.first > b.first)
+            return false;
+        else
+            return a.second->mnId < b.second->mnId; // If the first elements are equal, compare the second elements
+    });
     list<KeyFrame*> lKFs;
     list<int> lWs;
     for(size_t i=0, iend=vPairs.size(); i<iend;i++)

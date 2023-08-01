@@ -104,6 +104,12 @@ void LocalMapping::Run()
 
             if(!CheckNewKeyFrames())
             {
+                // When built with TEST_REPEATABLE - only update on specified frames.
+                while(!mpCurrentKeyFrame->CanUpdate())
+                {
+                    usleep(10);
+                }
+
                 // Find more matches in neighbor keyframes and fuse point duplications
                 SearchInNeighbors();
             }

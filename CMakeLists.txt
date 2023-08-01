@@ -11,6 +11,11 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+option(TEST_REPEATABLE "Synchronize threads such that runs are repeatable." OFF)
+if(TEST_REPEATABLE)
+   message(STATUS "ADD TEST_REPEATABLE")
+   add_definitions(-DTEST_REPEATABLE)
+endif()
 
 # Check C++11 or C++0x support
 include(CheckCXXCompilerFlag)

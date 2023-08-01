@@ -844,7 +844,7 @@ void TemplatedVocabulary<TDescriptor,F>::initiateClustersKMpp(
   // 5. Now that the initial centers have been chosen, proceed using standard k-means 
   //    clustering.
 
-  DUtils::Random::SeedRandOnce();
+  DUtils::Random::SeedRandOnce(0);
 
   clusters.resize(0);
   clusters.reserve(m_k);

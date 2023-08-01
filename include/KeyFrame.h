@@ -304,6 +304,9 @@ public:
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
     void SetKeyFrameDatabase(KeyFrameDatabase* pKFDB);
 
+    bool CanUpdate() const {return mCanUpdate;};
+    void SetCanUpdate() {mCanUpdate = true;};
+
     bool bImu;
 
     // The following variables are accesed from only 1 thread or never change (no mutex needed).
@@ -501,6 +504,9 @@ protected:
     std::mutex mMutexConnections;
     std::mutex mMutexFeatures;
     std::mutex mMutexMap;
+
+    // For repeatable results
+    bool mCanUpdate;
 
 public:
     GeometricCamera* mpCamera, *mpCamera2;
