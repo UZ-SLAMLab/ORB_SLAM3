@@ -70,8 +70,9 @@ CMAKE_COMMAND="cmake -B build -S . \
 	-DANDROID_PLATFORM=android-$ANDROID_PLATFORM\
 	-DANDROID_NDK=$ANDROID_NDK_ROOT\
 	-DEIGEN3_INCLUDE_DIR=$SLAM_ROOT/Thirdparty/eigen-$EIGEN_VERSION
-	-DBoost_INCLUDE_DIR=$SLAM_ROOT/Thirdparty/Boost-for-Android/build/out/$ANDROID_ABI/include/boost-1_82\
-	-DOpenCV_DIR=$SLAM_ROOT/Thirdparty/OpenCV-android-sdk/sdk/native/jni/abi-$ANDROID_ABI\
+	-DBoost_INCLUDE_DIRS=$SLAM_ROOT/Thirdparty/Boost-for-Android/build/out/$ANDROID_ABI/include/boost-1_82\
+	-DOpenCV_INCLUDE_DIRS=$SLAM_ROOT/Thirdparty/OpenCV-android-sdk/sdk/native/jni/include\
+	-DOpenCV_LIBS=$SLAM_ROOT/Thirdparty/OpenCV-android-sdk/sdk/native/libs/$ANDROID_ABI/libopencv_java4.so\
 	-DOpenssl_INCLUDE_DIR=$SLAM_ROOT/Thirdparty/openssl/include
 "
 
@@ -86,13 +87,13 @@ chmod +x ./build-android.sh
 ./build-android.sh --boost=1.82.0 --progress --arch=$ANDROID_ABI --target-version=$ANDROID_PLATFORM $ANDROID_NDK_ROOT
 cd ..
 
-Eigen
+#Eigen
 echo "Building Eigen3"
 cd eigen-$EIGEN_VERSION
 $CMAKE_COMMAND
 cd build
-make install
-cd ..
+make
+cd ../..
 
 #openSSL
 echo "Building openSSl"

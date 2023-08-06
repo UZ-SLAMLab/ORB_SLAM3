@@ -27,20 +27,15 @@ set(SRCS_DUTILS
   DUtils/Random.cpp
   DUtils/Timestamp.cpp)
 
-
-find_package(OpenCV 4 QUIET)
-if(NOT OpenCV_FOUND)
-   find_package(OpenCV 3.0 QUIET)
-   if(NOT OpenCV_FOUND)
-      message(FATAL_ERROR "OpenCV > 3.0 not found.")
-      #SET(OpenCV_INCLUDE_DIRS /home/ron/Desktop/Repos/opencv-4.4.0-android-sdk/OpenCV-android-sdk/sdk/native/jni/include)
-      #SET(OpenCV_LIBS /home/ron/Desktop/Repos/opencv-4.4.0-android-sdk/OpenCV-android-sdk/sdk/native/libs/arm64-v8a/libopencv_java4.so)
-
-   endif()
+if(NOT DEFINED ANDROID_ABI)
+  find_package(OpenCV 4 QUIET)
+  if(NOT OpenCV_FOUND)
+    find_package(OpenCV 3.0 QUIET)
+    if(NOT OpenCV_FOUND)
+          message(FATAL_ERROR "OpenCV > 3.0 not found.")
+    endif()
+  endif()
 endif()
-
-SET(Boost_INCLUDE_DIRS /home/ron/Desktop/Repos/Boost-for-Android/build/out/arm64-v8a/include/boost-1_82)
-
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 include_directories(${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})

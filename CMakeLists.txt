@@ -9,9 +9,11 @@ MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
-option(USE_GRAPHICS "Enable using graphincs" ON)
+if(NOT DEFINED ANDROID_ABI)
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+endif()
+option(USE_GRAPHICS "Enable using graphincs" OFF)
 if(USE_GRAPHICS)
    message(STATUS "ADD USE_GRAPHICS")
    add_definitions(-DUSE_GRAPHICS)
@@ -48,8 +50,61 @@ find_package(Eigen3 3.1.0 REQUIRED)
 if(USE_GRAPHICS)
 find_package(Pangolin REQUIRED)
 endif()
+
+if(DEFINED ANDROID_ABI)
+# Boost libs & include dirs
+set(Boost_ROOT /home/ron/Desktop/Repos/Boost-for-Android/build/out/arm64-v8a)
+set(Boost_LIBS)
+set(Boost_LIBS_NO_PREF
+libboost_atomic-clang-mt-a64-1_82.a
+libboost_chrono-clang-mt-a64-1_82.a
+libboost_container-clang-mt-a64-1_82.a
+libboost_context-clang-mt-a64-1_82.a
+libboost_contract-clang-mt-a64-1_82.a
+libboost_coroutine-clang-mt-a64-1_82.a
+libboost_date_time-clang-mt-a64-1_82.a
+libboost_exception-clang-mt-a64-1_82.a
+libboost_fiber-clang-mt-a64-1_82.a
+libboost_filesystem-clang-mt-a64-1_82.a
+libboost_graph-clang-mt-a64-1_82.a
+libboost_iostreams-clang-mt-a64-1_82.a
+libboost_json-clang-mt-a64-1_82.a
+libboost_locale-clang-mt-a64-1_82.a
+libboost_log-clang-mt-a64-1_82.a
+libboost_log_setup-clang-mt-a64-1_82.a
+libboost_math_c99-clang-mt-a64-1_82.a
+libboost_math_c99f-clang-mt-a64-1_82.a
+libboost_math_c99l-clang-mt-a64-1_82.a
+libboost_math_tr1-clang-mt-a64-1_82.a
+libboost_math_tr1f-clang-mt-a64-1_82.a
+libboost_math_tr1l-clang-mt-a64-1_82.a
+libboost_nowide-clang-mt-a64-1_82.a
+libboost_prg_exec_monitor-clang-mt-a64-1_82.a
+libboost_program_options-clang-mt-a64-1_82.a
+libboost_random-clang-mt-a64-1_82.a
+libboost_regex-clang-mt-a64-1_82.a
+libboost_serialization-clang-mt-a64-1_82.a
+libboost_stacktrace_basic-clang-mt-a64-1_82.a
+libboost_stacktrace_noop-clang-mt-a64-1_82.a
+libboost_system-clang-mt-a64-1_82.a
+libboost_test_exec_monitor-clang-mt-a64-1_82.a
+libboost_thread-clang-mt-a64-1_82.a
+libboost_timer-clang-mt-a64-1_82.a
+libboost_type_erasure-clang-mt-a64-1_82.a
+libboost_unit_test_framework-clang-mt-a64-1_82.a
+libboost_url-clang-mt-a64-1_82.a
+libboost_wave-clang-mt-a64-1_82.a
+libboost_wserialization-clang-mt-a64-1_82.a
+)
+foreach(item IN LISTS Boost_LIBS_NO_PREF)
+list(APPEND Boost_LIBS "${Boost_ROOT}/lib/${item}")
+endforeach()
+# OpenSSL libs
+set(OpenSSL_LIBS /home/ron/Desktop/Repos/openssl-1.1.1u/libcrypto.so)
+else()
 find_package(realsense2)
 find_package(Boost)
+endif()
 
 include_directories(
 ${PROJECT_SOURCE_DIR}
@@ -59,6 +114,7 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/Sophus
 ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
 ${Boost_INCLUDE_DIR}
+${Openssl_INCLUDE_DIR}
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -131,14 +187,25 @@ endif()
 add_subdirectory(Thirdparty/DBoW2)
 add_subdirectory(Thirdparty/g2o)
 
+if(DEFINED ANDROID_ABI)
+set(BOOST_SSL_LINK 
+    ${Boost_LIBS}
+    ${OpenSSL_LIBS}
+)
+else()
+set(BOOST_SSL_LINK 
+    -lboost_serialization
+    -lcrypto
+)
+endif()
+
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
 ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
--lboost_serialization
--lcrypto
+${BOOST_SSL_LINK}
 )
 
 # If RealSense SDK is found the library is added and its examples compiled
