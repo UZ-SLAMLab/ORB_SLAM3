@@ -38,17 +38,18 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-if(DEFINED ANDROID_ABI)
+if(NOT DEFINED ANDROID_ABI)
     find_package(OpenCV 4.2)
     if(NOT OpenCV_FOUND)
         message(FATAL_ERROR "OpenCV > 4.4 not found.")
     endif()
+    MESSAGE("OPENCV VERSION:")
+    MESSAGE(${OpenCV_VERSION})
+    
+    find_package(Eigen3 3.1.0 REQUIRED)
 endif()
 
-MESSAGE("OPENCV VERSION:")
-MESSAGE(${OpenCV_VERSION})
 
-find_package(Eigen3 3.1.0 REQUIRED)
 if(USE_GRAPHICS)
 find_package(Pangolin REQUIRED)
 endif()
