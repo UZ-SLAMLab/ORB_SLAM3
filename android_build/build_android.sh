@@ -27,7 +27,7 @@ function script_help {
     echo "Usage: build_android.sh [parameters]"
     echo -e "  --app_path\t\t\tAbsolute path to DemoApp root"
     echo -e "  --ndk_path\t\t<optional> Absolute path to NDK (default is /home/${USER}/Android/Sdk/ndk/25.1.8937393)"
-    echo -e "  --abi\t\t<optional> android abi to build for (arm64-v8a, armeabi-v7a, x86, x86_64). default is 30"
+    echo -e "  --abi\t\t<optional> android abi to build for (arm64-v8a, armeabi-v7a, x86, x86_64). default is arm64-v8a"
     echo -e "  --platform\t\t<optional> android api level to build for (default is 30)"
     echo -e "  --help\t\t\tsee this help"
 }
