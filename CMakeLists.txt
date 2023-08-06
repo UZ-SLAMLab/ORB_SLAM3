@@ -116,7 +116,7 @@ ${PROJECT_SOURCE_DIR}/include/CameraModels
 ${PROJECT_SOURCE_DIR}/Thirdparty/Sophus
 ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
-${Boost_INCLUDE_DIR}
+${Boost_INCLUDE_DIRS}
 ${Openssl_INCLUDE_DIR}
 ${OpenCV_INCLUDE_DIRS}
 )
