@@ -53,10 +53,9 @@ endif()
 if(USE_GRAPHICS)
 find_package(Pangolin REQUIRED)
 endif()
-
 if(DEFINED ANDROID_ABI)
     # Boost libs & include dirs
-    set(Boost_ROOT /home/ron/Desktop/Repos/Boost-for-Android/build/out/arm64-v8a)
+    set(Boost_ROOT ${PROJECT_SOURCE_DIR}/Thirdparty/Boost-for-Android/build/out/${ANDROID_ABI})
     set(Boost_LIBS)
     set(Boost_LIBS_NO_PREF
     libboost_atomic-clang-mt-a64-1_82.a
@@ -103,7 +102,7 @@ if(DEFINED ANDROID_ABI)
         list(APPEND Boost_LIBS "${Boost_ROOT}/lib/${item}")
     endforeach()
     # OpenSSL libs
-    set(OpenSSL_LIBS /home/ron/Desktop/Repos/openssl-1.1.1u/libcrypto.so)
+    set(OpenSSL_LIBS ${PROJECT_SOURCE_DIR}/Thirdparty/openssl/libcrypto.so)
 else()
     find_package(realsense2)
     find_package(Boost)
