@@ -129,10 +129,10 @@ make -j4
 
 echo "Copying Shared Objects"
 JNI_PATH=$APP_PATH/ServiceApp/com.LibbaInc.ltd/app/src/main/jniLibs/$ANDROID_ABI
-cp -r -f -a Thirdparty/g2o/lib/. $JNI_PATH
+cp -r -f -a Thirdparty/g2o/lib/libg2o.so $JNI_PATH
 cp -r -f -a Thirdparty/openssl/libcrypto.so $JNI_PATH
 cp -r -f -a Thirdparty/openssl/libcrypto.so.1.1 $JNI_PATH
-cp -r -f -a lib/. $JNI_PATH
+cp -r -f -a lib/* $JNI_PATH
 
 echo "Copying Headers"
 APP_HEADERS_PATH=$APP_PATH/ServiceApp/com.LibbaInc.ltd/app/src/main/jni
