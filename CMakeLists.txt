@@ -38,10 +38,12 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-find_package(OpenCV 4.2)
-   if(NOT OpenCV_FOUND)
-      message(FATAL_ERROR "OpenCV > 4.4 not found.")
-   endif()
+if(DEFINED ANDROID_ABI)
+    find_package(OpenCV 4.2)
+    if(NOT OpenCV_FOUND)
+        message(FATAL_ERROR "OpenCV > 4.4 not found.")
+    endif()
+endif()
 
 MESSAGE("OPENCV VERSION:")
 MESSAGE(${OpenCV_VERSION})
@@ -52,58 +54,58 @@ find_package(Pangolin REQUIRED)
 endif()
 
 if(DEFINED ANDROID_ABI)
-# Boost libs & include dirs
-set(Boost_ROOT /home/ron/Desktop/Repos/Boost-for-Android/build/out/arm64-v8a)
-set(Boost_LIBS)
-set(Boost_LIBS_NO_PREF
-libboost_atomic-clang-mt-a64-1_82.a
-libboost_chrono-clang-mt-a64-1_82.a
-libboost_container-clang-mt-a64-1_82.a
-libboost_context-clang-mt-a64-1_82.a
-libboost_contract-clang-mt-a64-1_82.a
-libboost_coroutine-clang-mt-a64-1_82.a
-libboost_date_time-clang-mt-a64-1_82.a
-libboost_exception-clang-mt-a64-1_82.a
-libboost_fiber-clang-mt-a64-1_82.a
-libboost_filesystem-clang-mt-a64-1_82.a
-libboost_graph-clang-mt-a64-1_82.a
-libboost_iostreams-clang-mt-a64-1_82.a
-libboost_json-clang-mt-a64-1_82.a
-libboost_locale-clang-mt-a64-1_82.a
-libboost_log-clang-mt-a64-1_82.a
-libboost_log_setup-clang-mt-a64-1_82.a
-libboost_math_c99-clang-mt-a64-1_82.a
-libboost_math_c99f-clang-mt-a64-1_82.a
-libboost_math_c99l-clang-mt-a64-1_82.a
-libboost_math_tr1-clang-mt-a64-1_82.a
-libboost_math_tr1f-clang-mt-a64-1_82.a
-libboost_math_tr1l-clang-mt-a64-1_82.a
-libboost_nowide-clang-mt-a64-1_82.a
-libboost_prg_exec_monitor-clang-mt-a64-1_82.a
-libboost_program_options-clang-mt-a64-1_82.a
-libboost_random-clang-mt-a64-1_82.a
-libboost_regex-clang-mt-a64-1_82.a
-libboost_serialization-clang-mt-a64-1_82.a
-libboost_stacktrace_basic-clang-mt-a64-1_82.a
-libboost_stacktrace_noop-clang-mt-a64-1_82.a
-libboost_system-clang-mt-a64-1_82.a
-libboost_test_exec_monitor-clang-mt-a64-1_82.a
-libboost_thread-clang-mt-a64-1_82.a
-libboost_timer-clang-mt-a64-1_82.a
-libboost_type_erasure-clang-mt-a64-1_82.a
-libboost_unit_test_framework-clang-mt-a64-1_82.a
-libboost_url-clang-mt-a64-1_82.a
-libboost_wave-clang-mt-a64-1_82.a
-libboost_wserialization-clang-mt-a64-1_82.a
-)
-foreach(item IN LISTS Boost_LIBS_NO_PREF)
-list(APPEND Boost_LIBS "${Boost_ROOT}/lib/${item}")
-endforeach()
-# OpenSSL libs
-set(OpenSSL_LIBS /home/ron/Desktop/Repos/openssl-1.1.1u/libcrypto.so)
+    # Boost libs & include dirs
+    set(Boost_ROOT /home/ron/Desktop/Repos/Boost-for-Android/build/out/arm64-v8a)
+    set(Boost_LIBS)
+    set(Boost_LIBS_NO_PREF
+    libboost_atomic-clang-mt-a64-1_82.a
+    libboost_chrono-clang-mt-a64-1_82.a
+    libboost_container-clang-mt-a64-1_82.a
+    libboost_context-clang-mt-a64-1_82.a
+    libboost_contract-clang-mt-a64-1_82.a
+    libboost_coroutine-clang-mt-a64-1_82.a
+    libboost_date_time-clang-mt-a64-1_82.a
+    libboost_exception-clang-mt-a64-1_82.a
+    libboost_fiber-clang-mt-a64-1_82.a
+    libboost_filesystem-clang-mt-a64-1_82.a
+    libboost_graph-clang-mt-a64-1_82.a
+    libboost_iostreams-clang-mt-a64-1_82.a
+    libboost_json-clang-mt-a64-1_82.a
+    libboost_locale-clang-mt-a64-1_82.a
+    libboost_log-clang-mt-a64-1_82.a
+    libboost_log_setup-clang-mt-a64-1_82.a
+    libboost_math_c99-clang-mt-a64-1_82.a
+    libboost_math_c99f-clang-mt-a64-1_82.a
+    libboost_math_c99l-clang-mt-a64-1_82.a
+    libboost_math_tr1-clang-mt-a64-1_82.a
+    libboost_math_tr1f-clang-mt-a64-1_82.a
+    libboost_math_tr1l-clang-mt-a64-1_82.a
+    libboost_nowide-clang-mt-a64-1_82.a
+    libboost_prg_exec_monitor-clang-mt-a64-1_82.a
+    libboost_program_options-clang-mt-a64-1_82.a
+    libboost_random-clang-mt-a64-1_82.a
+    libboost_regex-clang-mt-a64-1_82.a
+    libboost_serialization-clang-mt-a64-1_82.a
+    libboost_stacktrace_basic-clang-mt-a64-1_82.a
+    libboost_stacktrace_noop-clang-mt-a64-1_82.a
+    libboost_system-clang-mt-a64-1_82.a
+    libboost_test_exec_monitor-clang-mt-a64-1_82.a
+    libboost_thread-clang-mt-a64-1_82.a
+    libboost_timer-clang-mt-a64-1_82.a
+    libboost_type_erasure-clang-mt-a64-1_82.a
+    libboost_unit_test_framework-clang-mt-a64-1_82.a
+    libboost_url-clang-mt-a64-1_82.a
+    libboost_wave-clang-mt-a64-1_82.a
+    libboost_wserialization-clang-mt-a64-1_82.a
+    )
+    foreach(item IN LISTS Boost_LIBS_NO_PREF)
+        list(APPEND Boost_LIBS "${Boost_ROOT}/lib/${item}")
+    endforeach()
+    # OpenSSL libs
+    set(OpenSSL_LIBS /home/ron/Desktop/Repos/openssl-1.1.1u/libcrypto.so)
 else()
-find_package(realsense2)
-find_package(Boost)
+    find_package(realsense2)
+    find_package(Boost)
 endif()
 
 include_directories(

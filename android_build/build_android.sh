@@ -76,6 +76,8 @@ CMAKE_COMMAND="cmake -B build -S . \
 	-DOpenssl_INCLUDE_DIR=$SLAM_ROOT/Thirdparty/openssl/include
 "
 
+sudo apt-get install pv
+
 cd ../Thirdparty
 
 echo "Building Thirdparty libs"
