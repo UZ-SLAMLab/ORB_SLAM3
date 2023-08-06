@@ -126,6 +126,7 @@ cd $SLAM_ROOT
 $CMAKE_COMMAND
 cd build
 make -j4
+cd $SLAM_ROOT
 
 echo "Copying Shared Objects"
 JNI_PATH=$APP_PATH/ServiceApp/com.LibbaInc.ltd/app/src/main/jniLibs/$ANDROID_ABI
