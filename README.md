@@ -81,11 +81,26 @@ We provide some examples to process input of a monocular, monocular-inertial, st
 
 # 3. Building ORB-SLAM3 library and examples
 
-Clone the repository:
+First, clone the repository:
 ```
 git clone https://github.com/UZ-SLAMLab/ORB_SLAM3.git ORB_SLAM3
 ```
+**Android:**
+Clone the dependencies, execute:
+```
+cd android_build
+chmod +x clone_deps.sh
+./clone_deps.sh
+```
 
+Then, to build ORB_SLAM3 and to copy the required files to DemoApp execute:
+```
+chmod +x build_android.sh
+./build_android.sh --app_path PATH_TO_DEMOAPP
+```
+Note: app_path is the only required option. to learn about other options related to android build run with --help.
+
+**Linux:**
 We provide a script `build.sh` to build the *Thirdparty* libraries and *ORB-SLAM3*. Please make sure you have installed all required dependencies (see section 2). Execute:
 ```
 cd ORB_SLAM3
