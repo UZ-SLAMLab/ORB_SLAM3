@@ -5,10 +5,11 @@ GREEN="\033[32m"
 DEFAULT_COLOR="\e[0m"
 
 ANDROID_NDK_ROOT="/home/${USER}/Android/Sdk/ndk/25.1.8937393"
-SLAM_ROOT=$(pwd)/..
+SLAM_ROOT=$(pwd)
 ANDROID_ABI="arm64-v8a" 
 ANDROID_PLATFORM="30"
 EIGEN_VERSION="3.4.0"
+MAKE="make -j4"
 
 # Enable errexit option
 set -e -o pipefail
@@ -24,11 +25,12 @@ trap 'handle_error' ERR
 
 # help menu
 function script_help {
-    echo "Usage: build_android.sh [parameters]"
+    echo "Usage: ./android_build/build_android.sh [parameters]"
     echo -e "  --app_path\t\t\tAbsolute path to DemoApp root"
     echo -e "  --ndk_path\t\t<optional> Absolute path to NDK (default is /home/${USER}/Android/Sdk/ndk/25.1.8937393)"
     echo -e "  --abi\t\t<optional> android abi to build for (arm64-v8a, armeabi-v7a, x86, x86_64). default is arm64-v8a"
     echo -e "  --platform\t\t<optional> android api level to build for (default is 30)"
+    echo -e "  --clean\t\t<optional> Clean build files before building"
     echo -e "  --help\t\t\tsee this help"
 }
 
@@ -43,6 +45,7 @@ do
         "--ndk_path") ANDROID_NDK_ROOT="$1"; shift;;
         "--abi") ANDROID_ABI="$1"; shift;;
         "--platform") ANDROID_PLATFORM="$1"; shift;;
+        "--clean") alias MAKE="make clean; make -j4";;
         "--help") script_help; exit 0;;
         *) echo -e "${RED}Unknown parameter ${opt} {$DEFAULT_COLOR}"; exit 1;;
     esac
@@ -78,7 +81,7 @@ CMAKE_COMMAND="cmake -B build -S . \
 
 sudo apt-get install pv
 
-cd ../Thirdparty
+cd $SLAM_ROOT/Thirdparty
 
 echo "Building Thirdparty libs"
 
@@ -94,7 +97,7 @@ echo "Building Eigen3"
 cd eigen-$EIGEN_VERSION
 $CMAKE_COMMAND
 cd build
-make
+$MAKE
 cd ../..
 
 #openSSL
@@ -103,7 +106,7 @@ cd openssl
 export ANDROID_NDK_HOME=$ANDROID_NDK_ROOT
 PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
 ./Configure $OPENSSL_ANDROID_ABI -D__ANDROID_API__=$ANDROID_PLATFORM --prefix=$(pwd)
-make -j4
+$MAKE
 cd ..
 
 # g2o
@@ -111,21 +114,21 @@ echo "Building g2o"
 cd g2o
 $CMAKE_COMMAND
 cd build
-make -j4
+$MAKE
 
 # DBoW2
 echo "Building DBoW2"
 cd ../../DBoW2
 $CMAKE_COMMAND
 cd build
-make -j4
+$MAKE
 
 # Build ORB_SLAM3 lib
 echo "Building ORB_SLAM3"
 cd $SLAM_ROOT
 $CMAKE_COMMAND
 cd build
-make -j4
+$MAKE
 cd $SLAM_ROOT
 
 echo "Copying Shared Objects"

@@ -4,7 +4,7 @@ RED="\033[1;31m"
 GREEN="\033[32m"
 DEFAULT_COLOR="\e[0m"
 
-BUILD_DIR=$(pwd)
+SLAM_DIR=$(pwd)
 EIGEN_VERSION="3.4.0"
 GIT_SSH=1
 
@@ -13,7 +13,7 @@ set -e -o pipefail
 
 # reset Thirdparty
 function delete_libs {
-  cd $BUILD_DIR/../Thirdparty
+  cd $SLAM_DIR/Thirdparty
   rm -r -f eigen-$EIGEN_VERSION Boost-for-Android OpenCV-android-sdk openssl
 }
 
@@ -32,9 +32,9 @@ trap 'handle_error' ERR
 
 # help menu
 function script_help {
-    echo "Usage: clone_deps.sh [parameters]"
-    echo -e "  -f<optional>\t\t\tOverwrite existing files and folders"
+    echo "Usage: ./android_build/clone_deps.sh [parameters]"
     echo -e "  --git_https<optional>\t\t\tUse https instead of ssh to clone git repos"
+    echo -e "  --clean\t\t<optional> Delete existing libs and reclone"
     echo -e "  --help\t\t\tsee this help"
 }
 
@@ -45,14 +45,14 @@ do
     opt="$1";
     shift;
     case "$opt" in
-        "-f") delete_libs;;
         "--git_https") GIT_SSH=0;;
+        "--clean") delete_libs;;
         "--help") script_help; exit 0;;
         *) echo -e "${RED}Unknown parameter ${opt} {$DEFAULT_COLOR}"; exit 1;;
     esac
 done
 
-cd ../Thirdparty
+cd $SLAM_DIR/Thirdparty
 
 echo "Downloading & Building Thirdparty libs"
 
