@@ -107,7 +107,6 @@ if [ $GIT_SSH == 1 ]; then
 else
     git clone https://github.com/openssl/openssl.git || { echo "Error: Failed to clone openssl."; }
 fi
-git clone git@github.com:openssl/openssl.git || { echo "Error: Failed to clone openssl."; }
 cd openssl
 git checkout 70c2912 # version 1.1.1u
 cd ..
