@@ -6,6 +6,7 @@ DEFAULT_COLOR="\e[0m"
 
 BUILD_DIR=$(pwd)
 EIGEN_VERSION="3.4.0"
+GIT_SSH=1
 
 # Enable errexit option
 set -e -o pipefail
@@ -33,6 +34,7 @@ trap 'handle_error' ERR
 function script_help {
     echo "Usage: clone_deps.sh [parameters]"
     echo -e "  -f<optional>\t\t\tOverwrite existing files and folders"
+    echo -e "  --git_https<optional>\t\t\tUse https insteadof ssh to clone git repos"
     echo -e "  --help\t\t\tsee this help"
 }
 
@@ -44,6 +46,7 @@ do
     shift;
     case "$opt" in
         "-f") delete_libs;;
+        "--git_https") GIT_SSH=0;;
         "--help") script_help; exit 0;;
         *) echo -e "${RED}Unknown parameter ${opt} {$DEFAULT_COLOR}"; exit 1;;
     esac
@@ -71,7 +74,11 @@ if [ -d "Boost-for-Android" ]; then
   echo "Boost-for-Android already exists in the current directory."
 else
 echo "Cloning Boost-for-Android"
-git clone git@github.com:moritz-wundke/Boost-for-Android.git || { echo "Error: Failed to clone Boost-for-Android."; }
+if [ $GIT_SSH == 1 ]; then
+    git clone git@github.com:moritz-wundke/Boost-for-Android.git || { echo "Error: Failed to clone Boost-for-Android."; }
+else
+    git clone https://github.com/moritz-wundke/Boost-for-Android.git || { echo "Error: Failed to clone Boost-for-Android."; }
+fi
 cd Boost-for-Android
 git checkout c6012c576e30ff6000ddab0988d59bad849200ce 
 cd ..
@@ -95,6 +102,11 @@ if [ -d "openssl" ]; then
   echo "openssl already exists in the current directory."
 else
 echo "Cloning openssl..."
+if [ $GIT_SSH == 1 ]; then
+    git clone git@github.com:openssl/openssl.git || { echo "Error: Failed to clone openssl."; }
+else
+    git clone https://github.com/openssl/openssl.git || { echo "Error: Failed to clone openssl."; }
+fi
 git clone git@github.com:openssl/openssl.git || { echo "Error: Failed to clone openssl."; }
 cd openssl
 git checkout 70c2912 # version 1.1.1u
