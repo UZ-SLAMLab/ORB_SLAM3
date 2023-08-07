@@ -34,7 +34,7 @@ trap 'handle_error' ERR
 function script_help {
     echo "Usage: clone_deps.sh [parameters]"
     echo -e "  -f<optional>\t\t\tOverwrite existing files and folders"
-    echo -e "  --git_https<optional>\t\t\tUse https insteadof ssh to clone git repos"
+    echo -e "  --git_https<optional>\t\t\tUse https instead of ssh to clone git repos"
     echo -e "  --help\t\t\tsee this help"
 }
 
