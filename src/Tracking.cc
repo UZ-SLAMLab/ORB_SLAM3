@@ -2218,11 +2218,12 @@ void Tracking::Track()
         vdLMTrack_ms.push_back(timeLMTrack);
 #endif
 
+#ifdef USE_GRAPHICS
         // Update drawer
         mpFrameDrawer->Update(this);
         if(mCurrentFrame.isSet())
             mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());
-
+#endif
         if(bOK || mState==RECENTLY_LOST)
         {
             // Update motion model
@@ -2236,9 +2237,10 @@ void Tracking::Track()
                 mbVelocity = false;
             }
 
+#ifdef USE_GRAPHICS
             if(mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
                 mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());
-
+#endif
             // Clean VO matches
             for(int i=0; i<mCurrentFrame.N; i++)
             {
@@ -2459,8 +2461,9 @@ void Tracking::StereoInitialization()
 
         mpAtlas->GetCurrentMap()->mvpKeyFrameOrigins.push_back(pKFini);
 
+#ifdef USE_GRAPHICS
         mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());
-
+#endif
         mState=OK;
     }
 }
@@ -2669,8 +2672,9 @@ void Tracking::CreateInitialMapMonocular()
 
     mpAtlas->SetReferenceMapPoints(mvpLocalMapPoints);
 
+#ifdef USE_GRAPHICS
     mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());
-
+#endif
     mpAtlas->GetCurrentMap()->mvpKeyFrameOrigins.push_back(pKFini);
 
     mState=OK;
@@ -3800,13 +3804,14 @@ void Tracking::Reset(bool bLocMap)
 {
     Verbose::PrintMess("System Reseting", Verbose::VERBOSITY_NORMAL);
 
+#ifdef USE_GRAPHICS
     if(mpViewer)
     {
         mpViewer->RequestStop();
         while(!mpViewer->isStopped())
             usleep(3000);
     }
-
+#endif
     // Reset Local Mapping
     if (!bLocMap)
     {
@@ -3851,22 +3856,24 @@ void Tracking::Reset(bool bLocMap)
     mpLastKeyFrame = static_cast<KeyFrame*>(NULL);
     mvIniMatches.clear();
 
+#ifdef USE_GRAPHICS
     if(mpViewer)
         mpViewer->Release();
-
+#endif
     Verbose::PrintMess("   End reseting! ", Verbose::VERBOSITY_NORMAL);
 }
 
 void Tracking::ResetActiveMap(bool bLocMap)
 {
     Verbose::PrintMess("Active map Reseting", Verbose::VERBOSITY_NORMAL);
+#ifdef USE_GRAPHICS
     if(mpViewer)
     {
         mpViewer->RequestStop();
         while(!mpViewer->isStopped())
             usleep(3000);
     }
-
+#endif
     Map* pMap = mpAtlas->GetCurrentMap();
 
     if (!bLocMap)
@@ -3942,9 +3949,10 @@ void Tracking::ResetActiveMap(bool bLocMap)
 
     mbVelocity = false;
 
+#ifdef USE_GRAPHICS
     if(mpViewer)
         mpViewer->Release();
-
+#endif
     Verbose::PrintMess("   End reseting! ", Verbose::VERBOSITY_NORMAL);
 }
 

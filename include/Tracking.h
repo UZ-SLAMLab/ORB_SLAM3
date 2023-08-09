@@ -47,6 +47,7 @@ namespace ORB_SLAM3
 
 class Viewer;
 class FrameDrawer;
+class MapDrawer;
 class Atlas;
 class LocalMapping;
 class LoopClosing;

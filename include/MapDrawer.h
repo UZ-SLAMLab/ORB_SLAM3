@@ -16,6 +16,7 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_GRAPHICS
 
 #ifndef MAPDRAWER_H
 #define MAPDRAWER_H
@@ -77,3 +78,4 @@ private:
 } //namespace ORB_SLAM
 
 #endif // MAPDRAWER_H
+#endif // USE_GRAPHICS

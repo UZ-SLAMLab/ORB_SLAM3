@@ -16,6 +16,11 @@ if(TEST_REPEATABLE)
    message(STATUS "ADD TEST_REPEATABLE")
    add_definitions(-DTEST_REPEATABLE)
 endif()
+option(USE_GRAPHICS "Enable using graphincs" ON)
+if(USE_GRAPHICS)
+   message(STATUS "ADD USE_GRAPHICS")
+   add_definitions(-DUSE_GRAPHICS)
+endif()
 
 # Check C++11 or C++0x support
 include(CheckCXXCompilerFlag)
@@ -45,7 +50,9 @@ MESSAGE("OPENCV VERSION:")
 MESSAGE(${OpenCV_VERSION})
 
 find_package(Eigen3 3.1.0 REQUIRED)
+if(USE_GRAPHICS)
 find_package(Pangolin REQUIRED)
+endif()
 find_package(realsense2)
 find_package(Boost)
 
@@ -68,18 +75,15 @@ src/LocalMapping.cc
 src/LoopClosing.cc
 src/ORBextractor.cc
 src/ORBmatcher.cc
-src/FrameDrawer.cc
 src/Converter.cc
 src/MapPoint.cc
 src/KeyFrame.cc
 src/Atlas.cc
 src/Map.cc
-src/MapDrawer.cc
 src/Optimizer.cc
 src/Frame.cc
 src/KeyFrameDatabase.cc
 src/Sim3Solver.cc
-src/Viewer.cc
 src/ImuTypes.cc
 src/G2oTypes.cc
 src/CameraModels/Pinhole.cpp
@@ -96,18 +100,15 @@ include/LocalMapping.h
 include/LoopClosing.h
 include/ORBextractor.h
 include/ORBmatcher.h
-include/FrameDrawer.h
 include/Converter.h
 include/MapPoint.h
 include/KeyFrame.h
 include/Atlas.h
 include/Map.h
-include/MapDrawer.h
 include/Optimizer.h
 include/Frame.h
 include/KeyFrameDatabase.h
 include/Sim3Solver.h
-include/Viewer.h
 include/ImuTypes.h
 include/G2oTypes.h
 include/CameraModels/GeometricCamera.h
@@ -120,6 +121,17 @@ include/TwoViewReconstruction.h
 include/SerializationUtils.h
 include/Config.h
 include/Settings.h)
+
+if(USE_GRAPHICS)
+    target_sources(${PROJECT_NAME} PRIVATE 
+    src/FrameDrawer.cc
+    src/MapDrawer.cc
+    src/Viewer.cc
+    include/FrameDrawer.h
+    include/MapDrawer.h
+    include/Viewer.h
+    )
+endif()
 
 add_subdirectory(Thirdparty/DBoW2)
 add_subdirectory(Thirdparty/g2o)
