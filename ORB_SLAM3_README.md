@@ -81,11 +81,10 @@ We provide some examples to process input of a monocular, monocular-inertial, st
 
 # 3. Building ORB-SLAM3 library and examples
 
-Clone the repository:
+First, clone the repository:
 ```
 git clone https://github.com/UZ-SLAMLab/ORB_SLAM3.git ORB_SLAM3
 ```
-
 We provide a script `build.sh` to build the *Thirdparty* libraries and *ORB-SLAM3*. Please make sure you have installed all required dependencies (see section 2). Execute:
 ```
 cd ORB_SLAM3
