@@ -1799,7 +1799,10 @@ void Tracking::Track()
     {
         if (mpLastKeyFrame)
         {
-            if (mCurrentFrame.mnId > mnLastKeyFrameId + FRAMES_COUNT_FOR_LOCAL_MAPPING)
+            int frame_count(FRAMES_COUNT_FOR_LOCAL_MAPPING);
+            if (mnLastKeyFrameId < 150)
+                frame_count = 1;
+            if (mCurrentFrame.mnId > mnLastKeyFrameId + frame_count)
             {
                 mpLastKeyFrame->SetCanUpdate();
                 while(!mpLocalMapper->AcceptKeyFrames())
