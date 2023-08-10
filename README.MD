@@ -22,6 +22,19 @@ Note: app_path is the only required option. to learn about other options related
 
 This will build ORB_SLAM3 for android and will the necessary shared objects and headers to the appropriate locations in DemoApp.
 
+**Android with Docker:**
+Build and run container, execute:
+```
+docker build -f ./Utils/Docker/Dockerfile -t slam .
+docker run --name slam -v <Host path to DemoApp>:/home/android/DemoApp -it slam
+```
+Replace <Host path to DemoApp> with your host's local path.
+Then, in the container bash execute:
+```
+android_build/clone_deps.sh --git_https --clean
+android_build/build_android.sh --app_path /home/android/DemoApp --ndk_path /home/android/android-ndk-r25c --abi arm64-v8a --platform 30 --clean
+```
+
 **Linux:**
 Refer to ORB_SLAM3_README.md
 
