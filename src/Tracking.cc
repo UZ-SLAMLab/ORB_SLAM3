@@ -53,7 +53,24 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
         newParameterLoader(settings);
     }
     else{
-        cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
+        cv::FileStorage fSettings;
+        if (ifstream(strSettingPath).is_open())
+        {
+            cout << "System - Loading settings from " << strSettingPath << endl;
+            fSettings.open(strSettingPath, cv::FileStorage::READ);
+            cout << "Done." << std::endl;
+        }
+        else
+        {
+            cout << "System - Loading settings from stream:" << strSettingPath.substr(0, std::min(strSettingPath.length(), static_cast<size_t>(100))) << std::endl;
+            fSettings.open(strSettingPath, cv::FileStorage::READ | cv::FileStorage::MEMORY);
+        }
+        if (!fSettings.isOpened())
+        {
+            cerr << "[ERROR]: could not open configuration." << endl;
+            cerr << "Aborting..." << endl;
+            exit(-1);
+        }
 
         bool b_parse_cam = ParseCamParamFile(fSettings);
         if(!b_parse_cam)
