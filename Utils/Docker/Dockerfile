@@ -24,9 +24,6 @@ RUN apt-get update && apt-get install -y \
     g++
 
 
-# Set up a non-root user
-# RUN useradd -ms /bin/bash android
-# RUN echo 'android ALL=NOPASSWD: /usr/bin/apt-get' >> /etc/sudoers
 
 # Set up directories
 RUN mkdir -p /home/android/ORB_SLAM3
@@ -41,9 +38,8 @@ RUN rm -f /home/android/android-ndk-r25c-linux.zip
 VOLUME [ "/home/android/DemoApp" ]
 
 # Copy repo to Volume
-COPY --chown=android . /home/android/ORB_SLAM3
-#RUN chown -R android /home/android/ORB_SLAM3 
-# USER android
+COPY . /home/android/ORB_SLAM3
+
 
 WORKDIR /home/android/ORB_SLAM3
 
