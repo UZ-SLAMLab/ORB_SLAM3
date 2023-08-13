@@ -173,6 +173,11 @@ mkdir -p $BOOST_HEADERS_PATH
 cp -r -f -v Thirdparty/Boost-for-Android/boost_1_82_0/boost $BOOST_HEADERS_PATH
 
 echo "Copying OpenCV"
+OLD_VER_STR="VERSION_1_6"
+NEW_VER_STR="VERSION_1_8"
+OPENCV_GRADLE_PATH="${SLAM_ROOT}/Thirdparty/OpenCV-android-sdk/sdk/build.gradle"
+# Search and replace in file:
+sed -i "s/${OLD_VER_STR}/${NEW_VER_STR}/g" "$OPENCV_GRADLE_PATH"
 cp -r -f -v Thirdparty/OpenCV-android-sdk $APP_PATH/ServiceApp
 
 echo -e "${GREEN}SUCCESS"

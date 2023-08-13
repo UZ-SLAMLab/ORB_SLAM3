@@ -21,7 +21,8 @@ RUN apt-get update && apt-get install -y \
     make\
     bzip2\
     nano\
-    g++
+    g++\
+    sed
 
 
 
