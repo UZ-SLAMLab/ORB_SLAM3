@@ -1,12 +1,12 @@
 # ORB-SLAM3
 
-# 3. Building ORB-SLAM3 library and examples
+## Building ORB-SLAM3 library
 
 First, clone the repository:
 ```
 git clone https://github.com/UZ-SLAMLab/ORB_SLAM3.git ORB_SLAM3
 ```
-**Android:**
+### Android:
 Clone the dependencies, execute:
 ```
 chmod +x ./android_build/clone_deps.sh
@@ -22,19 +22,24 @@ Note: app_path is the only required option. to learn about other options related
 
 This will build ORB_SLAM3 for android and will the necessary shared objects and headers to the appropriate locations in DemoApp.
 
-**Android with Docker:**
+### Android with Docker:
 Build and run container, execute:
 ```
 docker build -f ./Utils/Docker/Dockerfile -t slam .
-docker run --name slam -v <Host path to DemoApp>:/home/android/DemoApp -it slam
+docker run --name slam -v <Host path to DemoApp>:/home/android/DemoApp -v <Host path to ORB_SLAM3>:/home/android/ORB_SLAM3 -it slam
 ```
-Replace <Host path to DemoApp> with your host's local path.
+Replace "<Host path to DemoApp>" and "<Host path to ORB_SLAM3>" with your host's local path, example:
+```
+docker run --name slam -v ~/Desktop/Repos/DemoApp:/home/android/DemoApp -v ~/Desktop/Repos/ORB_SLAM3:/home/android/ORB_SLAM3 -it slam
+```
+
+
 Then, in the container bash execute:
 ```
 android_build/clone_deps.sh --git_https --clean
 android_build/build_android.sh --app_path /home/android/DemoApp --ndk_path /home/android/android-ndk-r25c --abi arm64-v8a --platform 30 --clean
 ```
 
-**Linux:**
+### Linux:
 Refer to ORB_SLAM3_README.md
 

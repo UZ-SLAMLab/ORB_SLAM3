@@ -25,7 +25,6 @@ RUN apt-get update && apt-get install -y \
     sed
 
 
-
 # Set up directories
 RUN mkdir -p /home/android/ORB_SLAM3
 RUN mkdir -p /home/android/DemoApp
@@ -35,12 +34,9 @@ RUN wget -P /home/android https://dl.google.com/android/repository/android-ndk-r
 RUN unzip /home/android/android-ndk-r25c-linux.zip -d /home/android
 RUN rm -f /home/android/android-ndk-r25c-linux.zip
 
-# Create a Volume to be mapped to host's DemoApp
+# Create a Volume to be mapped to host's DemoApp and ORB_SLAM3
 VOLUME [ "/home/android/DemoApp" ]
-
-# Copy repo to Volume
-COPY . /home/android/ORB_SLAM3
-
+VOLUME [ "/home/android/ORB_SLAM3" ]
 
 WORKDIR /home/android/ORB_SLAM3
 

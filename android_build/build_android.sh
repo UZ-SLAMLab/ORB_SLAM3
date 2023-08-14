@@ -36,6 +36,12 @@ function script_help {
     echo -e "  --help\t\t\tsee this help"
 }
 
+# reset build artifcats
+function clean_build {
+  cd $SLAM_ROOT/Thirdparty
+  rm -r -f eigen-$EIGEN_VERSION/build g2o/build DBoW2/build $SLAM_ROOT/build
+  cd $SLAM_ROOT
+}
 
 # parse options from user
 while [[ $# -gt 0 ]];
@@ -47,7 +53,7 @@ do
         "--ndk_path") ANDROID_NDK_ROOT="$1"; shift;;
         "--abi") ANDROID_ABI="$1"; shift;;
         "--platform") ANDROID_PLATFORM="$1"; shift;;
-        "--clean") alias MAKE="make clean; make -j4";;
+        "--clean") clean_build;;
         "--skip_deps") SKIP_DEPS=1;;
         "--help") script_help; exit 0;;
         *) echo -e "${RED}Unknown parameter ${opt} {$DEFAULT_COLOR}"; exit 1;;
@@ -180,4 +186,4 @@ OPENCV_GRADLE_PATH="${SLAM_ROOT}/Thirdparty/OpenCV-android-sdk/sdk/build.gradle"
 sed -i "s/${OLD_VER_STR}/${NEW_VER_STR}/g" "$OPENCV_GRADLE_PATH"
 cp -r -f -v Thirdparty/OpenCV-android-sdk $APP_PATH/ServiceApp
 
-echo -e "${GREEN}SUCCESS"
+echo -e "${GREEN}SUCCESS${DEFAULT_COLOR}"
