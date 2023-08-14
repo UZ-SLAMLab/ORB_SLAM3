@@ -26,9 +26,9 @@ This will build ORB_SLAM3 for android and will the necessary shared objects and 
 Build and run container, execute:
 ```
 docker build -f ./Utils/Docker/Dockerfile -t slam .
-docker run --name slam -v <Host path to DemoApp>:/home/android/DemoApp -v <Host path to ORB_SLAM3>:/home/android/ORB_SLAM3 -it slam
+docker run --name slam -v "Host path to DemoApp":/home/android/DemoApp -v "Host path to ORB_SLAM3":/home/android/ORB_SLAM3 -it slam
 ```
-Replace "<Host path to DemoApp>" and "<Host path to ORB_SLAM3>" with your host's local path, example:
+Replace "Host path to DemoApp" and "Host path to ORB_SLAM3" with your host's local path, example:
 ```
 docker run --name slam -v ~/Desktop/Repos/DemoApp:/home/android/DemoApp -v ~/Desktop/Repos/ORB_SLAM3:/home/android/ORB_SLAM3 -it slam
 ```
