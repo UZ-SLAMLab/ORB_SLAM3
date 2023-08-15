@@ -129,15 +129,23 @@ namespace ORB_SLAM3 {
         sensor_ = sensor;
 
         //Open settings file
-        cv::FileStorage fSettings(configFile, cv::FileStorage::READ);
-        if (!fSettings.isOpened()) {
-            cerr << "[ERROR]: could not open configuration file at: " << configFile << endl;
-            cerr << "Aborting..." << endl;
-
-            exit(-1);
+        cv::FileStorage fSettings;
+        if (ifstream(configFile).is_open())
+        {
+            cout << "Settings - Loading settings from " << configFile << endl;
+            fSettings.open(configFile, cv::FileStorage::READ);
+            cout << "Done." << std::endl;
         }
-        else{
-            cout << "Loading settings from " << configFile << endl;
+        else
+        {
+            cout << "Settings - Loading settings from stream:" << configFile.substr(0, std::min(configFile.length(), static_cast<size_t>(100))) << std::endl;
+            fSettings.open(configFile, cv::FileStorage::READ | cv::FileStorage::MEMORY);
+        }
+        if (!fSettings.isOpened())
+        {
+            cerr << "[ERROR]: Settings - could not open configuration." << endl;
+            cerr << "Aborting..." << endl;
+            exit(-1);
         }
 
         //Read first camera

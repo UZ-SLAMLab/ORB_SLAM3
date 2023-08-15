@@ -22,6 +22,7 @@
 #include <vector>
 #include <numeric>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <algorithm>
 #include <opencv2/core/core.hpp>
@@ -1337,11 +1338,25 @@ int TemplatedVocabulary<TDescriptor,F>::stopWords(double minWeight)
 template<class TDescriptor, class F>
 bool TemplatedVocabulary<TDescriptor,F>::loadFromTextFile(const std::string &filename)
 {
-    ifstream f;
-    f.open(filename.c_str());
-	
-    if(f.eof())
-	return false;
+    std::stringstream f;
+
+    ifstream fin;
+    fin.open(filename.c_str());
+    if (fin.is_open())
+    {
+      if(fin.eof())
+      {
+        return false;
+      }
+      else
+      {
+        f << fin.rdbuf();
+      }
+    }
+    else
+    {
+      f = std::stringstream(filename);
+    }
 
     m_words.clear();
     m_nodes.clear();

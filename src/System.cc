@@ -69,13 +69,28 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         cout << "RGB-D-Inertial" << endl;
 
     //Check settings file
-    cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
-    if(!fsSettings.isOpened())
+    cv::FileStorage fsSettings;
+    if (ifstream(strSettingsFile).is_open())
     {
-       cerr << "Failed to open settings file at: " << strSettingsFile << endl;
-       exit(-1);
+        cout << "System - Loading settings from " << strSettingsFile << endl;
+        fsSettings.open(strSettingsFile, cv::FileStorage::READ);
+        cout << "Done." << std::endl;
+        mStrVocabularyFilePath = strVocFile;
     }
-
+    else
+    {
+        cout << "System - Loading settings from stream:" << strSettingsFile.substr(0, std::min(strSettingsFile.length(), static_cast<size_t>(100))) << std::endl;
+        fsSettings.open(strSettingsFile, cv::FileStorage::READ | cv::FileStorage::MEMORY);
+        mStrVocabularyFilePath = std::string("tempVocFile.txt");
+        cout << "Saves vocabulary at end to: " << mStrVocabularyFilePath << std::endl;
+    }
+    if (!fsSettings.isOpened())
+    {
+        cerr << "[ERROR]: could not open configuration." << endl;
+        cerr << "Aborting..." << endl;
+        exit(-1);
+    }
+    
     cv::FileNode node = fsSettings["File.version"];
     if(!node.empty() && node.isString() && node.string() == "1.0"){
         settings_ = new Settings(strSettingsFile,mSensor);
@@ -107,8 +122,6 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         activeLC = static_cast<int>(fsSettings["loopClosing"]) != 0;
     }
 
-    mStrVocabularyFilePath = strVocFile;
-
     if(mStrLoadAtlasFromFile.empty())
     {
         //Load ORB Vocabulary
@@ -118,8 +131,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
         if(!bVocLoad)
         {
-            cerr << "Wrong path to vocabulary. " << endl;
-            cerr << "Falied to open at: " << strVocFile << endl;
+            cerr << "Error reading vocabulary. " << endl;
             exit(-1);
         }
         cout << "Vocabulary loaded!" << endl << endl;
@@ -141,7 +153,6 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         if(!bVocLoad)
         {
             cerr << "Wrong path to vocabulary. " << endl;
-            cerr << "Falied to open at: " << strVocFile << endl;
             exit(-1);
         }
         cout << "Vocabulary loaded!" << endl << endl;
