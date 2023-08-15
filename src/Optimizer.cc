@@ -3361,29 +3361,29 @@ void Optimizer::InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &sc
 
     // for Tbc
     g2o::VertexSE3Expmap* VTbc = new g2o::VertexSE3Expmap();
-    g2o::SE3Quat TbcSe3(vpKFs.front()->mImuCalib.mTcb.rotationMatrix().cast<double>(), 
-        vpKFs.front()->mImuCalib.mTcb.translation().cast<double>());
+    g2o::SE3Quat TbcSe3(vpKFs.front()->mImuCalib.mTbc.rotationMatrix().cast<double>(), 
+        vpKFs.front()->mImuCalib.mTbc.translation().cast<double>());
     VTbc->setEstimate(TbcSe3);
     VTbc->setId(maxKFid*2+6);
     VTbc->setFixed(false);
     optimizer.addVertex(VTbc);
     vector<EdgeTbc*> vpebc;
     vpebc.reserve(vpKFs.size());
+    Eigen::Matrix<double, 6, 6> infoMat = Eigen::Matrix<double, 6, 6>::Identity()*1e5;
+    
     for(size_t i=0;i<vpKFs.size();i++)
     {
         KeyFrame* pKFi = vpKFs[i];
-
         if(pKFi->mnId<=maxKFid)
         {
             if(pKFi->isBad())
                 continue;
 
             g2o::HyperGraph::Vertex* VP =  optimizer.vertex(pKFi->mnId);
-
+            g2o::HyperGraph::Vertex* VTbc =  optimizer.vertex(maxKFid*2+6);
             if(!VP)
             {
                 cout << "Error" << VP <<endl;
-
                 continue;
             }
             EdgeTbc* ei = new EdgeTbc();
@@ -3392,9 +3392,9 @@ void Optimizer::InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &sc
             g2o::SE3Quat Tcw(pKFi->GetRotation().cast<double>(), pKFi->GetTranslation().cast<double>());
 
             ei->setMeasurement(Tcw);
+            ei->setInformation(infoMat);
 
             vpebc.push_back(ei);
-
             optimizer.addEdge(ei);
 
         }
@@ -3418,6 +3418,7 @@ void Optimizer::InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &sc
     bg << VG->estimate();
     ba << VA->estimate();
     scale = VS->estimate();
+    VTbc = static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(maxKFid*2+6));
     Tbc.block<3,3>(0,0) = VTbc->estimate().rotation().toRotationMatrix();
     Tbc.block<3,1>(0,3) = VTbc->estimate().translation();
 
