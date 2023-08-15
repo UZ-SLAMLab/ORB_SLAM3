@@ -842,6 +842,29 @@ public:
     Eigen::Vector3d dtij;
 };
 
+class EdgeTbc : public g2o::BaseBinaryEdge<6,g2o::SE3Quat,VertexPose,g2o::VertexSE3Expmap>
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    EdgeTbc(){}
+
+    virtual bool read(std::istream& is){return false;}
+    virtual bool write(std::ostream& os) const{return false;}
+
+    void computeError(){
+        const VertexPose* VPimu = static_cast<const VertexPose*>(_vertices[0]);
+        const g2o::VertexSE3Expmap* VTbc = static_cast<const g2o::VertexSE3Expmap*>(_vertices[1]);
+        g2o::SE3Quat Twb(VPimu->estimate().Rwb, VPimu->estimate().twb);
+        g2o::SE3Quat Tcw(_measurement);
+
+        // g2o::SE3Quat error_=Twb*VTbc->estimate()*Tcw;
+        g2o::SE3Quat error_=Twb.inverse()*Tcw.inverse() * VTbc->estimate().inverse();
+        _error = error_.log();
+
+    }
+};
+
 } //namespace ORB_SLAM2
 
 #endif // G2OTYPES_H
