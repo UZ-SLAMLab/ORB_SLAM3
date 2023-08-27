@@ -32,7 +32,7 @@ Only computed scores for keyframes in which the number of common words is larger
 
 **Update:** But this would make this part very slow. Thus the codes are changed as following.
 
-https://github.com/fishmarch/ORB_SLAM3_Fixed/blob/d7288c62c2b3000d4aa9c5acb7f5aa83027a251d/src/KeyFrameDatabase.cc#L687-L691
+https://github.com/fishmarch/ORB_SLAM3_Fixed/blob/35c2361f82f32b320150a254e1627bcedc455df6/src/KeyFrameDatabase.cc#L687-L691
 
 
 
