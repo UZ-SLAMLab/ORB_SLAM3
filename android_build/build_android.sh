@@ -178,6 +178,12 @@ BOOST_HEADERS_PATH=$APP_HEADERS_PATH
 mkdir -p $BOOST_HEADERS_PATH
 cp -r -f -v Thirdparty/Boost-for-Android/boost_1_82_0/boost $BOOST_HEADERS_PATH
 
+echo "Extracting and copying ORB_SLAM3 assets"
+APP_ASSETS_PATH=$APP_PATH/ServiceApp/com.LibbaInc.ltd/app/src/main/assets
+tar -xzf "Vocabulary/ORBvoc.txt.tar.gz" --directory $SLAM_ROOT/android_build/assets/ORB3_SLAM || { echo "Error: Failed to extract ORBvoc.txt"; }
+cp -r -f -v android_build/assets/ORB3_SLAM $APP_ASSETS_PATH
+rm -f $SLAM_ROOT/android_build/assets/ORB3_SLAM/ORBvoc.txt
+
 echo "Copying OpenCV"
 OLD_VER_STR="VERSION_1_6"
 NEW_VER_STR="VERSION_1_8"
