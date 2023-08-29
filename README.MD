@@ -2,9 +2,10 @@
 
 ## Building ORB-SLAM3 library
 
-First, clone the repository:
+First, clone the repository and checkout libmaster (main dev branch):
 ```
-git clone https://github.com/LibbaXR/ORB_SLAM3.git ORB_SLAM3
+git clone https://github.com/LibbaXR/ORB_SLAM3.git
+git checkout libmaster
 ```
 ### Build for Android on Linux:
 Clone the dependencies, execute:
@@ -20,7 +21,7 @@ chmod +x ./android_build/build_android.sh
 ```
 Note: app_path is the only required option. to learn about other options related to android build run with --help.
 
-This will build ORB_SLAM3 for android and will the necessary shared objects and headers to the appropriate locations in DemoApp.
+This will build ORB_SLAM3 for android and will copy the necessary shared objects and headers to the appropriate locations in DemoApp.
 
 ### Build for Android with Docker:
 Build and run container, execute:
