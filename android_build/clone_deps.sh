@@ -14,7 +14,7 @@ set -e -o pipefail
 # reset Thirdparty
 function delete_libs {
   cd $SLAM_DIR/Thirdparty
-  rm -r -f eigen-$EIGEN_VERSION Boost-for-Android OpenCV-android-sdk openssl
+  rm -r -f eigen-$EIGEN_VERSION Boost-for-Android OpenCV-android-sdk openssl g2o/build DBoW2/build $SLAM_DIR/build
 }
 
 # Define a function to handle errors
@@ -54,7 +54,7 @@ done
 
 cd $SLAM_DIR/Thirdparty
 
-echo "Downloading & Building Thirdparty libs"
+echo "Downloading Thirdparty libs"
 
 #Eigen
 if [ -d "eigen-$EIGEN_VERSION" ]; then

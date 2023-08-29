@@ -10,6 +10,7 @@ ANDROID_ABI="arm64-v8a"
 ANDROID_PLATFORM="30"
 EIGEN_VERSION="3.4.0"
 MAKE="make -j4"
+SKIP_DEPS=0
 
 # Enable errexit option
 set -e -o pipefail
@@ -31,9 +32,16 @@ function script_help {
     echo -e "  --abi\t\t<optional> android abi to build for (arm64-v8a, armeabi-v7a, x86, x86_64). default is arm64-v8a"
     echo -e "  --platform\t\t<optional> android api level to build for (default is 30)"
     echo -e "  --clean\t\t<optional> Clean build files before building"
+    echo -e "  --skip_deps\t\t<optional> Skip building and configuration of dependencies."
     echo -e "  --help\t\t\tsee this help"
 }
 
+# reset build artifcats
+function clean_build {
+  cd $SLAM_ROOT/Thirdparty
+  rm -r -f eigen-$EIGEN_VERSION/build g2o/build DBoW2/build $SLAM_ROOT/build
+  cd $SLAM_ROOT
+}
 
 # parse options from user
 while [[ $# -gt 0 ]];
@@ -45,7 +53,8 @@ do
         "--ndk_path") ANDROID_NDK_ROOT="$1"; shift;;
         "--abi") ANDROID_ABI="$1"; shift;;
         "--platform") ANDROID_PLATFORM="$1"; shift;;
-        "--clean") alias MAKE="make clean; make -j4";;
+        "--clean") clean_build;;
+        "--skip_deps") SKIP_DEPS=1;;
         "--help") script_help; exit 0;;
         *) echo -e "${RED}Unknown parameter ${opt} {$DEFAULT_COLOR}"; exit 1;;
     esac
@@ -79,7 +88,15 @@ CMAKE_COMMAND="cmake -B build -S . \
 	-DOpenssl_INCLUDE_DIR=$SLAM_ROOT/Thirdparty/openssl/include
 "
 
-sudo apt-get install pv
+if ! command -v pv &> /dev/null; then
+    echo "Installing pv..."
+    sudo apt-get update
+    sudo apt-get install -y pv
+else
+    echo "pv is already installed."
+fi
+
+if [ $SKIP_DEPS == 0 ]; then
 
 cd $SLAM_ROOT/Thirdparty
 
@@ -89,7 +106,7 @@ echo "Building Thirdparty libs"
 echo "Building Boost"
 cd Boost-for-Android
 chmod +x ./build-android.sh
-./build-android.sh --boost=1.82.0 --progress --arch=$ANDROID_ABI --target-version=$ANDROID_PLATFORM $ANDROID_NDK_ROOT
+./build-android.sh --boost=1.82.0 --progress --arch=$ANDROID_ABI --target-version=$ANDROID_PLATFORM $ANDROID_NDK_ROOT || handle_error
 cd ..
 
 #Eigen
@@ -122,6 +139,7 @@ cd ../../DBoW2
 $CMAKE_COMMAND
 cd build
 $MAKE
+fi # $SKIP_DEPS == 0
 
 # Build ORB_SLAM3 lib
 echo "Building ORB_SLAM3"
@@ -160,7 +178,18 @@ BOOST_HEADERS_PATH=$APP_HEADERS_PATH
 mkdir -p $BOOST_HEADERS_PATH
 cp -r -f -v Thirdparty/Boost-for-Android/boost_1_82_0/boost $BOOST_HEADERS_PATH
 
+echo "Extracting and copying ORB_SLAM3 assets"
+APP_ASSETS_PATH=$APP_PATH/ServiceApp/com.LibbaInc.ltd/app/src/main/assets
+tar -xzf "Vocabulary/ORBvoc.txt.tar.gz" --directory $SLAM_ROOT/android_build/assets/ORB3_SLAM || { echo "Error: Failed to extract ORBvoc.txt"; }
+cp -r -f -v android_build/assets/ORB3_SLAM $APP_ASSETS_PATH
+rm -f $SLAM_ROOT/android_build/assets/ORB3_SLAM/ORBvoc.txt
+
 echo "Copying OpenCV"
+OLD_VER_STR="VERSION_1_6"
+NEW_VER_STR="VERSION_1_8"
+OPENCV_GRADLE_PATH="${SLAM_ROOT}/Thirdparty/OpenCV-android-sdk/sdk/build.gradle"
+# Search and replace in file:
+sed -i "s/${OLD_VER_STR}/${NEW_VER_STR}/g" "$OPENCV_GRADLE_PATH"
 cp -r -f -v Thirdparty/OpenCV-android-sdk $APP_PATH/ServiceApp
 
-echo -e "${GREEN}SUCCESS"
+echo -e "${GREEN}SUCCESS${DEFAULT_COLOR}"
