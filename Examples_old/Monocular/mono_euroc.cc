@@ -139,7 +139,7 @@ int main(int argc, char **argv)
 
             // Pass the image to the SLAM system
             // cout << "tframe = " << tframe << endl;
-	        // TODO change to monocular_inertial
+	        // change to monocular_inertial
 	        SLAM.TrackMonocular(im,tframe);
 
     #ifdef COMPILEDWITHC11
