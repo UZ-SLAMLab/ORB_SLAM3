@@ -37,9 +37,10 @@ int main(int argc, char **argv)
         cerr << endl << "Usage: ./mono_euroc path_to_vocabulary path_to_settings path_to_sequence_folder_1 path_to_times_file_1 (path_to_image_folder_2 path_to_times_file_2 ... path_to_image_folder_N path_to_times_file_N) (trajectory_file_name)" << endl;
         return 1;
     }
-
+	// 图像序列个数
     const int num_seq = (argc-3)/2;
     cout << "num_seq = " << num_seq << endl;
+	// 是否设定output文件名
     bool bFileName= (((argc-3) % 2) == 1);
     string file_name;
     if (bFileName)
@@ -115,6 +116,7 @@ int main(int argc, char **argv)
                 std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
     #endif
 #endif
+				// 调整图像缩放比例
                 int width = im.cols * imageScale;
                 int height = im.rows * imageScale;
                 cv::resize(im, im, cv::Size(width, height));
@@ -137,7 +139,8 @@ int main(int argc, char **argv)
 
             // Pass the image to the SLAM system
             // cout << "tframe = " << tframe << endl;
-            SLAM.TrackMonocular(im,tframe); // TODO change to monocular_inertial
+	        // TODO change to monocular_inertial
+	        SLAM.TrackMonocular(im,tframe);
 
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -170,6 +173,7 @@ int main(int argc, char **argv)
             }
         }
 
+		// 切换图像序列
         if(seq < num_seq - 1)
         {
             string kf_file_submap =  "./SubMaps/kf_SubMap_" + std::to_string(seq) + ".txt";
@@ -208,6 +212,7 @@ void LoadImages(const string &strImagePath, const string &strPathTimes,
 {
     ifstream fTimes;
     fTimes.open(strPathTimes.c_str());
+	// 预分配内存
     vTimeStamps.reserve(5000);
     vstrImages.reserve(5000);
     while(!fTimes.eof())
@@ -218,6 +223,7 @@ void LoadImages(const string &strImagePath, const string &strPathTimes,
         {
             stringstream ss;
             ss << s;
+			// 只保存了图像路径
             vstrImages.push_back(strImagePath + "/" + ss.str() + ".png");
             double t;
             ss >> t;
