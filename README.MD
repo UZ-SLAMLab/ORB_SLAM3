@@ -8,7 +8,7 @@ git clone https://github.com/LibbaXR/ORB_SLAM3.git
 git checkout libmaster
 ```
 ### Build for Android on Linux:
-Clone the dependencies, execute:
+Clone the dependencies, execute (use --git_https flag if you dont use git ssh):
 ```
 chmod +x ./android_build/clone_deps.sh
 ./android_build/clone_deps.sh
