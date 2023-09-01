@@ -655,7 +655,6 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
     for(list<KeyFrame*>::iterator lit=lKFsSharingWords.begin(), lend= lKFsSharingWords.end(); lit!=lend; lit++)
     {
         KeyFrame* pKFi = *lit;
-
         if(pKFi->mnPlaceRecognitionWords>minCommonWords)
         {
             nscores++;
@@ -685,7 +684,11 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
             KeyFrame* pKF2 = *vit;
             if(pKF2->mnPlaceRecognitionQuery!=pKF->mnId)
                 continue;
-
+            if(pKF2->mnPlaceRecognitionWords<=minCommonWords){
+                float si = mpVoc->score(pKF->mBowVec,pKF2->mBowVec);
+                pKF2->mPlaceRecognitionScore=si;
+                pKF2->mnPlaceRecognitionWords = minCommonWords+1;
+            }
             accScore+=pKF2->mPlaceRecognitionScore;
             if(pKF2->mPlaceRecognitionScore>bestScore)
             {
@@ -709,20 +712,19 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
     while(i < lAccScoreAndMatch.size() && (vpLoopCand.size() < nNumCandidates || vpMergeCand.size() < nNumCandidates))
     {
         KeyFrame* pKFi = it->second;
-        if(pKFi->isBad())
-            continue;
-
-        if(!spAlreadyAddedKF.count(pKFi))
-        {
-            if(pKF->GetMap() == pKFi->GetMap() && vpLoopCand.size() < nNumCandidates)
+        if(!pKFi->isBad()){
+            if(!spAlreadyAddedKF.count(pKFi))
             {
-                vpLoopCand.push_back(pKFi);
+                if(pKF->GetMap() == pKFi->GetMap() && vpLoopCand.size() < nNumCandidates)
+                {
+                    vpLoopCand.push_back(pKFi);
+                }
+                else if(pKF->GetMap() != pKFi->GetMap() && vpMergeCand.size() < nNumCandidates && !pKFi->GetMap()->IsBad())
+                {
+                    vpMergeCand.push_back(pKFi);
+                }
+                spAlreadyAddedKF.insert(pKFi);
             }
-            else if(pKF->GetMap() != pKFi->GetMap() && vpMergeCand.size() < nNumCandidates && !pKFi->GetMap()->IsBad())
-            {
-                vpMergeCand.push_back(pKFi);
-            }
-            spAlreadyAddedKF.insert(pKFi);
         }
         i++;
         it++;
