@@ -140,6 +140,7 @@ cd build
 $MAKE
 fi # $SKIP_DEPS == 0
 
+
 # Build ORB_SLAM3 lib
 echo "Building ORB_SLAM3"
 cd $SLAM_ROOT
