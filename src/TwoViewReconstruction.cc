@@ -726,7 +726,7 @@ namespace ORB_SLAM3
         {
             T21 = Sophus::SE3f(vR[bestSolutionIdx], vt[bestSolutionIdx]);
             vbTriangulated = bestTriangulated;
-
+            vP3D = bestP3D;
             return true;
         }
 
