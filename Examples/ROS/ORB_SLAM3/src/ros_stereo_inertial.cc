@@ -132,7 +132,7 @@ int main(int argc, char **argv)
     }
 
     // Maximum delay, 5 seconds
-    ros::Subscriber sub_imu = n.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb);
+    ros::Subscriber sub_imu = n.subscribe("/tello/imu", 1000, &ImuGrabber::GrabImu, &imugb);
     ros::Subscriber sub_img_left = n.subscribe("/camera/left/image_raw", 100, &ImageGrabber::GrabImageLeft, &igb);
     ros::Subscriber sub_img_right = n.subscribe("/camera/right/image_raw", 100, &ImageGrabber::GrabImageRight, &igb);
 

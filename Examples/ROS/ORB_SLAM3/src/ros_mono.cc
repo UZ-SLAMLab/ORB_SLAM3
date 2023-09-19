@@ -18,8 +18,9 @@
 
 #include <iostream>
 #include <ros/ros.h>
+#include <sensor_msgs/CompressedImage.h>
 #include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/Image.h>
+#include <image_transport/image_encoding.h>
 #include <opencv2/core.hpp>
 #include "../../../include/System.h"
 
@@ -30,7 +31,7 @@ class ImageGrabber
 public:
     ImageGrabber(ORB_SLAM3::System* pSLAM) : mpSLAM(pSLAM) {}
 
-    void GrabImage(const sensor_msgs::ImageConstPtr& msg);
+    void GrabImage(const sensor_msgs::CompressedImageConstPtr& msg);
 
     ORB_SLAM3::System* mpSLAM;
 };
@@ -53,7 +54,7 @@ int main(int argc, char** argv)
     ImageGrabber igb(&SLAM);
 
     ros::NodeHandle nodeHandler;
-    ros::Subscriber sub = nodeHandler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage, &igb);
+    ros::Subscriber sub = nodeHandler.subscribe("/camera/image_raw/compressed", 1, &ImageGrabber::GrabImage, &igb);
 
     ros::spin();
 
@@ -68,13 +69,13 @@ int main(int argc, char** argv)
     return 0;
 }
 
-void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
+void ImageGrabber::GrabImage(const sensor_msgs::CompressedImageConstPtr& msg)
 {
     // Copy the ros image message to cv::Mat.
     cv_bridge::CvImageConstPtr cv_ptr;
     try
     {
-        cv_ptr = cv_bridge::toCvShare(msg);
+        cv_ptr = cv_bridge::toCvCopy(msg,image_transport::ImageEncodings::BGR8 );
     }
     catch (cv_bridge::Exception& e)
     {
