@@ -1,0 +1,101 @@
+%YAML:1.0
+
+# Camera calibration and distortion parameters (OpenCV)
+Camera.type: "PinHole"
+
+Camera.fx: 924.873180
+Camera.fy: 923.504522
+Camera.cx: 486.997346
+Camera.cy: 364.308527
+
+#   data: [ 924.873180, 0.000000  , 486.997346, 
+#           0.000000  , 923.504522, 364.308527, 
+#           0.000000  , 0.000000  , 1.000000  ]
+
+          # [ fx        0           cx]
+          # [ 0         fy          cy]
+          # [ 0         0           1 ]
+
+
+Camera.k1: -0.034749
+Camera.k2: 0.071514
+Camera.p1: 0.000363
+Camera.p2: 0.003131
+Camera.k3: 0.0
+
+# data: [-0.034749, 0.071514, 0.000363, 0.003131, 0.000000]
+
+
+Camera.width: 960
+Camera.height: 720
+
+# Camera frames per second
+# Camera.fps: 60.0
+Camera.fps: 30.0
+
+# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+Camera.RGB: 1
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters
+#--------------------------------------------------------------------------------------------
+
+# ORB Extractor: Number of features per image
+ORBextractor.nFeatures: 10000
+
+# ORB Extractor: Scale factor between levels in the scale pyramid
+ORBextractor.scaleFactor: 1.15
+
+# ORB Extractor: Number of levels in the scale pyramid
+ORBextractor.nLevels: 10
+
+# ORB Extractor: Fast threshold
+# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
+# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
+# You can lower these values if your images have low contrast
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 14
+
+
+# image_width: 960
+#hanged the resolution of the cameras so as to have the biggest resolution they can. The results seem similar for the camera matrix, but the distorti 
+#image_height: 720
+# camera_name: narrow_stereo
+# camera_matrix:
+#   rows: 3
+#   cols: 3
+#   data: [ 924.873180, 0.000000  , 486.997346, 
+#           0.000000  , 923.504522, 364.308527, 
+#           0.000000  , 0.000000  , 1.000000  ]
+
+          # [ fx        0           cx]
+          # [ 0         fy          cy]
+          # [ 0         0           1 ]
+# distortion_model: plumb_bob
+# distortion_coefficients:
+#   rows: 1
+#   cols: 5
+#   data: [-0.034749, 0.071514, 0.000363, 0.003131, 0.000000]
+# rectification_matrix:
+#   rows: 3
+#   cols: 3
+#   data: [ 1.000000, 0.000000, 0.000000, 
+#           0.000000, 1.000000, 0.000000, 
+#           0.000000, 0.000000, 1.000000]
+# projection_matrix:
+#   rows: 3
+#   cols: 4
+#   data: [   921.967102, 0.000000  , 489.492281, 0.000000, 
+#             0.000000  , 921.018890, 364.508536, 0.000000, 
+#             0.000000  , 0.000000  , 1.000000  , 0.000000]
+
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1
+Viewer.GraphLineWidth: 0.9
+Viewer.PointSize:2
+Viewer.CameraSize: 0.08
+Viewer.CameraLineWidth: 3
+Viewer.ViewpointX: 0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: -1.8
+Viewer.ViewpointF: 500
