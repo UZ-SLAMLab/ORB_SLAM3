@@ -20,7 +20,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/CompressedImage.h>
 #include <cv_bridge/cv_bridge.h>
-#include <image_transport/image_encoding.h>
+#include <sensor_msgs/image_encodings.h>
 #include <opencv2/core.hpp>
 #include "../../../include/System.h"
 
@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     ImageGrabber igb(&SLAM);
 
     ros::NodeHandle nodeHandler;
-    ros::Subscriber sub = nodeHandler.subscribe("/camera/image_raw/compressed", 1, &ImageGrabber::GrabImage, &igb);
+    ros::Subscriber sub = nodeHandler.subscribe("/tello/image_raw/compressed", 1, &ImageGrabber::GrabImage, &igb);
 
     ros::spin();
 
@@ -75,7 +75,7 @@ void ImageGrabber::GrabImage(const sensor_msgs::CompressedImageConstPtr& msg)
     cv_bridge::CvImageConstPtr cv_ptr;
     try
     {
-        cv_ptr = cv_bridge::toCvCopy(msg,image_transport::ImageEncodings::BGR8 );
+        cv_ptr = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::BGR8 );
     }
     catch (cv_bridge::Exception& e)
     {
