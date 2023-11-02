@@ -172,6 +172,14 @@ add_executable(stereo_euroc
         Examples/Stereo/stereo_euroc.cc)
 target_link_libraries(stereo_euroc ${PROJECT_NAME})
 
+add_executable(stereo_realsense_D455
+        Examples/Stereo/stereo_realsense_D455.cc)
+target_link_libraries(stereo_realsense_D455 ${PROJECT_NAME})
+
+add_executable(stereo_zed2i
+        Examples/Stereo/stereo_zed2i.cc)
+target_link_libraries(stereo_zed2i ${PROJECT_NAME})
+
 add_executable(stereo_tum_vi
         Examples/Stereo/stereo_tum_vi.cc)
 target_link_libraries(stereo_tum_vi ${PROJECT_NAME})
@@ -316,6 +324,7 @@ if(realsense2_FOUND)
     add_executable(stereo_realsense_D435i_old
             Examples_old/Stereo/stereo_realsense_D435i.cc)
     target_link_libraries(stereo_realsense_D435i_old ${PROJECT_NAME})
+
 endif()
 
 #Monocular examples

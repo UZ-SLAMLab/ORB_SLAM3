@@ -71,7 +71,7 @@ lib/
 
 cmake_modules/
 cmake-build-debug/
-
+cmake-*
 ExecMean.txt
 SessionInfo.txt
 Results_Euroc.txt

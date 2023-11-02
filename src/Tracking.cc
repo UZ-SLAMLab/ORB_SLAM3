@@ -2724,12 +2724,12 @@ bool Tracking::TrackReferenceKeyFrame()
 
     // We perform first an ORB matching with the reference keyframe
     // If enough matches are found we setup a PnP solver
-    ORBmatcher matcher(0.7,true);
+    ORBmatcher matcher(0.7, true);
     vector<MapPoint*> vpMapPointMatches;
 
-    int nmatches = matcher.SearchByBoW(mpReferenceKF,mCurrentFrame,vpMapPointMatches);
+    int nmatches = matcher.SearchByBoW(mpReferenceKF, mCurrentFrame, vpMapPointMatches);
 
-    if(nmatches<15)
+    if(nmatches < 15)
     {
         cout << "TRACK_REF_KF: Less than 15 matches!!\n";
         return false;
@@ -2810,7 +2810,7 @@ void Tracking::UpdateLastFrame()
     // We insert all close points (depth<mThDepth)
     // If less than 100 close points, we insert the 100 closest ones.
     int nPoints = 0;
-    for(size_t j=0; j<vDepthIdx.size();j++)
+    for (size_t j=0; j<vDepthIdx.size();j++)
     {
         int i = vDepthIdx[j].second;
 
