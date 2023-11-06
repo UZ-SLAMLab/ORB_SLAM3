@@ -29,7 +29,7 @@
 
 #include "../core/base_vertex.h"
 
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Geometry>
 #include <iostream>
 
 namespace g2o {

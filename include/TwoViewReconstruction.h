@@ -20,7 +20,7 @@
 #define TwoViewReconstruction_H
 
 #include <opencv2/opencv.hpp>
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include <unordered_set>
 
 #include <sophus/se3.hpp>

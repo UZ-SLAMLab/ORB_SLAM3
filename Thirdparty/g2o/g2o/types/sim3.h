@@ -28,7 +28,7 @@
 #define G2O_SIM_3
 
 #include "se3_ops.h"
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Geometry>
 
 namespace g2o
 {

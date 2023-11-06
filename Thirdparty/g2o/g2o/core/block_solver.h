@@ -26,7 +26,7 @@
 
 #ifndef G2O_BLOCK_SOLVER_H
 #define G2O_BLOCK_SOLVER_H
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include "solver.h"
 #include "linear_solver.h"
 #include "sparse_block_matrix.h"

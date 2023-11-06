@@ -10,7 +10,7 @@
 #include <random>
 #include <type_traits>
 
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 #if !defined(SOPHUS_DISABLE_ENSURES)
 #include "formatstring.hpp"

@@ -27,7 +27,7 @@
 #ifndef G2O_CORE_MATRIX_OPERATIONS_H
 #define G2O_CORE_MATRIX_OPERATIONS_H
 
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 namespace g2o {
   namespace internal {

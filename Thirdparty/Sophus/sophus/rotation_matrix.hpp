@@ -4,8 +4,8 @@
 #ifndef SOPHUS_ROTATION_MATRIX_HPP
 #define SOPHUS_ROTATION_MATRIX_HPP
 
-#include <Eigen/Dense>
-#include <Eigen/SVD>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/SVD>
 
 #include "types.hpp"
 

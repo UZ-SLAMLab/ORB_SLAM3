@@ -31,10 +31,10 @@
 #include "creators.h"
 #include "../stuff/macros.h"
 
-#include <Eigen/Core>
-#include <Eigen/Dense>
-#include <Eigen/Cholesky>
-#include <Eigen/StdVector>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Cholesky>
+#include <eigen3/Eigen/StdVector>
 #include <stack>
 
 namespace g2o {

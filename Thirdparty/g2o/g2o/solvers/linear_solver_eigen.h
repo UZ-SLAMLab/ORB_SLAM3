@@ -27,8 +27,8 @@
 #ifndef G2O_LINEAR_SOLVER_EIGEN_H
 #define G2O_LINEAR_SOLVER_EIGEN_H
 
-#include <Eigen/Sparse>
-#include <Eigen/SparseCholesky>
+#include <eigen3/Eigen/Sparse>
+#include <eigen3/Eigen/SparseCholesky>
 
 #include "../core/linear_solver.h"
 #include "../core/batch_stats.h"

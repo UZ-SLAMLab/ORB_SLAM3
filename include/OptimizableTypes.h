@@ -23,7 +23,7 @@
 #include <Thirdparty/g2o/g2o/types/types_six_dof_expmap.h>
 #include <Thirdparty/g2o/g2o/types/sim3.h>
 
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Geometry>
 #include <include/CameraModels/GeometricCamera.h>
 
 

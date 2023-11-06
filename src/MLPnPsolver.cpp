@@ -48,7 +48,7 @@
 
 #include "MLPnPsolver.h"
 
-#include <Eigen/Sparse>
+#include <eigen3/Eigen/Sparse>
 
 
 namespace ORB_SLAM3 {

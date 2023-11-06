@@ -4,7 +4,7 @@
 #ifndef SOPHUS_INTERPOLATE_HPP
 #define SOPHUS_INTERPOLATE_HPP
 
-#include <Eigen/Eigenvalues>
+#include <eigen3/Eigen/Eigenvalues>
 
 #include "interpolate_details.hpp"
 

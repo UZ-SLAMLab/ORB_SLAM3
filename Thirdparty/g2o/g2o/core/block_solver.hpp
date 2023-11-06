@@ -25,7 +25,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "sparse_optimizer.h"
-#include <Eigen/LU>
+#include <eigen3/Eigen/LU>
 #include <fstream>
 #include <iomanip>
 

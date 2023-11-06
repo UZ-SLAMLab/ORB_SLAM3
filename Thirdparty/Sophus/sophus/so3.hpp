@@ -10,9 +10,9 @@
 
 // Include only the selective set of Eigen headers that we need.
 // This helps when using Sophus with unusual compilers, like nvcc.
-#include <Eigen/src/Geometry/OrthoMethods.h>
-#include <Eigen/src/Geometry/Quaternion.h>
-#include <Eigen/src/Geometry/RotationBase.h>
+#include <eigen3/Eigen/src/Geometry/OrthoMethods.h>
+#include <eigen3/Eigen/src/Geometry/Quaternion.h>
+#include <eigen3/Eigen/src/Geometry/RotationBase.h>
 
 namespace Sophus {
 template <class Scalar_, int Options = 0>

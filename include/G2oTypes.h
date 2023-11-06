@@ -27,9 +27,9 @@
 
 #include<opencv2/core/core.hpp>
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
+#include <eigen3/Eigen/Dense>
 
 #include <Frame.h>
 #include <KeyFrame.h>

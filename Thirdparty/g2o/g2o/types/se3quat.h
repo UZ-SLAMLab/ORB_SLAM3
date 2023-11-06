@@ -29,8 +29,8 @@
 
 #include "se3_ops.h"
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 
 namespace g2o {
   using namespace Eigen;

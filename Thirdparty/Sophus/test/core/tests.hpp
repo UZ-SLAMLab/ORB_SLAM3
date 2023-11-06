@@ -3,7 +3,7 @@
 
 #include <array>
 
-#include <Eigen/StdVector>
+#include <eigen3/Eigen/StdVector>
 #include <unsupported/Eigen/MatrixFunctions>
 
 #include <sophus/average.hpp>

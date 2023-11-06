@@ -34,7 +34,7 @@
 
 #include <sophus/se3.hpp>
 
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Geometry>
 
 #include "Converter.h"
 #include "GeometricTools.h"

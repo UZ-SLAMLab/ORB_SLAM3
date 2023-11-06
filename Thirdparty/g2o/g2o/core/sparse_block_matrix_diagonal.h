@@ -28,8 +28,8 @@
 #define G2O_SPARSE_BLOCK_MATRIX_DIAGONAL_H
 
 #include <vector>
-#include <Eigen/Core>
-#include <Eigen/StdVector>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/StdVector>
 
 #include "../../config.h"
 #include "matrix_operations.h"

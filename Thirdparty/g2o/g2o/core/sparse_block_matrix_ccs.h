@@ -29,7 +29,7 @@
 
 #include <vector>
 #include <cassert>
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 #include "../../config.h"
 #include "matrix_operations.h"

@@ -27,8 +27,8 @@
 #ifndef G2O_EIGEN_TYPES_H
 #define G2O_EIGEN_TYPES_H
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 
 namespace g2o {
 

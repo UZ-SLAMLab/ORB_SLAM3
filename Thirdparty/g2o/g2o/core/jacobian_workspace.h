@@ -27,8 +27,8 @@
 #ifndef JACOBIAN_WORKSPACE_H
 #define JACOBIAN_WORKSPACE_H
 
-#include <Eigen/Core>
-#include <Eigen/StdVector>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/StdVector>
 
 #include <vector>
 #include <cassert>

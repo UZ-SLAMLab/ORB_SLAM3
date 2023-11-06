@@ -22,7 +22,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <sophus/se3.hpp>
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 namespace ORB_SLAM3
 {
