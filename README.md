@@ -120,7 +120,14 @@ Directory `Examples` contains several demo programs and calibration files to run
 
 3. Execute the following script to process all the sequences with all sensor configurations:
 ```
-./euroc_examples
+chmod +x ./Examples/Monocular/mono_euroc.cc
+chmod +x ./Examples/Stereo/stereo_euroc.cc
+chmod +x ./Examples/Monocular-Inertial/mono_inertial_euroc.cc
+chmod +x ./Examples/Stereo-Inertial/stereo_inertial_euroc.cc
+chmod +x ./Examples/Monocular/mono_euroc.cc
+chmod +x ./Examples/Stereo/stereo_euroc.cc
+chmod +x ./Examples/Monocular-Inertial/mono_inertial_euroc.cc
+./Examples/euroc_examples.sh
 ```
 
 ## Evaluation
