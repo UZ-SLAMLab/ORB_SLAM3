@@ -42,6 +42,11 @@ import sys
 import numpy
 import associate
 import pandas
+import matplotlib
+from mpl_toolkits.mplot3d import Axes3D
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import os
 
 def align(model,data):
     """Align two trajectories using the method of Horn (closed-form).
@@ -104,19 +109,22 @@ def plot_traj(ax,stamps,traj,style,color,label):
     interval = numpy.median([s-t for s,t in zip(stamps[1:],stamps[:-1])])
     x = []
     y = []
+    z = []
     last = stamps[0]
     for i in range(len(stamps)):
         if stamps[i]-last < 2*interval:
             x.append(traj[i][0])
             y.append(traj[i][1])
+            z.append(traj[i][2])
         elif len(x)>0:
-            ax.plot(x,y,style,color=color,label=label)
+            ax.plot(x,y,z,style,color=color,label=label)
             label=""
             x=[]
             y=[]
+            z=[]
         last= stamps[i]
     if len(x)>0:
-        ax.plot(x,y,style,color=color,label=label)
+        ax.plot(x,y,z,style,color=color,label=label)
             
 
 if __name__=="__main__":
@@ -139,7 +147,7 @@ if __name__=="__main__":
     # Dataset path
     dataset_path = './Datasets/euroc/MachineHall/'
     # Algorithms and subdatasets
-    algorithms = ['monocular']
+    algorithms = ['monocular', 'stereo']
     sub_datasets = ['MH01']
     # Go through all algoirhtms and datasets
     for algorithm in algorithms:
@@ -149,11 +157,16 @@ if __name__=="__main__":
             evaluation_results_path = dataset_path + 'ORBSLAM3_Run/' + algorithm + '/' + sub_dataset
             first_file = groundtruth_path
             second_file = orb_results_path
+            # create the output directory if it doesn't exist
+            if not os.path.exists(evaluation_results_path):
+                os.makedirs(evaluation_results_path)
+                print('new directory is created for output')
             # save evaluation output
-            poses_associations_output_file = evaluation_results_path + '_poses_associations.txt'
-            time_associations_output_file = evaluation_results_path + '_time_associations.txt'
-            estimation_error_summary_output_file = evaluation_results_path + '_evaluation_error.txt'
-            plot_results_output_file = evaluation_results_path + '_results_output.png'
+            poses_associations_output_file = evaluation_results_path + '/poses_associations.txt'
+            time_associations_output_file = evaluation_results_path + '/time_associations.txt'
+            estimation_error_summary_output_file = evaluation_results_path + '/evaluation_error.txt'
+            plot_results_output_file = evaluation_results_path + '/trajectory_output.png'
+            plot_error_hist_output_file = evaluation_results_path + '/error_histogram.png'
 
             first_list = associate.read_file_list(first_file, False)
             second_list = associate.read_file_list(second_file, False)
@@ -206,23 +219,21 @@ if __name__=="__main__":
                 file.close()
 
             if is_plot:
-                import matplotlib
-                matplotlib.use('Agg')
-                import matplotlib.pyplot as plt
-                import matplotlib.pylab as pylab
-                from matplotlib.patches import Ellipse
                 fig = plt.figure()
-                ax = fig.add_subplot(111)
+                ax = fig.add_subplot(projection='3d')
                 plot_traj(ax,first_stamps,first_xyz_full.transpose().A,'-',"black","ground truth")
-                plot_traj(ax,second_stamps,second_xyz_full_aligned.transpose().A,'-',"blue","estimated")
-                label="difference"
-                for (a,b),(x1,y1,z1),(x2,y2,z2) in zip(matches,first_xyz.transpose().A,second_xyz_aligned.transpose().A):
-                    ax.plot([x1,x2],[y1,y2],'-',color="red",label=label, alpha=0.25)
-                    label=""
-                    
+                plot_traj(ax,second_stamps,second_xyz_full_aligned.transpose().A,'-',"blue","estimated")                    
                 ax.legend()
-                    
                 ax.set_xlabel('x [m]')
                 ax.set_ylabel('y [m]')
-                plt.axis('equal')
                 plt.savefig(plot_results_output_file,format="png")
+                position_error=first_xyz-second_xyz_aligned
+                plt.clf()
+                fig, ax = plt.subplots(3)
+                fig.suptitle('Error Histograms')
+                ax[0].hist(numpy.array(position_error[0,:]).flatten(), label='error in x', bins=100, color='blue')
+                ax[1].hist(numpy.array(position_error[1,:]).flatten(), label='error in y', bins=100, color='green')
+                ax[2].hist(numpy.array(position_error[2,:]).flatten(), label='error in z', bins=100, color='red') 
+                ax[2].set_xlabel('error [m]')
+                fig.legend()
+                plt.savefig(plot_error_hist_output_file,format="png")
