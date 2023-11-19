@@ -85,10 +85,10 @@ def align(model,data):
     s = float(dots/norms)    
     
     transGT = data.mean(1) - s*rot * model.mean(1)
-    trans = data.mean(1) - rot * model.mean(1)
+    trans = data.mean(1) - s * rot * model.mean(1)
 
     model_alignedGT = s*rot * model + transGT
-    model_aligned = rot * model + trans
+    model_aligned = s * rot * model + trans
 
     alignment_errorGT = model_alignedGT - data
     alignment_error = model_aligned - data
