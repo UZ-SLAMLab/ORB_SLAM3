@@ -147,13 +147,13 @@ if __name__=="__main__":
     # Dataset path
     dataset_path = './Datasets/euroc/MachineHall/'
     # Algorithms and subdatasets
-    algorithms = ['monocular', 'stereo']
-    sub_datasets = ['MH01']
+    algorithms = ['monocular', 'stereo', 'monocular-inertial', 'stereo-inertial']
+    sub_datasets = ['MH01_to_MH05']
     # Go through all algoirhtms and datasets
     for algorithm in algorithms:
         for sub_dataset in sub_datasets:
             groundtruth_path = dataset_path + sub_dataset +'/mav0/state_groundtruth_estimate0/data.csv'
-            orb_results_path = dataset_path + 'ORBSLAM3_Run/' + algorithm + '/' + sub_dataset + '_frames.txt'
+            orb_results_path = dataset_path + 'ORBSLAM3_Run/' + algorithm + '/' + sub_dataset + '/results_frames.txt'
             evaluation_results_path = dataset_path + 'ORBSLAM3_Run/' + algorithm + '/' + sub_dataset
             first_file = groundtruth_path
             second_file = orb_results_path
