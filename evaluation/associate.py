@@ -102,6 +102,24 @@ def associate(first_list, second_list,offset,max_difference):
     matches.sort()
     return matches
 
+def associate2(first_time_list, second_time_list, offset, max_difference):
+    """
+    Associate two timestamp by finding the closest element in the second list to each element in the first list given some restirction max_difference
+
+    Output:
+    matches -- list of matched tuples ((stamp1,data1),(stamp2,data2))
+    
+    """
+    first_time_list_numpy = numpy.array(first_time_list)
+    second_time_list_numpy = numpy.array(second_time_list)
+    match_first_indicies = numpy.array(list(range(len(first_time_list))))
+    match_second_indicies = numpy.array([numpy.argmin(abs(a - (second_time_list_numpy + offset))) for a in first_time_list])
+    match_time_diff = numpy.abs(first_time_list_numpy[match_first_indicies] - (second_time_list_numpy[match_second_indicies] + offset))
+    match_time_first_list = list(first_time_list_numpy[match_first_indicies[numpy.where(match_time_diff < max_difference)[0]]])
+    match_time_second_list = list(second_time_list_numpy[match_second_indicies[numpy.where(match_time_diff < max_difference)[0]]])
+
+    return match_time_first_list, match_time_second_list
+
 if __name__ == '__main__':
     
     # parse command line
