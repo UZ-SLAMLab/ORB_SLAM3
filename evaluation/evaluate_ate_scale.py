@@ -147,8 +147,8 @@ if __name__=="__main__":
     # Dataset path
     dataset_path = './Datasets/euroc/MachineHall/'
     # Algorithms and subdatasets
-    algorithms = ['monocular', 'stereo', 'monocular-inertial', 'stereo-inertial']
-    sub_datasets = ['MH01_to_MH05']
+    algorithms = ['monocular', 'stereo']
+    sub_datasets = ['MH01', 'MH02', 'MH03', 'MH04', 'MH05', 'MH01']
     # Go through all algoirhtms and datasets
     for algorithm in algorithms:
         for sub_dataset in sub_datasets:
@@ -162,11 +162,11 @@ if __name__=="__main__":
                 os.makedirs(evaluation_results_path)
                 print('new directory is created for output')
             # save evaluation output
-            poses_associations_output_file = evaluation_results_path + '/poses_associations.txt'
-            time_associations_output_file = evaluation_results_path + '/time_associations.txt'
-            estimation_error_summary_output_file = evaluation_results_path + '/evaluation_error.txt'
-            plot_results_output_file = evaluation_results_path + '/trajectory_output.png'
-            plot_error_hist_output_file = evaluation_results_path + '/error_histogram.png'
+            poses_associations_output_file = evaluation_results_path + '/poses_associations_frames.txt'
+            time_associations_output_file = evaluation_results_path + '/time_associations_frames.txt'
+            estimation_error_summary_output_file = evaluation_results_path + '/evaluation_error_frames.txt'
+            plot_results_output_file = evaluation_results_path + '/trajectory_output_frames.png'
+            plot_error_hist_output_file = evaluation_results_path + '/error_histogram_frames.png'
 
             first_list = associate.read_file_list(first_file, False)
             second_list = associate.read_file_list(second_file, False)
@@ -227,6 +227,7 @@ if __name__=="__main__":
                 ax.set_xlabel('x [m]')
                 ax.set_ylabel('y [m]')
                 plt.savefig(plot_results_output_file,format="png")
+                plt.close()
                 position_error=first_xyz-second_xyz_aligned
                 plt.clf()
                 fig, ax = plt.subplots(3)
@@ -237,3 +238,4 @@ if __name__=="__main__":
                 ax[2].set_xlabel('error [m]')
                 fig.legend()
                 plt.savefig(plot_error_hist_output_file,format="png")
+                plt.close()
