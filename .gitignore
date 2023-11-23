@@ -65,6 +65,7 @@ Thirdparty/g2o/build/
 Thirdparty/g2o/config.h
 Thirdparty/g2o/lib/
 Vocabulary/ORBvoc.txt
+Examples/ROS/ORB_SLAM3/ORBvoc.txt
 build/
 
 lib/
@@ -97,3 +98,4 @@ borrar/*
 */.vscode/
 
 */.vs
+.debug/
