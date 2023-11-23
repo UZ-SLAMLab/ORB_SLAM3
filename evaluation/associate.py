@@ -66,9 +66,9 @@ def read_file_list(filename,remove_bounds):
     lines = data.replace(","," ").replace("\t"," ").split("\n")
     if remove_bounds:
         lines = lines[100:-100]
-    list = [[v.strip() for v in line.split(" ") if v.strip()!=""] for line in lines if len(line)>0 and line[0]!="#"]
-    list = [(float(l[0]),l[1:]) for l in list if len(l)>1]
-    return dict(list)
+    lines_list = [[v.strip() for v in line.split(" ") if v.strip()!=""] for line in lines if len(line)>0 and line[0]!="#"]
+    lines_list = [(float(l[0]),l[1:]) for l in lines_list if len(l)>1]
+    return dict(lines_list)
 
 def associate(first_list, second_list,offset,max_difference):
     """
@@ -85,8 +85,8 @@ def associate(first_list, second_list,offset,max_difference):
     matches -- list of matched tuples ((stamp1,data1),(stamp2,data2))
     
     """
-    first_keys = first_list.keys()
-    second_keys = second_list.keys()
+    first_keys = list(first_list.keys())
+    second_keys = list(second_list.keys())
     potential_matches = [(abs(a - (b + offset)), a, b) 
                          for a in first_keys 
                          for b in second_keys 
@@ -101,6 +101,24 @@ def associate(first_list, second_list,offset,max_difference):
     
     matches.sort()
     return matches
+
+def associate2(first_time_list, second_time_list, offset, max_difference):
+    """
+    Associate two timestamp by finding the closest element in the second list to each element in the first list given some restirction max_difference
+
+    Output:
+    matches -- list of matched tuples ((stamp1,data1),(stamp2,data2))
+    
+    """
+    first_time_list_numpy = numpy.array(first_time_list)
+    second_time_list_numpy = numpy.array(second_time_list)
+    match_first_indicies = numpy.array(list(range(len(first_time_list))))
+    match_second_indicies = numpy.array([numpy.argmin(abs(a - (second_time_list_numpy + offset))) for a in first_time_list])
+    match_time_diff = numpy.abs(first_time_list_numpy[match_first_indicies] - (second_time_list_numpy[match_second_indicies] + offset))
+    match_time_first_list = list(first_time_list_numpy[match_first_indicies[numpy.where(match_time_diff < max_difference)[0]]])
+    match_time_second_list = list(second_time_list_numpy[match_second_indicies[numpy.where(match_time_diff < max_difference)[0]]])
+
+    return match_time_first_list, match_time_second_list
 
 if __name__ == '__main__':
     

@@ -234,8 +234,8 @@ int main(int argc, char *argv[])
     // Save camera trajectory
     if (bFileName)
     {
-        const string kf_file =  "kf_" + string(argv[argc-1]) + ".txt";
-        const string f_file =  "f_" + string(argv[argc-1]) + ".txt";
+        const string kf_file =  string(argv[argc-1]) + "_keyframes.txt";
+        const string f_file =  string(argv[argc-1]) + "_frames.txt";
         SLAM.SaveTrajectoryEuRoC(f_file);
         SLAM.SaveKeyFrameTrajectoryEuRoC(kf_file);
     }
