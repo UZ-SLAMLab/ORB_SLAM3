@@ -99,3 +99,6 @@ borrar/*
 
 */.vs
 .debug/
+
+install/
+log/

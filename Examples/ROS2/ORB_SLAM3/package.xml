@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>orb_slam3_ros2</name>
+  <version>1.0.0</version>
+  <description>ROS2 wrapper for ORB_SLAM3 library</description>
+  <maintainer email="dxie33@uwo.ca">Daniel Xie</maintainer>
+  <license>MIT</license>
+  <author>Daniel Xie</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>Pangolin</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
