@@ -1,9 +1,13 @@
 # ORB-SLAM3
 
+
+
+## Acknowledgements
+
 ### V1.0, December 22th, 2021
 **Authors:** Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/).
 
-The [Changelog](https://github.com/UZ-SLAMLab/ORB_SLAM3/blob/master/Changelog.md) describes the features of each version.
+The [Changelog](https://github.com/Western-Autonomous-Racing/ORB_SLAM3/blob/master/Changelog.md) describes the features of each version.
 
 ORB-SLAM3 is the first real-time SLAM library able to perform **Visual, Visual-Inertial and Multi-Map SLAM** with **monocular, stereo and RGB-D** cameras, using **pin-hole and fisheye** lens models. In all sensor configurations, ORB-SLAM3 is as robust as the best systems available in the literature, and significantly more accurate. 
 
@@ -13,6 +17,10 @@ This software is based on [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) deve
 
 <a href="https://youtu.be/HyLNq-98LRo" target="_blank"><img src="https://img.youtube.com/vi/HyLNq-98LRo/0.jpg" 
 alt="ORB-SLAM3" width="240" height="180" border="10" /></a>
+
+### Related Repositories
+
+[ROS2] Haebeom Jung - **[ORBSLAM3 ROS2](https://github.com/zang09/ORB_SLAM3_ROS2)**
 
 ### Related Publications:
 
@@ -53,14 +61,23 @@ If you use ORB-SLAM3 in an academic work, please cite:
 # 2. Prerequisites
 We have tested the library in **Ubuntu 16.04** and **18.04**, but it should be easy to compile in other platforms. A powerful computer (e.g. i7) will ensure real-time performance and provide more stable and accurate results.
 
+Test with **Ubuntu 20.04** for x86-64.
+
 ## C++14 or C++11 Compiler
-We use the new thread and chrono functionalities of C++11.
+Using C++14 compiler
 
 ## Pangolin
 We use [Pangolin](https://github.com/stevenlovegrove/Pangolin) for visualization and user interface. Dowload and install instructions can be found at: https://github.com/stevenlovegrove/Pangolin.
 
 ## OpenCV
-We use [OpenCV](http://opencv.org) to manipulate images and features. Dowload and install instructions can be found at: http://opencv.org. **Required at leat 3.0. Tested with OpenCV 3.2.0 and 4.4.0**.
+We use [OpenCV](http://opencv.org) to manipulate images and features. Dowload and install instructions can be found at: http://opencv.org. **Required at leat 3.0. Tested with OpenCV 3.2.0, 4.2.0, 4.4.0 and 4.8.0**.
+
+### **Note: Very Important If Your Using ROS2 with ORBSLAM3
+
+Foxy compiles opencv against OpenCV 4.2. If you have a conflicting version of OpenCV here are a couple of options.
+
+- **Remove conflicting version of OpenCV.** If you have a built version of OpenCV this can annoying and tedious to do.
+- **Rebuild cv_bridge and components for specific OpenCV version** See 
 
 ## Eigen3
 Required by g2o (see below). Download and install instructions can be found at: http://eigen.tuxfamily.org. **Required at least 3.1.0**.
@@ -69,25 +86,38 @@ Required by g2o (see below). Download and install instructions can be found at: 
 We use modified versions of the [DBoW2](https://github.com/dorian3d/DBoW2) library to perform place recognition and [g2o](https://github.com/RainerKuemmerle/g2o) library to perform non-linear optimizations. Both modified libraries (which are BSD) are included in the *Thirdparty* folder.
 
 ## Python
-Required to calculate the alignment of the trajectory with the ground truth. **Required Numpy module**.
+Required to calculate the alignment of the trajectory with the ground truth. Tested with Python3.8, Python3. **Required Numpy module**. Virtual environment recommended.
 
-* (win) http://www.python.org/downloads/windows
-* (deb) `sudo apt install libpython2.7-dev`
-* (mac) preinstalled with osx
+## ROS 
 
-## ROS (optional)
+This library has modified examples for ROS and ROS2.
 
-We provide some examples to process input of a monocular, monocular-inertial, stereo, stereo-inertial or RGB-D camera using ROS. Building these examples is optional. These have been tested with ROS Melodic under Ubuntu 18.04.
+### ROS1
+
+Tested with Melodic, Noetic.
+
+### ROS 2 
+
+Tested with Foxy.
+
+If you don't have OpenCV 4.2 installed and wish to rebuild cv_bridge please see the [following instructions](https://github.com/ros-perception/vision_opencv/tree/rolling/cv_bridge). Use Python 3.8 and ensure that the correct OpenCV version is targetted.
+
+In `CMakeLists.txt`, add to lines 61 and 62,
+
+```cmake
+MESSAGE("OPENCV VERSION:")
+MESSAGE(${OpenCV_VERSION})
+```
 
 # 3. Building ORB-SLAM3 library and examples
 
 Clone the repository:
-```
-git clone https://github.com/UZ-SLAMLab/ORB_SLAM3.git ORB_SLAM3
+```bash
+git clone https://github.com/Western-Autonomous-Racing/ORB_SLAM3.git ORB_SLAM3
 ```
 
 We provide a script `build.sh` to build the *Thirdparty* libraries and *ORB-SLAM3*. Please make sure you have installed all required dependencies (see section 2). Execute:
-```
+```bash
 cd ORB_SLAM3
 chmod +x build.sh
 ./build.sh
@@ -139,7 +169,7 @@ Execute the following script to process sequences and compute the RMS ATE:
 2. Open the script "tum_vi_examples.sh" in the root of the project. Change **pathDatasetTUM_VI** variable to point to the directory where the dataset has been uncompressed. 
 
 3. Execute the following script to process all the sequences with all sensor configurations:
-```
+```bash
 ./tum_vi_examples
 ```
 
@@ -147,77 +177,82 @@ Execute the following script to process sequences and compute the RMS ATE:
 In TUM-VI ground truth is only available in the room where all sequences start and end. As a result the error measures the drift at the end of the sequence. 
 
 Execute the following script to process sequences and compute the RMS ATE:
-```
+```bash
 ./tum_vi_eval_examples
 ```
 
 # 7. ROS Examples
 
+## ROS
+
+Tested with Melodic, Noetic.
+
 ### Building the nodes for mono, mono-inertial, stereo, stereo-inertial and RGB-D
 Tested with ROS Melodic and ubuntu 18.04.
 
 1. Add the path including *Examples/ROS/ORB_SLAM3* to the ROS_PACKAGE_PATH environment variable. Open .bashrc file:
-  ```
+  ```bash
   gedit ~/.bashrc
   ```
 and add at the end the following line. Replace PATH by the folder where you cloned ORB_SLAM3:
 
-  ```
-  export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:PATH/ORB_SLAM3/Examples/ROS
+  ```bash
+  export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:<PATH>/ORB_SLAM3/Examples/ROS
   ```
   
 2. Execute `build_ros.sh` script:
 
-  ```
+  ```bash
   chmod +x build_ros.sh
   ./build_ros.sh
   ```
-  
+Make sure to run `roscore` prior to starting an example.
+
 ### Running Monocular Node
 For a monocular input from topic `/camera/image_raw` run node ORB_SLAM3/Mono. You will need to provide the vocabulary file and a settings file. See the monocular examples above.
 
-  ```
+  ```bash
   rosrun ORB_SLAM3 Mono PATH_TO_VOCABULARY PATH_TO_SETTINGS_FILE
   ```
 
 ### Running Monocular-Inertial Node
 For a monocular input from topic `/camera/image_raw` and an inertial input from topic `/imu`, run node ORB_SLAM3/Mono_Inertial. Setting the optional third argument to true will apply CLAHE equalization to images (Mainly for TUM-VI dataset).
 
-  ```
+  ```bash
   rosrun ORB_SLAM3 Mono PATH_TO_VOCABULARY PATH_TO_SETTINGS_FILE [EQUALIZATION]	
   ```
 
 ### Running Stereo Node
 For a stereo input from topic `/camera/left/image_raw` and `/camera/right/image_raw` run node ORB_SLAM3/Stereo. You will need to provide the vocabulary file and a settings file. For Pinhole camera model, if you **provide rectification matrices** (see Examples/Stereo/EuRoC.yaml example), the node will recitify the images online, **otherwise images must be pre-rectified**. For FishEye camera model, rectification is not required since system works with original images:
 
-  ```
+  ```bash
   rosrun ORB_SLAM3 Stereo PATH_TO_VOCABULARY PATH_TO_SETTINGS_FILE ONLINE_RECTIFICATION
   ```
 
 ### Running Stereo-Inertial Node
 For a stereo input from topics `/camera/left/image_raw` and `/camera/right/image_raw`, and an inertial input from topic `/imu`, run node ORB_SLAM3/Stereo_Inertial. You will need to provide the vocabulary file and a settings file, including rectification matrices if required in a similar way to Stereo case:
 
-  ```
+  ```bash
   rosrun ORB_SLAM3 Stereo_Inertial PATH_TO_VOCABULARY PATH_TO_SETTINGS_FILE ONLINE_RECTIFICATION [EQUALIZATION]	
   ```
   
 ### Running RGB_D Node
 For an RGB-D input from topics `/camera/rgb/image_raw` and `/camera/depth_registered/image_raw`, run node ORB_SLAM3/RGBD. You will need to provide the vocabulary file and a settings file. See the RGB-D example above.
 
-  ```
+  ```bash
   rosrun ORB_SLAM3 RGBD PATH_TO_VOCABULARY PATH_TO_SETTINGS_FILE
   ```
 
 **Running ROS example:** Download a rosbag (e.g. V1_02_medium.bag) from the EuRoC dataset (http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets). Open 3 tabs on the terminal and run the following command at each tab for a Stereo-Inertial configuration:
-  ```
+  ```bash
   roscore
   ```
   
-  ```
+  ```bash
   rosrun ORB_SLAM3 Stereo_Inertial Vocabulary/ORBvoc.txt Examples/Stereo-Inertial/EuRoC.yaml true
   ```
   
-  ```
+  ```bash
   rosbag play --pause V1_02_medium.bag /cam0/image_raw:=/camera/left/image_raw /cam1/image_raw:=/camera/right/image_raw /imu0:=/imu
   ```
   
@@ -227,6 +262,46 @@ Once ORB-SLAM3 has loaded the vocabulary, press space in the rosbag tab.
   ```
   rosrun rosbag fastrebag.py dataset-room1_512_16.bag dataset-room1_512_16_small_chunks.bag
   ```
+
+## ROS2
+
+### Building ROS2 Examples
+
+```bash
+source /opt/ros/foxy/setup.bash
+chmod +x build_ros.sh
+./build_ros.sh
+```
+
+### Running Mono-Interial
+
+In a new terminal,
+
+```bash
+source Examples/ROS2/ORB_SLAM3/install.bash
+```
+
+If you rebuilt cv_bridge,
+
+```bash
+source /path/to/custom/vision_opencv_ws/install/local_setup.bash
+```
+
+You can also add the above line to `~/.bashrc`.
+
+Then run
+
+```bash
+ros2 run orb_slam3_ros2 mono_inertial Vocabulary/ORBvoc.txt Examples/Monocular-Inertial/EuRoC.yaml equalize
+```
+
+### Replaying ROS db3 files
+
+```
+ros2 bag play path/to/sample.db3 --remap /cam0/image_raw:=/camera/image_raw /imu0:=/imu
+```
+
+See these [utilties](https://github.com/Western-Autonomous-Racing/Utilities) for how to convert ROS1 bags to ROS2 bags.
 
 # 8. Running time analysis
 A flag in `include\Config.h` activates time measurements. It is necessary to uncomment the line `#define REGISTER_TIMES` to obtain the time stats of one execution which is shown at the terminal and stored in a text file(`ExecTimeMean.txt`).

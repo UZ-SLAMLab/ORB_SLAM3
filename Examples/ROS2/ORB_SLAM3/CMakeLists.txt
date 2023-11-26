@@ -33,20 +33,6 @@ set(LIBS
    -lboost_system
 )
 
-# add_executable(mono
-#    src/ros_mono.cc
-# )
-
-# ament_target_dependencies(mono
-#    rclcpp
-#    sensor_msgs
-#    cv_bridge
-# )
-
-# target_link_libraries(mono
-#    ${LIBS}
-# )
-
 add_executable(mono_inertial
    src/mono_inertial_node.cpp
    src/ros_mono_inertial.cc
@@ -64,7 +50,6 @@ target_link_libraries(mono_inertial
 
 
 install(TARGETS
-   # mono
    mono_inertial
    DESTINATION lib/${PROJECT_NAME}
 )
