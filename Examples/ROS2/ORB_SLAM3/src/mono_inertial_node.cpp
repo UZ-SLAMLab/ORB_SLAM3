@@ -36,7 +36,7 @@ MonoInertialNode::~MonoInertialNode()
 
 }
 
-void MonoInertialNode::GrabImu(const sensor_msgs::msg::Imu::SharedPtr imu_msg)
+void MonoInertialNode::GrabImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
   mBufMutex.lock();
   imuBuf.push(imu_msg);
@@ -44,7 +44,7 @@ void MonoInertialNode::GrabImu(const sensor_msgs::msg::Imu::SharedPtr imu_msg)
   return;
 }
 
-void MonoInertialNode::GrabImage(const sensor_msgs::msg::Image::SharedPtr img_msg)
+void MonoInertialNode::GrabImage(const sensor_msgs::msg::Image::ConstSharedPtr img_msg)
 {
   mBufMutex.lock();
   if (!img0Buf.empty())
@@ -53,7 +53,7 @@ void MonoInertialNode::GrabImage(const sensor_msgs::msg::Image::SharedPtr img_ms
   mBufMutex.unlock();
 }
 
-cv::Mat MonoInertialNode::GetImage(const sensor_msgs::msg::Image::SharedPtr img_msg)
+cv::Mat MonoInertialNode::GetImage(const sensor_msgs::msg::Image::ConstSharedPtr img_msg)
 {
   // Copy the ros image message to cv::Mat.
   cv_bridge::CvImageConstPtr cv_ptr;

@@ -23,14 +23,14 @@ public:
     MonoInertialNode(ORB_SLAM3::System* pSLAM, const bool bClahe);
     ~MonoInertialNode();
 
-    void GrabImu(const sensor_msgs::msg::Imu::SharedPtr imu_msg);
-    void GrabImage(const sensor_msgs::msg::Image::SharedPtr img_msg);
+    void GrabImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
+    void GrabImage(const sensor_msgs::msg::Image::ConstSharedPtr img_msg);
     void SyncWithImu();
-    cv::Mat GetImage(const sensor_msgs::msg::Image::SharedPtr img_msg);
+    cv::Mat GetImage(const sensor_msgs::msg::Image::ConstSharedPtr img_msg);
     double GetSeconds(builtin_interfaces::msg::Time stamp);
 
-    queue<sensor_msgs::msg::Imu::SharedPtr> imuBuf;
-    queue<sensor_msgs::msg::Image::SharedPtr> img0Buf;
+    queue<sensor_msgs::msg::Imu::ConstSharedPtr> imuBuf;
+    queue<sensor_msgs::msg::Image::ConstSharedPtr> img0Buf;
 
     std::mutex mBufMutex;
     ORB_SLAM3::System* mpSLAM;
@@ -41,8 +41,8 @@ public:
     
 
 private:
-    rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
-    rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr sub_img0_;
+    rclcpp::Subscription<sensor_msgs::msg::Imu>::ConstSharedPtr sub_imu_;
+    rclcpp::Subscription<sensor_msgs::msg::Image>::ConstSharedPtr sub_img0_;
 };
 
 #endif
