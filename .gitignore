@@ -102,3 +102,4 @@ borrar/*
 
 install/
 log/
+*.code-workspace
