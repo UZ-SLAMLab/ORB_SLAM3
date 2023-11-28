@@ -39,16 +39,19 @@ trajectory and the estimated trajectory.
 """
 
 import sys
-import numpy
+import numpy as np
 import associate
 import pandas
 import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
+from scipy.spatial.transform import Rotation as scipy_rotation
 
-def align(model,data):
+matplotlib.use('TkAgg')
+
+
+def align(model, data):
     """Align two trajectories using the method of Horn (closed-form).
     
     Input:
@@ -61,38 +64,38 @@ def align(model,data):
     trans_error -- translational error per point (1xn)
     """
 
-
-    numpy.set_printoptions(precision=3,suppress=True)
+    np.set_printoptions(precision=3, suppress=True)
     model_zerocentered = model - model.mean(1)
     data_zerocentered = data - data.mean(1)
-    
-    W = numpy.zeros( (3,3) )
-    for column in range(model.shape[1]):
-        W += numpy.outer(model_zerocentered[:,column],data_zerocentered[:,column])
-    U,d,Vh = numpy.linalg.linalg.svd(W.transpose())
-    S = numpy.matrix(numpy.identity( 3 ))
-    if(numpy.linalg.det(U) * numpy.linalg.det(Vh)<0):
-        S[2,2] = -1
-    rot = U*S*Vh
 
-    rotmodel = rot*model_zerocentered
+    W = np.zeros((3, 3))
+    for column in range(model.shape[1]):
+        W += np.outer(model_zerocentered[:, column], data_zerocentered[:, column])
+    U, d, Vh = np.linalg.linalg.svd(W.transpose())
+    S = np.matrix(np.identity(3))
+    if (np.linalg.det(U) * np.linalg.det(Vh) < 0):
+        S[2, 2] = -1
+    rot = U * S * Vh
+
+    rotmodel = rot * model_zerocentered
     dots = 0.0
     norms = 0.0
 
     for column in range(data_zerocentered.shape[1]):
-        dots += numpy.dot(data_zerocentered[:,column].transpose(),rotmodel[:,column])
-        normi = numpy.linalg.norm(model_zerocentered[:,column])
-        norms += normi*normi
+        dots += np.dot(data_zerocentered[:, column].transpose(), rotmodel[:, column])
+        normi = np.linalg.norm(model_zerocentered[:, column])
+        norms += normi * normi
 
-    s = float(dots/norms)
+    s = float(dots / norms)
     trans = data.mean(1) - s * rot * model.mean(1)
     model_aligned = s * rot * model + trans
     alignment_error = model_aligned - data
-    trans_error = numpy.sqrt(numpy.sum(numpy.multiply(alignment_error,alignment_error),0)).A[0]
-        
-    return rot,trans,trans_error, s
+    trans_error = np.sqrt(np.sum(np.multiply(alignment_error, alignment_error), 0)).A[0]
 
-def plot_traj(ax,stamps,traj,style,color,label):
+    return rot, trans, trans_error, s
+
+
+def plot_traj(ax, stamps, traj, style, color, label):
     """
     Plot a trajectory using matplotlib. 
     
@@ -106,30 +109,31 @@ def plot_traj(ax,stamps,traj,style,color,label):
     
     """
     stamps.sort()
-    interval = numpy.median([s-t for s,t in zip(stamps[1:],stamps[:-1])])
+    interval = np.median([s - t for s, t in zip(stamps[1:], stamps[:-1])])
     x = []
     y = []
     z = []
     last = stamps[0]
     for i in range(len(stamps)):
-        if stamps[i]-last < 2*interval:
+        if stamps[i] - last < 2 * interval:
             x.append(traj[i][0])
             y.append(traj[i][1])
             z.append(traj[i][2])
-        elif len(x)>0:
-            ax.plot(x,y,z,style,color=color,label=label)
-            label=""
-            x=[]
-            y=[]
-            z=[]
-        last= stamps[i]
-    if len(x)>0:
-        ax.plot(x,y,z,style,color=color,label=label)
-            
+        elif len(x) > 0:
+            ax.plot(x, y, z, style, color=color, label=label)
+            label = ""
+            x = []
+            y = []
+            z = []
+        last = stamps[i]
+    if len(x) > 0:
+        ax.plot(x, y, z, style, color=color, label=label)
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     # print all evaluation data (otherwise, only the RMSE absolute translational error in meters after alignment will be printed)
     is_verbose = False
+    plot_orientation_error_euler_angles = False
     # save all evaluation data (otherwise, only the RMSE absolute translational error in meters after alignment will be printed)
     is_save_verbose = True
     # save associated first and aligned second trajectory to disk (format: stamp1 x1 y1 z1 stamp2 x2 y2 z2)
@@ -145,16 +149,18 @@ if __name__=="__main__":
     # scaling factor for the second trajectory (default: 1.0)
     scale_factor = 1.0
     # Dataset path
-    dataset_path = './Datasets/euroc/MachineHall/'
+    dataset_path = '/home/justmohsen/Documents/SLAM2/Datasets/UZH/'
+    results_path = 'indoor_forward_3_snapdragon_results/'
+    ground_truth_path = 'indoor_forward_3_snapdragon/'
     # Algorithms and subdatasets
-    algorithms = ['monocular', 'stereo']
-    sub_datasets = ['MH01', 'MH02', 'MH03', 'MH04', 'MH05', 'MH01']
+    algorithms = ['mono']  # , 'stereo']
+    sub_datasets = ['']  # , 'MH02', 'MH03', 'MH04', 'MH05', 'MH01']
     # Go through all algoirhtms and datasets
     for algorithm in algorithms:
         for sub_dataset in sub_datasets:
-            groundtruth_path = dataset_path + sub_dataset +'/mav0/state_groundtruth_estimate0/data.csv'
-            orb_results_path = dataset_path + 'ORBSLAM3_Run/' + algorithm + '/' + sub_dataset + '/results_frames.txt'
-            evaluation_results_path = dataset_path + 'ORBSLAM3_Run/' + algorithm + '/' + sub_dataset
+            groundtruth_path = dataset_path + ground_truth_path + sub_dataset + 'groundtruth.txt'
+            orb_results_path = dataset_path + results_path + algorithm + '_' + sub_dataset + 'frames.txt'
+            evaluation_results_path = dataset_path + results_path + algorithm + '_' + sub_dataset + 'results'
             first_file = groundtruth_path
             second_file = orb_results_path
             # create the output directory if it doesn't exist
@@ -167,75 +173,134 @@ if __name__=="__main__":
             estimation_error_summary_output_file = evaluation_results_path + '/evaluation_error_frames.txt'
             plot_results_output_file = evaluation_results_path + '/trajectory_output_frames.png'
             plot_error_hist_output_file = evaluation_results_path + '/error_histogram_frames.png'
+            plot_error_rot_hist_output_file = evaluation_results_path + '/error_histogram_rotation_frames.png'
 
             first_list = associate.read_file_list(first_file, False)
             second_list = associate.read_file_list(second_file, False)
 
-            matches = associate.associate(first_list, second_list,float(time_offset),float(max_time_difference_ns))    
-            if len(matches)<2:
-                sys.exit("Couldn't find matching timestamp pairs between groundtruth and estimated trajectory! Did you choose the correct sequence?")
-            first_xyz = numpy.matrix([[float(value) for value in first_list[a][0:3]] for a,b in matches]).transpose()
-            second_xyz = numpy.matrix([[float(value)*float(scale_factor) for value in second_list[b][0:3]] for a,b in matches]).transpose()
+            matches = associate.associate(first_list, second_list, float(time_offset), float(max_time_difference_ns))
+            if len(matches) < 2:
+                sys.exit(
+                    "Couldn't find matching timestamp pairs between groundtruth and estimated trajectory! Did you choose the correct sequence?")
+            first_xyz = np.matrix([[float(value) for value in first_list[a][0:3]] for a, b in matches]).transpose()
+            second_xyz = np.matrix(
+                [[float(value) * float(scale_factor) for value in second_list[b][0:3]] for a, b in matches]).transpose()
             dictionary_items = second_list.items()
             sorted_second_list = sorted(dictionary_items)
 
-            second_xyz_full = numpy.matrix([[float(value)*float(scale_factor) for value in sorted_second_list[i][1][0:3]] for i in range(len(sorted_second_list))]).transpose() # sorted_second_list.keys()]).transpose()
-            rot,trans,trans_error, scale = align(second_xyz,first_xyz)
-            
+            second_xyz_full = np.matrix(
+                [[float(value) * float(scale_factor) for value in sorted_second_list[i][1][0:3]] for i in
+                 range(len(sorted_second_list))]).transpose()  # sorted_second_list.keys()]).transpose()
+            rot, trans, trans_error, scale = align(second_xyz, first_xyz)
+
             second_xyz_aligned = scale * rot * second_xyz + trans
             first_stamps = list(first_list.keys())
             first_stamps.sort()
-            first_xyz_full = numpy.matrix([[float(value) for value in first_list[b][0:3]] for b in first_stamps]).transpose()
-            
+            first_xyz_full = np.matrix(
+                [[float(value) for value in first_list[b][0:3]] for b in first_stamps]).transpose()
+
             second_stamps = list(second_list.keys())
             second_stamps.sort()
-            second_xyz_full = numpy.matrix([[float(value)*float(scale_factor) for value in second_list[b][0:3]] for b in second_stamps]).transpose()
+            second_xyz_full = np.matrix(
+                [[float(value) * float(scale_factor) for value in second_list[b][0:3]] for b in
+                 second_stamps]).transpose()
             second_xyz_full_aligned = scale * rot * second_xyz_full + trans
-            
+
+            # Orientation
+            quaternion_order_1 = [3, 4, 5, 6]
+            quaternion_order_2 = [4, 5, 6, 3]
+            first_orientation_matrices = np.array([scipy_rotation.from_quat(first_list[a][quaternion_order_2]).as_matrix() for a, _ in matches])
+            second_orientation_matrices = np.array([scipy_rotation.from_quat(second_list[b][quaternion_order_1]).as_matrix()  for _, b in matches])
+            second_orientation_matrices_aligned = np.array([rot * second_orientation_matrices[i] for i in range(len(second_orientation_matrices))])
+            orientation_difference_matrices = np.array([np.matmul(np.transpose(first_orientation_matrices[i]), second_orientation_matrices_aligned[i]) for i in range(len(second_orientation_matrices_aligned))])
+            reference_rotation_difference_matrix = np.mean(orientation_difference_matrices, axis=0)
+            second_orientation_matrices_aligned = np.array([rot * second_orientation_matrices[i] * np.transpose(reference_rotation_difference_matrix) for i in range(len(second_orientation_matrices))])
+            orientation_error_matrices = np.array([np.matmul(np.transpose(first_orientation_matrices[i]), second_orientation_matrices_aligned[i]) for i in range(len(second_orientation_matrices_aligned))])
+            orientation_error_euler = np.array([scipy_rotation.from_matrix(orientation_error_matrices[i]).as_euler('zyx', degrees= True) for i in range(len(first_orientation_matrices))])
+            orientation_error_axis_angle = np.array([scipy_rotation.from_matrix(orientation_error_matrices[i]).as_rotvec(degrees=True) for i in range(len(first_orientation_matrices))])
+            orientation_diff = np.array([np.matmul(np.matmul(np.transpose(rot), first_orientation_matrices[i]), np.transpose(second_orientation_matrices[i])) for i in range(len(second_orientation_matrices_aligned))])
+            euler_rmse = np.sqrt(np.mean(orientation_error_euler**2, axis=0))
+            angle_error = np.array([np.linalg.norm(orientation_error_axis_angle[i]) for i in range(len(first_orientation_matrices))])
+            angle_rmse = np.sqrt(np.mean(angle_error**2))
+
+            if plot_orientation_error_euler_angles:
+                first_orientation_euler_y = np.array([scipy_rotation.from_matrix(first_orientation_matrices[i]).as_euler('zyx', degrees=True)[2] for i in range(len(first_orientation_matrices))])
+                second_orientation_euler_y = np.array([scipy_rotation.from_matrix(second_orientation_matrices[i]).as_euler('zyx', degrees=True)[2] for i in range(len(second_orientation_matrices_aligned))])
+                second_orientation_euler_y_aligned = np.array([scipy_rotation.from_matrix(second_orientation_matrices_aligned[i]).as_euler('zyx', degrees=True)[2] for i in range(len(second_orientation_matrices_aligned))])
+                orientation_error_euler_y = np.array([scipy_rotation.from_matrix(orientation_error_matrices[i]).as_euler('zyx', degrees=True)[2] for i in range(len(orientation_error_matrices))])
+                plt.plot(first_orientation_euler_y, label='first')
+                plt.plot(second_orientation_euler_y, label='second')
+                plt.plot(second_orientation_euler_y_aligned, label='second aligned')
+                plt.plot(orientation_error_euler_y, label='error')
+                plt.legend()
+                plt.show()
+
             if is_verbose:
-                print(f"compared_pose_pairs %d pairs"%(len(trans_error)))
-                print(f"absolute_translational_error.rmse %f m"%numpy.sqrt(numpy.dot(trans_error,trans_error) / len(trans_error)))
-                print(f"absolute_translational_error.mean %f m"%numpy.mean(trans_error))
-                print(f"absolute_translational_error.median %f m"%numpy.median(trans_error))
-                print(f"absolute_translational_error.std %f m"%numpy.std(trans_error))
-                print(f"absolute_translational_error.min %f m"%numpy.min(trans_error))
-                print(f"absolute_translational_error.max %f m"%numpy.max(trans_error))
-                print(f"max idx: %i" %numpy.argmax(trans_error))
+                print(f"compared_pose_pairs %d pairs" % (len(trans_error)))
+                print(f"absolute_translational_error.rmse %f m" % np.sqrt(
+                    np.dot(trans_error, trans_error) / len(trans_error)))
+                print(f"absolute_translational_error.mean %f m" % np.mean(trans_error))
+                print(f"absolute_translational_error.median %f m" % np.median(trans_error))
+                print(f"absolute_translational_error.std %f m" % np.std(trans_error))
+                print(f"absolute_translational_error.min %f m" % np.min(trans_error))
+                print(f"absolute_translational_error.max %f m" % np.max(trans_error))
+                print(f"absolute_rotational_angle_degrees_error.rmse %f m" % angle_rmse)
+                print(f"max idx: %i" % np.argmax(trans_error))
 
             if is_save_verbose:
-                headers = ["# pose paired compared", "rmse of absolute_translational_error", "mean of absolute_translational_error", "median of absolute_translational_error", "std of absolute_translational_error", "min of absolute_translational_error", "max of absolute_translational_error"]
-                output_df = pandas.DataFrame([len(trans_error), numpy.sqrt(numpy.dot(trans_error,trans_error) / len(trans_error)), numpy.mean(trans_error), numpy.median(trans_error), numpy.std(trans_error), numpy.min(trans_error), numpy.max(trans_error)])
+                headers = ["# pose paired compared", "rmse of absolute_translational_error",
+                           "rmse of orientation error rotational angle in axis-angle",
+                           "mean of absolute_translational_error", "median of absolute_translational_error",
+                           "std of absolute_translational_error", "min of absolute_translational_error",
+                           "max of absolute_translational_error"]
+                output_df = pandas.DataFrame(
+                    [len(trans_error), np.sqrt(np.dot(trans_error, trans_error) / len(trans_error)), angle_rmse,
+                     np.mean(trans_error), np.median(trans_error), np.std(trans_error), np.min(trans_error),
+                     np.max(trans_error)])
                 output_df.index = headers
                 output_df.to_csv(estimation_error_summary_output_file)
 
             if is_save_associations:
-                file = open(poses_associations_output_file,"w")
-                file.write("\n".join(["%f %f %f %f %f %f %f %f"%(a,x1,y1,z1,b,x2,y2,z2) for (a,b),(x1,y1,z1),(x2,y2,z2) in zip(matches,first_xyz.transpose().A,second_xyz_aligned.transpose().A)]))
+                file = open(poses_associations_output_file, "w")
+                file.write("\n".join(
+                    ["%f %f %f %f %f %f %f %f" % (a, x1, y1, z1, b, x2, y2, z2) for (a, b), (x1, y1, z1), (x2, y2, z2)
+                     in zip(matches, first_xyz.transpose().A, second_xyz_aligned.transpose().A)]))
                 file.close()
-                
+
             if is_save:
-                file = open(time_associations_output_file,"w")
-                file.write("\n".join(["%f "%stamp+" ".join(["%f"%d for d in line]) for stamp,line in zip(second_stamps,second_xyz_aligned.transpose().A)]))
+                file = open(time_associations_output_file, "w")
+                file.write("\n".join(["%f " % stamp + " ".join(["%f" % d for d in line]) for stamp, line in
+                                      zip(second_stamps, second_xyz_aligned.transpose().A)]))
                 file.close()
 
             if is_plot:
                 fig = plt.figure()
                 ax = fig.add_subplot(projection='3d')
-                plot_traj(ax,first_stamps,first_xyz_full.transpose().A,'-',"black","ground truth")
-                plot_traj(ax,second_stamps,second_xyz_full_aligned.transpose().A,'-',"blue","estimated")                    
+                plot_traj(ax, first_stamps, first_xyz_full.transpose().A, '-', "black", "ground truth")
+                plot_traj(ax, second_stamps, second_xyz_full_aligned.transpose().A, '-', "blue", "estimated")
                 ax.legend()
                 ax.set_xlabel('x [m]')
                 ax.set_ylabel('y [m]')
-                plt.savefig(plot_results_output_file,format="png")
+                plt.savefig(plot_results_output_file, format="png")
                 plt.close()
-                position_error=first_xyz-second_xyz_aligned
+                position_error = first_xyz - second_xyz_aligned
                 plt.clf()
                 fig, ax = plt.subplots(3)
-                fig.suptitle('Error Histograms')
-                ax[0].hist(numpy.array(position_error[0,:]).flatten(), label='error in x', bins=100, color='blue')
-                ax[1].hist(numpy.array(position_error[1,:]).flatten(), label='error in y', bins=100, color='green')
-                ax[2].hist(numpy.array(position_error[2,:]).flatten(), label='error in z', bins=100, color='red') 
+                fig.suptitle('Translational Error Histograms')
+                ax[0].hist(np.array(position_error[0, :]).flatten(), label='error in x', bins=100, color='blue')
+                ax[1].hist(np.array(position_error[1, :]).flatten(), label='error in y', bins=100, color='green')
+                ax[2].hist(np.array(position_error[2, :]).flatten(), label='error in z', bins=100, color='red')
                 ax[2].set_xlabel('error [m]')
                 fig.legend()
-                plt.savefig(plot_error_hist_output_file,format="png")
+                plt.savefig(plot_error_hist_output_file, format="png")
+                plt.close()
+                plt.clf()
+                fig, ax = plt.subplots(3)
+                fig.suptitle('Rotational Error Histograms')
+                ax[0].hist(np.array(orientation_error_euler[:, 0]).flatten(), label='error in euler x', bins=100, color='blue')
+                ax[1].hist(np.array(orientation_error_euler[:, 1]).flatten(), label='error in euler y', bins=100, color='green')
+                ax[2].hist(np.array(orientation_error_euler[:, 2]).flatten(), label='error in euler z', bins=100, color='red')
+                ax[2].set_xlabel('error [degrees]')
+                fig.legend()
+                plt.savefig(plot_error_rot_hist_output_file, format="png")
                 plt.close()

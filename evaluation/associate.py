@@ -44,6 +44,7 @@ import argparse
 import sys
 import os
 import numpy
+import numpy as np
 
 
 def read_file_list(filename,remove_bounds):
@@ -67,7 +68,7 @@ def read_file_list(filename,remove_bounds):
     if remove_bounds:
         lines = lines[100:-100]
     lines_list = [[v.strip() for v in line.split(" ") if v.strip()!=""] for line in lines if len(line)>0 and line[0]!="#"]
-    lines_list = [(float(l[0]),l[1:]) for l in lines_list if len(l)>1]
+    lines_list = [(float(l[0]), np.array(l[1:])) for l in lines_list if len(l)>1]
     return dict(lines_list)
 
 def associate(first_list, second_list,offset,max_difference):
@@ -85,7 +86,7 @@ def associate(first_list, second_list,offset,max_difference):
     matches -- list of matched tuples ((stamp1,data1),(stamp2,data2))
     
     """
-    first_keys = list(first_list.keys())
+    first_keys = list(1000000000 * np.array(list(first_list.keys())))
     second_keys = list(second_list.keys())
     potential_matches = [(abs(a - (b + offset)), a, b) 
                          for a in first_keys 
@@ -97,7 +98,7 @@ def associate(first_list, second_list,offset,max_difference):
         if a in first_keys and b in second_keys:
             first_keys.remove(a)
             second_keys.remove(b)
-            matches.append((a, b))
+            matches.append((a/1000000000, b))
     
     matches.sort()
     return matches

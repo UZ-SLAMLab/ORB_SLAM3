@@ -388,3 +388,18 @@ if(realsense2_FOUND)
             Examples_old/Stereo-Inertial/stereo_inertial_realsense_D435i.cc)
     target_link_libraries(stereo_inertial_realsense_D435i_old ${PROJECT_NAME})
 endif()
+
+#UZH Dataset
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/UZH_Run)
+
+add_executable(mono_UZH_trial
+        UZH_Run/mono_UZH_trial.cc)
+target_link_libraries(mono_UZH_trial ${PROJECT_NAME})
+
+add_executable(mono_UZH_trial_run
+        UZH_Run/mono_UZH_trial_run.cc)
+target_link_libraries(mono_UZH_trial_run ${PROJECT_NAME})
+
+add_executable(mono_inertial_UZH_trial
+        UZH_Run/mono_inertial_UZH_trial.cc)
+target_link_libraries(mono_inertial_UZH_trial ${PROJECT_NAME})
