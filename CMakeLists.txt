@@ -168,10 +168,6 @@ add_executable(stereo_kitti
         Examples/Stereo/stereo_kitti.cc)
 target_link_libraries(stereo_kitti ${PROJECT_NAME})
 
-add_executable(stereo_euroc
-        Examples/Stereo/stereo_euroc.cc)
-target_link_libraries(stereo_euroc ${PROJECT_NAME})
-
 add_executable(stereo_tum_vi
         Examples/Stereo/stereo_tum_vi.cc)
 target_link_libraries(stereo_tum_vi ${PROJECT_NAME})
@@ -197,10 +193,6 @@ add_executable(mono_kitti
         Examples/Monocular/mono_kitti.cc)
 target_link_libraries(mono_kitti ${PROJECT_NAME})
 
-add_executable(mono_euroc
-        Examples/Monocular/mono_euroc.cc)
-target_link_libraries(mono_euroc ${PROJECT_NAME})
-
 add_executable(mono_tum_vi
         Examples/Monocular/mono_tum_vi.cc)
 target_link_libraries(mono_tum_vi ${PROJECT_NAME})
@@ -218,10 +210,6 @@ endif()
 #Monocular inertial examples
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular-Inertial)
 
-add_executable(mono_inertial_euroc
-        Examples/Monocular-Inertial/mono_inertial_euroc.cc)
-target_link_libraries(mono_inertial_euroc ${PROJECT_NAME})
-
 add_executable(mono_inertial_tum_vi
         Examples/Monocular-Inertial/mono_inertial_tum_vi.cc)
 target_link_libraries(mono_inertial_tum_vi ${PROJECT_NAME})
@@ -238,10 +226,6 @@ endif()
 
 #Stereo Inertial examples
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo-Inertial)
-
-add_executable(stereo_inertial_euroc
-        Examples/Stereo-Inertial/stereo_inertial_euroc.cc)
-target_link_libraries(stereo_inertial_euroc ${PROJECT_NAME})
 
 add_executable(stereo_inertial_tum_vi
         Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
@@ -389,17 +373,37 @@ if(realsense2_FOUND)
     target_link_libraries(stereo_inertial_realsense_D435i_old ${PROJECT_NAME})
 endif()
 
+#EuRoC Dataset
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Run_Examples/EuRoC)
+
+
+add_executable(stereo_inertial_euroc
+        Run_Examples/EuRoC/stereo_inertial_euroc.cc)
+target_link_libraries(stereo_inertial_euroc ${PROJECT_NAME})
+
+add_executable(mono_inertial_euroc
+        Run_Examples/EuRoC/mono_inertial_euroc.cc)
+target_link_libraries(mono_inertial_euroc ${PROJECT_NAME})
+
+add_executable(mono_euroc
+        Run_Examples/EuRoC/mono_euroc.cc)
+target_link_libraries(mono_euroc ${PROJECT_NAME})
+
+add_executable(stereo_euroc
+        Run_Examples/EuRoC/stereo_euroc.cc)
+target_link_libraries(stereo_euroc ${PROJECT_NAME})
+
 #UZH Dataset
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/UZH_Run)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Run_Examples/UZH)
 
 add_executable(mono_UZH_trial
-        UZH_Run/mono_UZH_trial.cc)
+        Run_Examples/UZH/mono_UZH_trial.cc)
 target_link_libraries(mono_UZH_trial ${PROJECT_NAME})
 
 add_executable(mono_UZH_trial_run
-        UZH_Run/mono_UZH_trial_run.cc)
+        Run_Examples/UZH/mono_UZH_trial_run.cc)
 target_link_libraries(mono_UZH_trial_run ${PROJECT_NAME})
 
 add_executable(mono_inertial_UZH_trial
-        UZH_Run/mono_inertial_UZH_trial.cc)
+        Run_Examples/UZH/mono_inertial_UZH_trial.cc)
 target_link_libraries(mono_inertial_UZH_trial ${PROJECT_NAME})
