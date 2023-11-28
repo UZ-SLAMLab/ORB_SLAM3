@@ -1,7 +1,8 @@
 # ORB-SLAM3
 
 ### V1.0, December 22th, 2021
-**Authors:** Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/).
+**Authors:** Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/). Fork and modifications by [Olaya Álvarez-Tuñón](https://www.linkedin.com/in/olayatu/?locale=en_US)
+
 
 The [Changelog](https://github.com/UZ-SLAMLab/ORB_SLAM3/blob/master/Changelog.md) describes the features of each version.
 
@@ -11,6 +12,9 @@ We provide examples to run ORB-SLAM3 in the datasets:
   - [EuRoC](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) using stereo or monocular, with or without IMU.
   - [TUM-VI](https://vision.in.tum.de/data/datasets/visual-inertial-dataset) using fisheye stereo or monocular, with or without IMU. 
   - [MIMIR-UW](https://github.com/remaro-network/MIMIR-UW) using stereo or monocular, without IMU.  
+  - [SubPipe](https://github.com/remaro-network/SubPipe-dataset) using monocular, without IMU.  
+  - Aqualoc
+  - KITTI
 
 Videos of some example executions can be found at [ORB-SLAM3 channel](https://www.youtube.com/channel/UCXVt-kXG6T95Z4tVaYlU80Q).
 
@@ -59,8 +63,8 @@ If you use ORB-SLAM3 in an academic work, please cite:
 # 2. Prerequisites
 We have tested the library in **Ubuntu 16.04** and **18.04**, but it should be easy to compile in other platforms. A powerful computer (e.g. i7) will ensure real-time performance and provide more stable and accurate results.
 
-## C++11 or C++0x Compiler
-We use the new thread and chrono functionalities of C++11.
+## C++14 
+ORB-SLAM3 the thread and chrono functionalities of C++11, but the CMakeLists have been modified to work with C++14.
 
 ## Pangolin
 We use [Pangolin](https://github.com/stevenlovegrove/Pangolin) for visualization and user interface. Dowload and install instructions can be found at: https://github.com/stevenlovegrove/Pangolin.

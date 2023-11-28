@@ -12,25 +12,30 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
-# Check C++11 or C++0x support
+# Check C++14 or C++0x support
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 if(COMPILER_SUPPORTS_CXX11)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
    add_definitions(-DCOMPILEDWITHC11)
-   message(STATUS "Using flag -std=c++11.")
+   message(STATUS "Using flag -std=c++14.")
 elseif(COMPILER_SUPPORTS_CXX0X)
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
    add_definitions(-DCOMPILEDWITHC0X)
    message(STATUS "Using flag -std=c++0x.")
+elseif(COMPILER_SUPPORTS_CXX14)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+	add_definitions(-DCOMPILEDWITHC11) #code seems to have macros which need this
+	add_definitions(-DCOMPILEDWITHC14)
+	message(STATUS "Using flag -std=c++14.")
 else()
-   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler.")
 endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-find_package(OpenCV 3.2)
+find_package(OpenCV)
    if(NOT OpenCV_FOUND)
       message(FATAL_ERROR "OpenCV > 4.4 not found.")
    endif()
@@ -172,10 +177,6 @@ add_executable(stereo_euroc
         Examples/Stereo/stereo_euroc.cc)
 target_link_libraries(stereo_euroc ${PROJECT_NAME})
 
-add_executable(stereo_mimir
-        Examples/Stereo/stereo_mimir.cc)
-target_link_libraries(stereo_mimir ${PROJECT_NAME})
-
 add_executable(stereo_tum_vi
         Examples/Stereo/stereo_tum_vi.cc)
 target_link_libraries(stereo_tum_vi ${PROJECT_NAME})
@@ -205,17 +206,21 @@ add_executable(mono_euroc
         Examples/Monocular/mono_euroc.cc)
 target_link_libraries(mono_euroc ${PROJECT_NAME})
 
-add_executable(mono_mimir
-        Examples/Monocular/mono_mimir.cc)
-target_link_libraries(mono_mimir ${PROJECT_NAME})
+add_executable(mono_tum_vi
+        Examples/Monocular/mono_tum_vi.cc)
+target_link_libraries(mono_tum_vi ${PROJECT_NAME})
 
 add_executable(mono_aqualoc
         Examples/Monocular/mono_aqualoc.cc)
 target_link_libraries(mono_aqualoc ${PROJECT_NAME})
 
-add_executable(mono_tum_vi
-        Examples/Monocular/mono_tum_vi.cc)
-target_link_libraries(mono_tum_vi ${PROJECT_NAME})
+add_executable(mono_mimir
+        Examples/Monocular/mono_mimir.cc)
+target_link_libraries(mono_mimir ${PROJECT_NAME})
+
+add_executable(mono_subpipe
+        Examples/Monocular/mono_subpipe.cc)
+target_link_libraries(mono_subpipe ${PROJECT_NAME})
 
 if(realsense2_FOUND)
     add_executable(mono_realsense_t265
@@ -233,10 +238,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular-Iner
 add_executable(mono_inertial_euroc
         Examples/Monocular-Inertial/mono_inertial_euroc.cc)
 target_link_libraries(mono_inertial_euroc ${PROJECT_NAME})
-
-add_executable(mono_inertial_mimir
-        Examples/Monocular-Inertial/mono_inertial_mimir.cc)
-target_link_libraries(mono_inertial_mimir ${PROJECT_NAME})
 
 add_executable(mono_inertial_tum_vi
         Examples/Monocular-Inertial/mono_inertial_tum_vi.cc)
@@ -258,6 +259,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo-Inertia
 add_executable(stereo_inertial_euroc
         Examples/Stereo-Inertial/stereo_inertial_euroc.cc)
 target_link_libraries(stereo_inertial_euroc ${PROJECT_NAME})
+
+add_executable(stereo_mimir
+        Examples/Stereo/stereo_mimir.cc)
+target_link_libraries(stereo_mimir ${PROJECT_NAME})
 
 add_executable(stereo_inertial_tum_vi
         Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
