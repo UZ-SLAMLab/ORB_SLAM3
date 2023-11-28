@@ -27,6 +27,9 @@
 
 #include<System.h>
 
+#include <cstring>
+#include <dirent.h>
+
 using namespace std;
 
 void LoadImages(const string &strFile, vector<string> &vstrImageFilenames,
@@ -34,16 +37,16 @@ void LoadImages(const string &strFile, vector<string> &vstrImageFilenames,
 
 int main(int argc, char **argv)
 {
-    if(argc != 5)
+    if(argc != 4)
     {
-        cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_sequence number_of_seq" << endl;
+        cerr << endl << "Usage: ./mono_subpipe path_to_vocabulary path_to_settings path_to_sequence" << endl;
         return 1;
     }
 
     // Retrieve paths to images
     vector<string> vstrImageFilenames;
     vector<double> vTimestamps;
-    string strFile = string(argv[3])+"/raw_data/img_sequence_"+string(argv[4])+".csv";
+    string strFile = string(argv[3])+"/EstimatedState.csv";
     LoadImages(strFile, vstrImageFilenames, vTimestamps);
 
 
@@ -61,17 +64,19 @@ int main(int argc, char **argv)
     cv::Mat im;
     for(int ni=0; ni<nImages; ni++)
     {
+        
         // Read image from file
-        im = cv::imread(string(argv[3])+"/raw_data/images_sequence_"+string(argv[4])+"/"+vstrImageFilenames[ni],cv::IMREAD_UNCHANGED);
+        im = cv::imread(string(argv[3])+"Cam0_images/"+vstrImageFilenames[ni],cv::IMREAD_UNCHANGED);
         
         double tframe = vTimestamps[ni];
 
         if(im.empty())
         {
             cerr << endl << "Failed to load image at: "
-                 << string(argv[3]) << "/raw_data/images_sequence_"<< string(argv[4])<<"/" << vstrImageFilenames[ni] << endl;
+                 << string(argv[3]) << "Cam0_images/"<< vstrImageFilenames[ni] << endl;
             return 1;
         }
+        
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
@@ -123,35 +128,41 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void LoadImages(const string &strFile, vector<string> &vstrImageFilenames, vector<double> &vTimestamps)
+void LoadImages(const std::string &strFile, std::vector<std::string> &vstrImageFilenames, std::vector<double> &vTimestamps)
 {
-    ifstream f;
+    std::ifstream f;
     f.open(strFile.c_str());
 
-    // skip first line
-    string s0;
-    getline(f,s0,',');
-    getline(f,s0,',');
+    // Skip the first line containing column names
+    std::string columnNames;
+    getline(f, columnNames);
 
-    while(!f.eof())
+    while (!f.eof())
     {
-        string s;
-        getline(f,s,',');
-        if(!s.empty())
+        std::string s1, s2; // Variables for the first and second columns
+        getline(f, s1, ','); // Read the first column
+        getline(f, s2, ','); // Read the second column
+
+        if (!s1.empty() && !s2.empty())
         {
-            stringstream ss;
-            ss << s;
+            std::stringstream ss1(s1);
+            std::stringstream ss2(s2);
 
             double t;
-            string sRGB;
+            std::string sRGB;
 
-            ss >> sRGB;
-            ss >> t;         
+            ss1 >> sRGB;
+            ss2 >> t;
 
-            vTimestamps.push_back(t/1e9d);            
-            vstrImageFilenames.push_back(sRGB);
+            // Extracting just the filename from the path using dirent.h
+            size_t lastSlashPos = sRGB.find_last_of('/');
+            std::string fileName = (lastSlashPos != std::string::npos) ? sRGB.substr(lastSlashPos + 1) : sRGB;
 
-
+            vTimestamps.push_back(t);
+            vstrImageFilenames.push_back(fileName);
         }
+
+        // Move to the next line
+        f.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 }
