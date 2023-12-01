@@ -10,7 +10,7 @@
 #System.LoadAtlasFromFile: "Session_MH01_MH02_MH03_Mono"
 
 # The store file is created from the current session, if a file with the same name exists it is deleted
-System.SaveAtlasToFile: '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-11-30_03-42-23/ORBSLAM_Results/monocular_atlas.osa'
+System.SaveAtlasToFile: 'Datasets/Pixel6/HomeFlying/Concorde_Place-2023-11-30_03-42-23/ORBSLAM_Results/monocular_atlas.osa'
 
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
@@ -39,13 +39,13 @@ Camera.RGB: 1
 #--------------------------------------------------------------------------------------------
 
 # ORB Extractor: Number of features per image
-ORBextractor.nFeatures: 1000
+ORBextractor.nFeatures: 5000
 
 # ORB Extractor: Scale factor between levels in the scale pyramid 	
-ORBextractor.scaleFactor: 1.2
+ORBextractor.scaleFactor: 1.1
 
 # ORB Extractor: Number of levels in the scale pyramid	
-ORBextractor.nLevels: 8
+ORBextractor.nLevels: 20
 
 # ORB Extractor: Fast threshold
 # Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.

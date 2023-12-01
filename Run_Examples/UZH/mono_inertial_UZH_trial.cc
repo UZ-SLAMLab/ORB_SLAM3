@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
         string pathTimeStamps(argv[(2*seq) + 4]);
 
         string pathCam0 = pathSeq;
-        string pathImu = pathSeq + "/imu.txt";
+        string pathImu = pathSeq + "/imu_reformatted.csv";
         cout << "test pt 1" << pathTimeStamps << endl;
         LoadImages(pathCam0, pathTimeStamps, vstrImageFilenames[seq], vTimestampsCam[seq]);
         cout << "LOADED!" << endl;
@@ -319,23 +319,19 @@ void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::P
         {
             string item;
             size_t pos = 0;
-            double data[8];
+            double data[7];
             int count = 0;
-            while ((pos = s.find(' ')) != string::npos) {
+            while ((pos = s.find(',')) != string::npos) {
                 item = s.substr(0, pos);
                 data[count++] = stod(item);
                 s.erase(0, pos + 1);
-                if (count==8){
-                    break;
-                }
             }
             item = s.substr(0, pos);
-            data[7] = stod(item);
+            data[6] = stod(item);
 
-            vTimeStamps.push_back(data[1]);
-            vAcc.push_back(cv::Point3f(data[5],data[6],data[7]));
-            vGyro.push_back(cv::Point3f(data[2],data[3],data[4]));
-
+            vTimeStamps.push_back(data[0]/1e9);
+            vAcc.push_back(cv::Point3f(data[4],data[5],data[6]));
+            vGyro.push_back(cv::Point3f(data[1],data[2],data[3]));
         }
     }
 }

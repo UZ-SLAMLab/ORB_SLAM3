@@ -132,8 +132,8 @@ def plot_traj(ax, stamps, traj, style, color, label):
 
 if __name__ == "__main__":
     # Dataset path
-    orb_results_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-11-30_03-42-23/ORBSLAM_Results/monocular_frames.txt'
-    evaluation_results_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-11-30_03-42-23/ORBSLAM_Results/Monocular'
+    orb_results_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-12-01_15-11-25/ORBSLAM_Results/monocular_frames.txt'
+    evaluation_results_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-12-01_15-11-25/ORBSLAM_Results/Monocular'
     quaternion_order = [4, 5, 6, 3]
     # save evaluation output
     plot_results_output_file = evaluation_results_path + '_trajectory_output_frames.png'

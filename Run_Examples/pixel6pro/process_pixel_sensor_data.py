@@ -3,18 +3,18 @@ import pandas as pd
 
 if __name__ == "__main__":
 
-    video_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-11-30_03-42-23/Camera/1701402143748.mp4'
-    images_save_directory = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-11-30_03-42-23/Camera/Camera0/'
-    raw_acceleration_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-11-30_03-42-23/AccelerometerUncalibrated.csv'
-    raw_gyro_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-11-30_03-42-23/GyroscopeUncalibrated.csv'
-    images_timestamp_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-11-30_03-42-23/Camera/Camera0.txt'
-    images_timestamp_names_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-11-30_03-42-23/Camera/Camera0.csv'
-    joined_imu_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-11-30_03-42-23/joinedRawIMU.csv'
+    video_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-12-01_15-11-25/Camera/1701443485827.mp4'
+    images_save_directory = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-12-01_15-11-25/Camera/Camera0/'
+    raw_acceleration_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-12-01_15-11-25/AccelerometerUncalibrated.csv'
+    raw_gyro_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-12-01_15-11-25/GyroscopeUncalibrated.csv'
+    images_timestamp_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-12-01_15-11-25/Camera/Camera0.txt'
+    images_timestamp_names_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-12-01_15-11-25/Camera/Camera0.csv'
+    joined_imu_path = '/home/justmohsen/Documents/SLAM/Datasets/Pixel6/HomeFlying/Concorde_Place-2023-12-01_15-11-25/joinedRawIMU.csv'
     video_clip = cv2.VideoCapture(video_path)
     fps = video_clip.get(cv2.CAP_PROP_FPS)
     success, image = video_clip.read()
     count = 0
-    initial_timestamp = 1701402143748000000
+    initial_timestamp = 1701443485827000000
     time_elapsed = 0
     image_timestamp = []
     image_names = []

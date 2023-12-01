@@ -32,13 +32,13 @@ Camera.RGB: 1
 #--------------------------------------------------------------------------------------------
 
 # ORB Extractor: Number of features per image
-ORBextractor.nFeatures: 1500 # 1000
+ORBextractor.nFeatures: 2000 # 1000
 
 # ORB Extractor: Scale factor between levels in the scale pyramid
-ORBextractor.scaleFactor: 1.2
+ORBextractor.scaleFactor: 1.4
 
 # ORB Extractor: Number of levels in the scale pyramid
-ORBextractor.nLevels: 10
+ORBextractor.nLevels: 20
 
 # ORB Extractor: Fast threshold
 # Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
