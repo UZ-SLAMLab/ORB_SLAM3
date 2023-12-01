@@ -111,7 +111,8 @@ include/GeometricTools.h
 include/TwoViewReconstruction.h
 include/SerializationUtils.h
 include/Config.h
-include/Settings.h)
+include/Settings.h
+Run_Examples/pixel6pro/mono_pixel_debug.cc)
 
 add_subdirectory(Thirdparty/g2o)
 
@@ -407,3 +408,18 @@ target_link_libraries(mono_UZH_trial_run ${PROJECT_NAME})
 add_executable(mono_inertial_UZH_trial
         Run_Examples/UZH/mono_inertial_UZH_trial.cc)
 target_link_libraries(mono_inertial_UZH_trial ${PROJECT_NAME})
+
+#Pixel 6 Pro Phone Data
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Run_Examples/pixel6pro)
+
+add_executable(mono_pixel
+        Run_Examples/pixel6pro/mono_pixel.cc)
+target_link_libraries(mono_pixel ${PROJECT_NAME})
+
+add_executable(mono_inertial_pixel
+        Run_Examples/pixel6pro/mono_inertial_pixel.cc)
+target_link_libraries(mono_inertial_pixel ${PROJECT_NAME})
+
+add_executable(mono_pixel_debug
+        Run_Examples/pixel6pro/mono_pixel_debug.cc)
+target_link_libraries(mono_pixel_debug ${PROJECT_NAME})
