@@ -29,22 +29,19 @@ using namespace std;
 void LoadImages(const string &strImagePath, const string &strPathTimes,
                 vector<string> &ImagesPathsVector, vector<double> &vTimeStamps);
 
-void LoadImages2(const string &strImagePath, const string &strPathTimes,
-                vector<string> &ImagesPathsVector, vector<double> &vTimeStamps, int numOfImages = 5000);
-
 int main()
 {
     string file_name;
-    file_name = string("/home/justmohsen/Documents/SLAM2/Datasets/UZH/indoor_forward_3_snapdragon_results/mono");
+    file_name = string("/home/justmohsen/Documents/SLAM/Datasets/UZH/indoor_forward_3_snapdragon_results/mono");
     cout << "file name: " << file_name << endl;
 
     // Load all sequences:
     vector<string> ImagesPathsVector;
     vector<double> vTimestampsCam;
     int nImages;
-    string pathSeq("/home/justmohsen/Documents/SLAM2/Datasets/UZH/indoor_forward_3_snapdragon");
-    string pathTimeStamps("/home/justmohsen/Documents/SLAM2/Datasets/UZH/indoor_forward_3_snapdragon/left_images.txt");
-    string pathImu = "/home/justmohsen/Documents/SLAM2/Datasets/UZH/indoor_forward_3_snapdragon/imu.txt";
+    string pathSeq("/home/justmohsen/Documents/SLAM/Datasets/UZH/indoor_forward_3_snapdragon");
+    string pathTimeStamps("/home/justmohsen/Documents/SLAM/Datasets/UZH/indoor_forward_3_snapdragon/left_images.txt");
+    string pathImu = "/home/justmohsen/Documents/SLAM/Datasets/UZH/indoor_forward_3_snapdragon/imu.txt";
     cout << "test pt 1" << pathTimeStamps << endl;
     LoadImages(pathSeq, pathTimeStamps, ImagesPathsVector, vTimestampsCam);
     cout << "LOADED!" << endl;
@@ -54,8 +51,8 @@ int main()
     cout << endl << "-------" << endl;
     cout.precision(17);
 
-    string vocabularyPath="/home/justmohsen/Documents/SLAM2/ORB_SLAM3/Vocabulary/ORBvoc.txt";
-    string SettingsPath="/home/justmohsen/Documents/SLAM2/ORB_SLAM3/UZH_Run/UZH_SNAP_mono.yaml";
+    string vocabularyPath="/home/justmohsen/Documents/SLAM/ORB_SLAM3/Vocabulary/ORBvoc.txt";
+    string SettingsPath="/home/justmohsen/Documents/SLAM/ORB_SLAM3/UZH_Run/UZH_SNAP_mono.yaml";
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(vocabularyPath,SettingsPath,ORB_SLAM3::System::MONOCULAR, false);
     float imageScale = SLAM.GetImageScale();

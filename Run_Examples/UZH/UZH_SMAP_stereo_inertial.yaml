@@ -1,0 +1,154 @@
+  %YAML:1.0
+
+  #--------------------------------------------------------------------------------------------
+  # System config
+  #--------------------------------------------------------------------------------------------
+
+  # When the variables are commented, the system doesn't load a previous session or not store the current one
+
+  # If the LoadFile doesn't exist, the system give a message and create a new Atlas from scratch
+  #System.LoadAtlasFromFile: "Session_MH01_MH02_MH03_Stereo60_Pseudo"
+
+  # The store file is created from the current session, if a file with the same name exists it is deleted
+  #System.SaveAtlasToFile: "Session_MH01_MH02_MH03_Stereo60_Pseudo"
+
+  #--------------------------------------------------------------------------------------------
+  # Camera Parameters. Adjust them!
+  #--------------------------------------------------------------------------------------------
+  File.version: "1.0"
+
+  Camera.type: "PinHole"
+
+  # Camera calibration and distortion parameters (OpenCV)
+  Camera1.fx: 278.6672
+  Camera1.fy: 278.4899
+  Camera1.cx: 319.7522
+  Camera1.cy: 241.9686
+
+  Camera1.k1: -0.013721808247486035
+  Camera1.k2: 0.020727425669427896
+  Camera1.p1: -0.012786476702685545
+  Camera1.p2: 0.0025242267320687625
+
+  Camera2.fx: 277.61640629770613
+  Camera2.fy: 277.63749695723294
+  Camera2.cx: 314.8944703346039
+  Camera2.cy: 236.04310050462587
+
+  Camera2.k1: -0.008456929295619607
+  Camera2.k2: 0.011407590938612062
+  Camera2.p1: -0.006951788325762078
+  Camera2.p2: 0.0015368127092821786
+
+  Camera.width: 640
+  Camera.height: 480
+
+  # Camera frames per second
+  Camera.fps: 30
+
+  # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+  Camera.RGB: 1
+
+  # Close/Far threshold. Baseline times.
+  Stereo.ThDepth: 60.0
+  Stereo.T_c1_c2: !!opencv-matrix
+    rows: 4
+    cols: 4
+    dt: f
+      #  data: [0.9998053017199768, 0.011197738450911482, 0.016247132245484134, -0.07961594300469246,
+      #       -0.011147758116323998, 0.9999328574031366, -0.0031635699090552883, 0.0007443452072558462,
+      #      -0.016281466199246437, 0.00298183486707869, 0.9998630018753666, 0.0004425529195268342,
+    #     0.0, 0.0, 0.0, 1.0]
+    #orig
+
+    data: [0.999805301719986, -0.011147758116324, -0.016281466199247, 0.079615945108254,
+           0.011197738450912, 0.999932857403145, 0.002981834867079, 0.000145903656578,
+           0.016247132245484,-0.003163569909055, 0.999863001875375, 0.000853393252339,
+           0, 0, 0, 1.000000000000000]
+  #inversed
+
+  # Transformation from camera 0 to body-frame (imu)
+  IMU.T_b_c1: !!opencv-matrix
+    rows: 4
+    cols: 4
+    dt: f
+      #orig transformation
+      #  data: [-0.028228787368606456, -0.999601488301944, 1.2175294828553618e-05, 0.02172388268966517,
+      #         0.014401251861751119, -0.00041887083271471837, -0.9998962088597202, -6.605455433829172e-05,
+      #        0.999497743623523, -0.028225682131089447, 0.014407337010089172, -0.00048817563004522853,
+      #       0.0, 0.0, 0.0, 1.0]
+
+
+      #inversed works?
+      #  data: [-0.028228787368606, 0.014401251861751, 0.999497743623522, 0.001102120574263,
+      #          -0.999601488301943, -0.000418870832715, -0.028225682131089, 0.021701418709802,
+      #          0.000012175294829, -0.999896208859719, 0.014407337010089, -0.000059278882315,
+      #         0.0, 0.0, 0.0, 1.000000000000000]
+      #
+      #  data: [-0.028228787368606456, -0.999601488301944, 1.2175294828553618e-05, 0.02172388268966517,
+      #         0.014401251861751119, -0.00041887083271471837, 0.9998962088597202, -6.605455433829172e-05,
+      #        0.999497743623523, -0.028225682131089447, 0.014407337010089172, -0.00048817563004522853,
+      #       0.0, 0.0, 0.0, 1.0]
+      # works?
+      #  data: [0,-1,0,0,
+      #        0,0,1,0,
+      #       1,0,0,0,
+      #      0,0,0,1]
+
+      ###############################other one orig
+      #  data: [-0.011823057800830705, -0.9998701444077991, -0.010950325390841398, -0.057904961033265645,
+      #        0.011552991631909482, 0.01081376681432078, -0.9998747875767439, 0.00043766687615362694,
+      #       0.9998633625093938, -0.011948086424720228, 0.011423639621249038, -0.00039944945687402214,
+    #      0.0, 0.0, 0.0, 1.0]
+    #other one inversed works?
+    data: [-0.011823057800831,   0.011552991631910,   0.999863362509394,  -0.000290275185906,
+           -0.999870144407799,   0.010813766814321,  -0.011948086424720,  -0.057906947234433,
+           -0.010950325390841,  -0.999874787576744,   0.011423639621249,  -0.000191902923593,
+           0,                   0,                   0,   1.000000000000000]
+      #multiply of the two inverted works?
+      #  data: [-0.017080173899602,   0.030682893760813,   0.999383223638475,   0.080476894082098,
+      #           -0.999850434735220,  -0.003239106635964,  -0.016988712370281,   0.021858029774866,
+      #          0.002715845974768,  -0.999523920783625,   0.030733629170304,   0.000743374834626,
+    #                0,                   0,                   0,   1.000000000000000]
+
+  # IMU noise
+  IMU.NoiseGyro: 0.05 #0.05
+  IMU.NoiseAcc:  0.1 #0.1
+  IMU.GyroWalk: 4.0e-05 #4.0e-05
+  IMU.AccWalk: 0.002 #0.002
+  IMU.Frequency: 500.0
+
+  #--------------------------------------------------------------------------------------------
+  # ORB Parameters
+  #--------------------------------------------------------------------------------------------
+
+  # ORB Extractor: Number of features per image
+  ORBextractor.nFeatures: 1200
+
+  # ORB Extractor: Scale factor between levels in the scale pyramid
+  ORBextractor.scaleFactor: 1.2
+
+  # ORB Extractor: Number of levels in the scale pyramid
+  ORBextractor.nLevels: 8
+
+  # ORB Extractor: Fast threshold
+  # Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
+  # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
+  # You can lower these values if your images have low contrast
+  ORBextractor.iniThFAST: 20
+  ORBextractor.minThFAST: 7
+
+  #--------------------------------------------------------------------------------------------
+  # Viewer Parameters
+  #--------------------------------------------------------------------------------------------
+  Viewer.KeyFrameSize: 0.05
+  Viewer.KeyFrameLineWidth: 1.0
+  Viewer.GraphLineWidth: 0.9
+  Viewer.PointSize: 2.0
+  Viewer.CameraSize: 0.08
+  Viewer.CameraLineWidth: 3.0
+  Viewer.ViewpointX: 0.0
+  Viewer.ViewpointY: -0.7
+  Viewer.ViewpointZ: -1.8
+  Viewer.ViewpointF: 500.0
+  Viewer.imageViewScale: 1.0

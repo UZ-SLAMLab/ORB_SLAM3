@@ -153,7 +153,7 @@ if __name__ == "__main__":
     results_path = 'ORBSLAM3_Run/'
     orb_results_path = '/home/justmohsen/Documents/SLAM/Datasets/euroc/MachineHall/ORBSLAM3_Run/monocular/MH01/results_frames.txt'
     ground_truth_path = '/home/justmohsen/Documents/SLAM/Datasets/euroc/MachineHall/MH01/mav0/state_groundtruth_estimate0/data.csv'
-    evaluation_results_path = '/home/justmohsen/Documents/SLAM/Datasets/euroc/MachineHall/ORBSLAM3_Run/monocular/MH01'
+    evaluation_results_path = '/home/justmohsen/Documents/SLAM/Datasets/euroc/MachineHall/ORBSLAM3_Run/mono/MH01'
     # Evaluation Job
     first_file = ground_truth_path
     second_file = orb_results_path
@@ -168,6 +168,8 @@ if __name__ == "__main__":
     plot_results_output_file = evaluation_results_path + '/trajectory_output_frames.png'
     plot_error_hist_output_file = evaluation_results_path + '/error_histogram_frames.png'
     plot_error_rot_hist_output_file = evaluation_results_path + '/error_histogram_rotation_frames.png'
+    plot_results_output_file_x = evaluation_results_path + '/trajectory_output_frames_location.png'
+    plot_results_output_file_euler = evaluation_results_path + '/trajectory_output_frames_euler.png'
 
     first_list = associate.read_file_list(first_file, False)
     second_list = associate.read_file_list(second_file, False)
@@ -198,7 +200,7 @@ if __name__ == "__main__":
     second_xyz_full = np.matrix(
         [[float(value) * float(scale_factor) for value in second_list[b][0:3]] for b in
          second_stamps]).transpose()
-    second_xyz_full_aligned = scale * rot * second_xyz_full + trans
+    second_xyz_full_aligned = rot * second_xyz_full + trans
 
     # Orientation
     quaternion_order_1 = [3, 4, 5, 6]
@@ -216,6 +218,17 @@ if __name__ == "__main__":
     euler_rmse = np.sqrt(np.mean(orientation_error_euler**2, axis=0))
     angle_error = np.array([np.linalg.norm(orientation_error_axis_angle[i]) for i in range(len(first_orientation_matrices))])
     angle_rmse = np.sqrt(np.mean(angle_error**2))
+
+
+    first_orientation_euler = np.array(
+        [scipy_rotation.from_matrix(first_orientation_matrices[i]).as_euler('zyx', degrees=True) for i in range(len(first_orientation_matrices))])
+    second_orientation_euler = np.array(
+        [scipy_rotation.from_matrix(second_orientation_matrices[i]).as_euler('zyx', degrees=True) for i in range(len(second_orientation_matrices_aligned))])
+    second_orientation_euler_aligned = np.array(
+        [scipy_rotation.from_matrix(second_orientation_matrices_aligned[i]).as_euler('zyx', degrees=True) for i in range(len(second_orientation_matrices_aligned))])
+    orientation_error_euler = np.array(
+        [scipy_rotation.from_matrix(orientation_error_matrices[i]).as_euler('zyx', degrees=True) for i in range(len(orientation_error_matrices))])
+
 
     if plot_orientation_error_euler_angles:
         first_orientation_euler_y = np.array([scipy_rotation.from_matrix(first_orientation_matrices[i]).as_euler('zyx', degrees=True)[2] for i in range(len(first_orientation_matrices))])
@@ -268,6 +281,34 @@ if __name__ == "__main__":
         file.close()
 
     if is_plot:
+        fig = plt.figure()
+        ax = fig.add_subplot()
+        ax.plot(np.array(first_stamps) / 1000000000, np.array(first_xyz_full[0, :]).flatten(), label="ground truth x")
+        ax.plot(np.array(first_stamps) / 1000000000, np.array(first_xyz_full[1, :]).flatten(), label="ground truth y")
+        ax.plot(np.array(first_stamps) / 1000000000, np.array(first_xyz_full[2, :]).flatten(), label="ground truth z")
+        ax.plot(np.array(second_stamps) / 1000000000, np.array(second_xyz_full_aligned[0, :]).flatten(), label="estimated x")
+        ax.plot(np.array(second_stamps) / 1000000000, np.array(second_xyz_full_aligned[1, :]).flatten(), label="estimated y")
+        ax.plot(np.array(second_stamps) / 1000000000, np.array(second_xyz_full_aligned[2, :]).flatten(), label="estimated z")
+        ax.legend()
+        ax.set_xlabel('time [sec]')
+        ax.set_ylabel('x [m]')
+        plt.savefig(plot_results_output_file_x, format="png")
+        plt.close()
+        plt.clf()
+        fig = plt.figure()
+        ax = fig.add_subplot()
+        ax.plot(np.array(first_orientation_euler[:, 0]).flatten(), label="ground truth x")
+        ax.plot(np.array(first_orientation_euler[:, 1]).flatten(), label="ground truth y")
+        ax.plot(np.array(first_orientation_euler[:, 2]).flatten(), label="ground truth z")
+        ax.plot(np.array(second_orientation_euler_aligned[:, 0]).flatten(), label="estimated x")
+        ax.plot(np.array(second_orientation_euler_aligned[:, 1]).flatten(), label="estimated y")
+        ax.plot(np.array(second_orientation_euler_aligned[:, 2]).flatten(), label="estimated z")
+        ax.legend()
+        ax.set_xlabel('time [sec]')
+        ax.set_ylabel('x [m]')
+        plt.savefig(plot_results_output_file_euler, format="png")
+        plt.close()
+        plt.clf()
         fig = plt.figure()
         ax = fig.add_subplot(projection='3d')
         plot_traj(ax, first_stamps, first_xyz_full.transpose().A, '-', "black", "ground truth")
