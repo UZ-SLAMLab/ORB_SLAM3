@@ -23,12 +23,12 @@
 
 #include<opencv2/core/core.hpp>
 
-#include<System.h>
+#include"include/System.h"
 
 using namespace std;
 
 void LoadImages(const string &strImagePath, const string &strPathTimes,
-                vector<string> &vstrImages, vector<double> &vTimeStamps);
+                vector<string> &ImagesPathsVector, vector<double> &vTimeStamps);
 
 int main(int argc, char **argv)
 {  
@@ -61,12 +61,19 @@ int main(int argc, char **argv)
     int tot_images = 0;
     for (seq = 0; seq<num_seq; seq++)
     {
-        cout << "Loading images for sequence " << seq << "...";
-        LoadImages(string(argv[(2*seq)+3]) + "/mav0/cam0/data", string(argv[(2*seq)+4]), vstrImageFilenames[seq], vTimestampsCam[seq]);
+
+        string pathSeq(argv[(2*seq) + 3]);
+        string pathTimeStamps(argv[(2*seq) + 4]);
+
+        string pathCam0 = pathSeq;
+        string pathImu = pathSeq + "/imu.txt";
+        cout << "test pt 1" << pathTimeStamps << endl;
+        LoadImages(pathCam0, pathTimeStamps, vstrImageFilenames[seq], vTimestampsCam[seq]);
         cout << "LOADED!" << endl;
 
         nImages[seq] = vstrImageFilenames[seq].size();
         tot_images += nImages[seq];
+        cout << std::to_string(tot_images) << endl;
     }
 
     // Vector for tracking time statistics
@@ -77,10 +84,10 @@ int main(int argc, char **argv)
     cout.precision(17);
 
 
-    int fps = 20;
+    int fps = 30;
     float dT = 1.f/fps;
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR, false);
+    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR, true);
     float imageScale = SLAM.GetImageScale();
 
     double t_resize = 0.f;
@@ -96,7 +103,7 @@ int main(int argc, char **argv)
         {
 
             // Read image from file
-            im = cv::imread(vstrImageFilenames[seq][ni],cv::IMREAD_UNCHANGED); //,CV_LOAD_IMAGE_UNCHANGED);
+            im = cv::imread(vstrImageFilenames[seq][ni],cv::IMREAD_GRAYSCALE); //,CV_LOAD_IMAGE_UNCHANGED); grayscale
             double tframe = vTimestampsCam[seq][ni];
 
             if(im.empty())
@@ -137,7 +144,7 @@ int main(int argc, char **argv)
 
             // Pass the image to the SLAM system
             // cout << "tframe = " << tframe << endl;
-            SLAM.TrackMonocular(im,tframe); // TODO change to monocular_inertial
+            SLAM.TrackMonocular(im,tframe);
 
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -166,7 +173,7 @@ int main(int argc, char **argv)
 
             if(ttrack<T) {
                 //std::cout << "usleep: " << (dT-ttrack) << std::endl;
-                usleep((T-ttrack)*1e6); // 1e6
+                usleep((T-ttrack)*1e6); // 1e6cd
             }
         }
 
@@ -189,8 +196,8 @@ int main(int argc, char **argv)
     // Save camera trajectory
     if (bFileName)
     {
-        const string kf_file =  string(argv[argc-1]) + "_keyframes.txt";
-        const string f_file =  string(argv[argc-1]) + "_frames.txt";
+        const string kf_file = string(argv[argc-1]) + "_keyframes.txt";
+        const string f_file = string(argv[argc-1]) + "_frames.txt";
         SLAM.SaveTrajectoryEuRoC(f_file);
         SLAM.SaveKeyFrameTrajectoryEuRoC(kf_file);
     }
@@ -210,18 +217,44 @@ void LoadImages(const string &strImagePath, const string &strPathTimes,
     fTimes.open(strPathTimes.c_str());
     vTimeStamps.reserve(5000);
     vstrImages.reserve(5000);
+    string dummyLine;
+    getline(fTimes, dummyLine); // dummy line
+    // cout << "test pt 2" << endl;
     while(!fTimes.eof())
     {
+        // cout << "test pt 3" << endl;
         string s;
         getline(fTimes,s);
         if(!s.empty())
         {
-            stringstream ss;
-            ss << s;
-            vstrImages.push_back(strImagePath + "/" + ss.str() + ".png");
-            double t;
-            ss >> t;
-            vTimeStamps.push_back(t*1e-9);
+            string itemz;
+            size_t posz = 0;
+            double dataz[3];
+            int count = 0;
+            while((posz = s.find(' ')) != string::npos){
+                // cout << "test pt 4" << endl;
+                itemz = s.substr(0, posz);
+                dataz[count++] = stod(itemz);
+                s.erase(0, posz + 1);
+                // cout << "test pt 5: " << s << ":end"<< endl;
+                if (count==2){
+                    break;
+                }
+            }
+            // itemz = s.substr(0, posz);
+            itemz=s;
+            itemz.erase(itemz.find_last_not_of(' ')+1);
+            // dataz[2] = itemz;
+            // cout <<"itemz: " <<itemz <<":end"<< endl;
+            // stringstream ss;
+            // ss << s;
+            vstrImages.push_back(strImagePath + "/" + itemz);
+            // double t;
+            // ss >> t;
+            double t=dataz[1];
+            vTimeStamps.push_back(t);
+            // cout << "t: " << t << endl;
+
 
         }
     }

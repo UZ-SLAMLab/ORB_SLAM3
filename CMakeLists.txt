@@ -12,20 +12,20 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
-# Check C++11 or C++0x support
+# Check C++14 or C++0x support
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 if(COMPILER_SUPPORTS_CXX11)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
    add_definitions(-DCOMPILEDWITHC11)
-   message(STATUS "Using flag -std=c++11.")
+   message(STATUS "Using flag -std=c++14.")
 elseif(COMPILER_SUPPORTS_CXX0X)
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
    add_definitions(-DCOMPILEDWITHC0X)
    message(STATUS "Using flag -std=c++0x.")
 else()
-   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler.")
 endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
@@ -111,7 +111,8 @@ include/GeometricTools.h
 include/TwoViewReconstruction.h
 include/SerializationUtils.h
 include/Config.h
-include/Settings.h)
+include/Settings.h
+Run_Examples/pixel6pro/mono_pixel_debug.cc)
 
 add_subdirectory(Thirdparty/g2o)
 
@@ -168,10 +169,6 @@ add_executable(stereo_kitti
         Examples/Stereo/stereo_kitti.cc)
 target_link_libraries(stereo_kitti ${PROJECT_NAME})
 
-add_executable(stereo_euroc
-        Examples/Stereo/stereo_euroc.cc)
-target_link_libraries(stereo_euroc ${PROJECT_NAME})
-
 add_executable(stereo_tum_vi
         Examples/Stereo/stereo_tum_vi.cc)
 target_link_libraries(stereo_tum_vi ${PROJECT_NAME})
@@ -197,10 +194,6 @@ add_executable(mono_kitti
         Examples/Monocular/mono_kitti.cc)
 target_link_libraries(mono_kitti ${PROJECT_NAME})
 
-add_executable(mono_euroc
-        Examples/Monocular/mono_euroc.cc)
-target_link_libraries(mono_euroc ${PROJECT_NAME})
-
 add_executable(mono_tum_vi
         Examples/Monocular/mono_tum_vi.cc)
 target_link_libraries(mono_tum_vi ${PROJECT_NAME})
@@ -218,10 +211,6 @@ endif()
 #Monocular inertial examples
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular-Inertial)
 
-add_executable(mono_inertial_euroc
-        Examples/Monocular-Inertial/mono_inertial_euroc.cc)
-target_link_libraries(mono_inertial_euroc ${PROJECT_NAME})
-
 add_executable(mono_inertial_tum_vi
         Examples/Monocular-Inertial/mono_inertial_tum_vi.cc)
 target_link_libraries(mono_inertial_tum_vi ${PROJECT_NAME})
@@ -238,10 +227,6 @@ endif()
 
 #Stereo Inertial examples
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo-Inertial)
-
-add_executable(stereo_inertial_euroc
-        Examples/Stereo-Inertial/stereo_inertial_euroc.cc)
-target_link_libraries(stereo_inertial_euroc ${PROJECT_NAME})
 
 add_executable(stereo_inertial_tum_vi
         Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
@@ -388,3 +373,53 @@ if(realsense2_FOUND)
             Examples_old/Stereo-Inertial/stereo_inertial_realsense_D435i.cc)
     target_link_libraries(stereo_inertial_realsense_D435i_old ${PROJECT_NAME})
 endif()
+
+#EuRoC Dataset
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Run_Examples/EuRoC)
+
+
+add_executable(stereo_inertial_euroc
+        Run_Examples/EuRoC/stereo_inertial_euroc.cc)
+target_link_libraries(stereo_inertial_euroc ${PROJECT_NAME})
+
+add_executable(mono_inertial_euroc
+        Run_Examples/EuRoC/mono_inertial_euroc.cc)
+target_link_libraries(mono_inertial_euroc ${PROJECT_NAME})
+
+add_executable(mono_euroc
+        Run_Examples/EuRoC/mono_euroc.cc)
+target_link_libraries(mono_euroc ${PROJECT_NAME})
+
+add_executable(stereo_euroc
+        Run_Examples/EuRoC/stereo_euroc.cc)
+target_link_libraries(stereo_euroc ${PROJECT_NAME})
+
+#UZH Dataset
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Run_Examples/UZH)
+
+add_executable(mono_UZH_trial
+        Run_Examples/UZH/mono_UZH_trial.cc)
+target_link_libraries(mono_UZH_trial ${PROJECT_NAME})
+
+add_executable(mono_UZH_trial_run
+        Run_Examples/UZH/mono_UZH_trial_run.cc)
+target_link_libraries(mono_UZH_trial_run ${PROJECT_NAME})
+
+add_executable(mono_inertial_UZH_trial
+        Run_Examples/UZH/mono_inertial_UZH_trial.cc)
+target_link_libraries(mono_inertial_UZH_trial ${PROJECT_NAME})
+
+#Pixel 6 Pro Phone Data
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Run_Examples/pixel6pro)
+
+add_executable(mono_pixel
+        Run_Examples/pixel6pro/mono_pixel.cc)
+target_link_libraries(mono_pixel ${PROJECT_NAME})
+
+add_executable(mono_inertial_pixel
+        Run_Examples/pixel6pro/mono_inertial_pixel.cc)
+target_link_libraries(mono_inertial_pixel ${PROJECT_NAME})
+
+add_executable(mono_pixel_debug
+        Run_Examples/pixel6pro/mono_pixel_debug.cc)
+target_link_libraries(mono_pixel_debug ${PROJECT_NAME})

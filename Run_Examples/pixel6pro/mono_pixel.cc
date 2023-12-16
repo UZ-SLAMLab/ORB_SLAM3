@@ -23,7 +23,7 @@
 
 #include<opencv2/core/core.hpp>
 
-#include<System.h>
+#include"include/System.h"
 
 using namespace std;
 
@@ -61,14 +61,13 @@ int main(int argc, char **argv)
     int tot_images = 0;
     for (seq = 0; seq<num_seq; seq++)
     {
-        cout << "Loading images for sequence " << seq << "...";
-        LoadImages(string(argv[(2*seq)+3]) + "/mav0/cam0/data", string(argv[(2*seq)+4]), vstrImageFilenames[seq], vTimestampsCam[seq]);
+        cout << "Loading images for sequence " << seq << endl;
+        LoadImages(string(argv[(2*seq)+3]) + "/Camera/Camera0", string(argv[(2*seq)+4]), vstrImageFilenames[seq], vTimestampsCam[seq]);
         cout << "LOADED!" << endl;
 
         nImages[seq] = vstrImageFilenames[seq].size();
         tot_images += nImages[seq];
     }
-
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
     vTimesTrack.resize(tot_images);
@@ -80,7 +79,7 @@ int main(int argc, char **argv)
     int fps = 20;
     float dT = 1.f/fps;
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR, false);
+    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR, true);
     float imageScale = SLAM.GetImageScale();
 
     double t_resize = 0.f;
@@ -189,8 +188,8 @@ int main(int argc, char **argv)
     // Save camera trajectory
     if (bFileName)
     {
-        const string kf_file =  string(argv[argc-1]) + "_keyframes.txt";
-        const string f_file =  string(argv[argc-1]) + "_frames.txt";
+        const string kf_file = string(argv[argc-1]) + "_keyframes.txt";
+        const string f_file = string(argv[argc-1]) + "_frames.txt";
         SLAM.SaveTrajectoryEuRoC(f_file);
         SLAM.SaveKeyFrameTrajectoryEuRoC(kf_file);
     }
@@ -218,7 +217,7 @@ void LoadImages(const string &strImagePath, const string &strPathTimes,
         {
             stringstream ss;
             ss << s;
-            vstrImages.push_back(strImagePath + "/" + ss.str() + ".png");
+            vstrImages.push_back(strImagePath + "/" + ss.str() + ".jpg");
             double t;
             ss >> t;
             vTimeStamps.push_back(t*1e-9);

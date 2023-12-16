@@ -40,13 +40,13 @@ trajectory and the estimated trajectory.
 
 import sys
 import numpy as np
-import associate
+import evaluation.associate as associate
 import pandas
 import matplotlib
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import os
 from scipy.spatial.transform import Rotation as scipy_rotation
+from mpl_toolkits.mplot3d import Axes3D
 
 matplotlib.use('TkAgg')
 
@@ -149,11 +149,9 @@ if __name__ == "__main__":
     # scaling factor for the second trajectory (default: 1.0)
     scale_factor = 1.0
     # Dataset path
-    dataset_path = '/home/justmohsen/Documents/SLAM/Datasets/euroc/MachineHall/'
-    results_path = 'ORBSLAM3_Run/'
-    orb_results_path = '/home/justmohsen/Documents/SLAM/Datasets/euroc/MachineHall/ORBSLAM3_Run/monocular/MH01/results_frames.txt'
-    ground_truth_path = '/home/justmohsen/Documents/SLAM/Datasets/euroc/MachineHall/MH01/mav0/state_groundtruth_estimate0/data.csv'
-    evaluation_results_path = '/home/justmohsen/Documents/SLAM/Datasets/euroc/MachineHall/ORBSLAM3_Run/monocular/MH01'
+    orb_results_path = '/home/justmohsen/Documents/SLAM/Datasets/UZH/indoor_forward_3_snapdragon_results/mono_frames.txt'
+    ground_truth_path = '/home/justmohsen/Documents/SLAM/Datasets/UZH/indoor_forward_3_snapdragon/groundtruth.txt'
+    evaluation_results_path = '/home/justmohsen/Documents/SLAM/Datasets/UZH/indoor_forward_3_snapdragon_results/mono_results'
     # Evaluation Job
     first_file = ground_truth_path
     second_file = orb_results_path
@@ -166,17 +164,21 @@ if __name__ == "__main__":
     time_associations_output_file = evaluation_results_path + '/time_associations_frames.txt'
     estimation_error_summary_output_file = evaluation_results_path + '/evaluation_error_frames.txt'
     plot_results_output_file = evaluation_results_path + '/trajectory_output_frames.png'
+    plot_results_output_file_x = evaluation_results_path + '/trajectory_output_frames_location.png'
+    plot_results_output_file_euler = evaluation_results_path + '/trajectory_output_frames_euler.png'
     plot_error_hist_output_file = evaluation_results_path + '/error_histogram_frames.png'
     plot_error_rot_hist_output_file = evaluation_results_path + '/error_histogram_rotation_frames.png'
 
-    first_list = associate.read_file_list(first_file, False)
-    second_list = associate.read_file_list(second_file, False)
+    first_list = associate.read_file_list(first_file, False, 1000000000)
+    second_list = associate.read_file_list(second_file, False, 1)
 
     matches = associate.associate(first_list, second_list, float(time_offset), float(max_time_difference_ns))
     if len(matches) < 2:
         sys.exit(
             "Couldn't find matching timestamp pairs between groundtruth and estimated trajectory! Did you choose the correct sequence?")
     first_xyz = np.matrix([[float(value) for value in first_list[a][0:3]] for a, b in matches]).transpose()
+    first_timestamp = np.array([a for a, _ in matches])
+    second_timestamp = np.array([b for _, b in matches])
     second_xyz = np.matrix(
         [[float(value) * float(scale_factor) for value in second_list[b][0:3]] for a, b in matches]).transpose()
     dictionary_items = second_list.items()
@@ -204,30 +206,32 @@ if __name__ == "__main__":
     quaternion_order_1 = [3, 4, 5, 6]
     quaternion_order_2 = [4, 5, 6, 3]
     first_orientation_matrices = np.array([scipy_rotation.from_quat(first_list[a][quaternion_order_2]).as_matrix() for a, _ in matches])
-    second_orientation_matrices = np.array([scipy_rotation.from_quat(second_list[b][quaternion_order_1]).as_matrix()  for _, b in matches])
+    second_orientation_matrices = np.array([scipy_rotation.from_quat(second_list[b][quaternion_order_1]).as_matrix() for _, b in matches])
     second_orientation_matrices_aligned = np.array([rot * second_orientation_matrices[i] for i in range(len(second_orientation_matrices))])
-    orientation_difference_matrices = np.array([np.matmul(np.transpose(first_orientation_matrices[i]), second_orientation_matrices_aligned[i]) for i in range(len(second_orientation_matrices_aligned))])
+    orientation_difference_matrices = np.array(
+        [np.matmul(np.transpose(first_orientation_matrices[i]), second_orientation_matrices_aligned[i]) for i in range(len(second_orientation_matrices_aligned))])
     reference_rotation_difference_matrix = np.mean(orientation_difference_matrices, axis=0)
-    second_orientation_matrices_aligned = np.array([rot * second_orientation_matrices[i] * np.transpose(reference_rotation_difference_matrix) for i in range(len(second_orientation_matrices))])
-    orientation_error_matrices = np.array([np.matmul(np.transpose(first_orientation_matrices[i]), second_orientation_matrices_aligned[i]) for i in range(len(second_orientation_matrices_aligned))])
-    orientation_error_euler = np.array([scipy_rotation.from_matrix(orientation_error_matrices[i]).as_euler('zyx', degrees= True) for i in range(len(first_orientation_matrices))])
+    second_orientation_matrices_aligned = np.array(
+        [rot * second_orientation_matrices[i] * np.transpose(reference_rotation_difference_matrix) for i in range(len(second_orientation_matrices))])
+    orientation_error_matrices = np.array(
+        [np.matmul(np.transpose(first_orientation_matrices[i]), second_orientation_matrices_aligned[i]) for i in range(len(second_orientation_matrices_aligned))])
+    orientation_error_euler = np.array([scipy_rotation.from_matrix(orientation_error_matrices[i]).as_euler('zyx', degrees=True) for i in range(len(first_orientation_matrices))])
     orientation_error_axis_angle = np.array([scipy_rotation.from_matrix(orientation_error_matrices[i]).as_rotvec(degrees=True) for i in range(len(first_orientation_matrices))])
-    orientation_diff = np.array([np.matmul(np.matmul(np.transpose(rot), first_orientation_matrices[i]), np.transpose(second_orientation_matrices[i])) for i in range(len(second_orientation_matrices_aligned))])
-    euler_rmse = np.sqrt(np.mean(orientation_error_euler**2, axis=0))
+    orientation_diff = np.array([np.matmul(np.matmul(np.transpose(rot), first_orientation_matrices[i]), np.transpose(second_orientation_matrices[i])) for i in
+                                 range(len(second_orientation_matrices_aligned))])
+    euler_rmse = np.sqrt(np.mean(orientation_error_euler ** 2, axis=0))
     angle_error = np.array([np.linalg.norm(orientation_error_axis_angle[i]) for i in range(len(first_orientation_matrices))])
-    angle_rmse = np.sqrt(np.mean(angle_error**2))
+    angle_rmse = np.sqrt(np.mean(angle_error ** 2))
 
-    if plot_orientation_error_euler_angles:
-        first_orientation_euler_y = np.array([scipy_rotation.from_matrix(first_orientation_matrices[i]).as_euler('zyx', degrees=True)[2] for i in range(len(first_orientation_matrices))])
-        second_orientation_euler_y = np.array([scipy_rotation.from_matrix(second_orientation_matrices[i]).as_euler('zyx', degrees=True)[2] for i in range(len(second_orientation_matrices_aligned))])
-        second_orientation_euler_y_aligned = np.array([scipy_rotation.from_matrix(second_orientation_matrices_aligned[i]).as_euler('zyx', degrees=True)[2] for i in range(len(second_orientation_matrices_aligned))])
-        orientation_error_euler_y = np.array([scipy_rotation.from_matrix(orientation_error_matrices[i]).as_euler('zyx', degrees=True)[2] for i in range(len(orientation_error_matrices))])
-        plt.plot(first_orientation_euler_y, label='first')
-        plt.plot(second_orientation_euler_y, label='second')
-        plt.plot(second_orientation_euler_y_aligned, label='second aligned')
-        plt.plot(orientation_error_euler_y, label='error')
-        plt.legend()
-        plt.show()
+
+    first_orientation_euler = np.array(
+        [scipy_rotation.from_matrix(first_orientation_matrices[i]).as_euler('xyz', degrees=True) for i in range(len(first_orientation_matrices))])
+    second_orientation_euler = np.array(
+        [scipy_rotation.from_matrix(second_orientation_matrices[i]).as_euler('xyz', degrees=True) for i in range(len(second_orientation_matrices_aligned))])
+    second_orientation_euler_aligned = np.array(
+        [scipy_rotation.from_matrix(second_orientation_matrices_aligned[i]).as_euler('xyz', degrees=True) for i in range(len(second_orientation_matrices_aligned))])
+    orientation_error_euler = np.array(
+        [scipy_rotation.from_matrix(orientation_error_matrices[i]).as_euler('xyz', degrees=True) for i in range(len(orientation_error_matrices))])
 
     if is_verbose:
         print(f"compared_pose_pairs %d pairs" % (len(trans_error)))
@@ -268,6 +272,34 @@ if __name__ == "__main__":
         file.close()
 
     if is_plot:
+        fig = plt.figure()
+        ax = fig.add_subplot()
+        ax.plot(np.array(first_stamps) / 1000000000, np.array(first_xyz_full[0, :]).flatten(), label="ground truth x")
+        ax.plot(np.array(first_stamps) / 1000000000, np.array(first_xyz_full[1, :]).flatten(), label="ground truth y")
+        ax.plot(np.array(first_stamps) / 1000000000, np.array(first_xyz_full[2, :]).flatten(), label="ground truth z")
+        ax.plot(np.array(second_stamps) / 1000000000, np.array(second_xyz_full_aligned[0, :]).flatten(), label="estimated x")
+        ax.plot(np.array(second_stamps) / 1000000000, np.array(second_xyz_full_aligned[1, :]).flatten(), label="estimated y")
+        ax.plot(np.array(second_stamps) / 1000000000, np.array(second_xyz_full_aligned[2, :]).flatten(), label="estimated z")
+        ax.legend()
+        ax.set_xlabel('time [sec]')
+        ax.set_ylabel('x [m]')
+        plt.savefig(plot_results_output_file_x, format="png")
+        plt.close()
+        plt.clf()
+        fig = plt.figure()
+        ax = fig.add_subplot()
+        ax.plot(first_timestamp, np.array(first_orientation_euler[:, 0]).flatten(), label="ground truth x")
+        ax.plot(first_timestamp, np.array(first_orientation_euler[:, 1]).flatten(), label="ground truth y")
+        ax.plot(first_timestamp, np.array(first_orientation_euler[:, 2]).flatten(), label="ground truth z")
+        #ax.plot(np.array(second_orientation_euler_aligned[:, 0]).flatten(), label="estimated x")
+        #ax.plot(np.array(second_orientation_euler_aligned[:, 1]).flatten(), label="estimated y")
+        #ax.plot(np.array(second_orientation_euler_aligned[:, 2]).flatten(), label="estimated z")
+        ax.legend()
+        ax.set_xlabel('time [sec]')
+        ax.set_ylabel('euler angles [deg]')
+        plt.savefig(plot_results_output_file_euler, format="png")
+        plt.close()
+        plt.clf()
         fig = plt.figure()
         ax = fig.add_subplot(projection='3d')
         plot_traj(ax, first_stamps, first_xyz_full.transpose().A, '-', "black", "ground truth")

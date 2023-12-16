@@ -2003,7 +2003,7 @@ void Tracking::Track()
                         bOK = Relocalization();
                         //std::cout << "mCurrentFrame.mTimeStamp:" << to_string(mCurrentFrame.mTimeStamp) << std::endl;
                         //std::cout << "mTimeStampLost:" << to_string(mTimeStampLost) << std::endl;
-                        if(mCurrentFrame.mTimeStamp-mTimeStampLost>3.0f && !bOK)
+                        if(mCurrentFrame.mTimeStamp-mTimeStampLost>4.0f && !bOK)
                         {
                             mState = LOST;
                             Verbose::PrintMess("Track Lost...", Verbose::VERBOSITY_NORMAL);
@@ -3721,7 +3721,7 @@ bool Tracking::Relocalization()
                         mCurrentFrame.mvpMapPoints[io]=static_cast<MapPoint*>(NULL);
 
                 // If few inliers, search by projection in a coarse window and optimize again
-                if(nGood<50)
+                if(nGood<30)
                 {
                     int nadditional =matcher2.SearchByProjection(mCurrentFrame,vpCandidateKFs[i],sFound,10,100);
 
@@ -3731,7 +3731,7 @@ bool Tracking::Relocalization()
 
                         // If many inliers but still not enough, search by projection again in a narrower window
                         // the camera has been already optimized with many points
-                        if(nGood>30 && nGood<50)
+                        if(nGood>10 && nGood<30)
                         {
                             sFound.clear();
                             for(int ip =0; ip<mCurrentFrame.N; ip++)
@@ -3740,7 +3740,7 @@ bool Tracking::Relocalization()
                             nadditional =matcher2.SearchByProjection(mCurrentFrame,vpCandidateKFs[i],sFound,3,64);
 
                             // Final optimization
-                            if(nGood+nadditional>=50)
+                            if(nGood+nadditional>=30)
                             {
                                 nGood = Optimizer::PoseOptimization(&mCurrentFrame);
 
@@ -3754,7 +3754,7 @@ bool Tracking::Relocalization()
 
 
                 // If the pose is supported by enough inliers stop ransacs and continue
-                if(nGood>=50)
+                if(nGood>=30)
                 {
                     bMatch = true;
                     break;
