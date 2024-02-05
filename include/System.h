@@ -158,6 +158,12 @@ public:
     void SaveTrajectoryEuRoC(const string &filename, Map* pMap);
     void SaveKeyFrameTrajectoryEuRoC(const string &filename, Map* pMap);
 
+    void SaveTrajectoryMimir(const string &filename);
+    void SaveKeyFrameTrajectoryMimir(const string &filename);
+
+    void SaveTrajectoryMimir(const string &filename, Map* pMap);
+    void SaveKeyFrameTrajectoryMimir(const string &filename, Map* pMap);
+
     // Save data used for initialization debug
     void SaveDebugData(const int &iniIdx);
 

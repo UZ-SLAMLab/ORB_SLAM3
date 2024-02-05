@@ -31,29 +31,29 @@
 
 using namespace std;
 
-void LoadImages(const string &strImagePath, const string &strPathTimes,
-                vector<string> &vstrImages, vector<double> &vTimeStamps);
+void LoadImages(const std::string &strAccPath, 
+                std::vector<std::string> &vImagePaths, std::vector<double> &vTimeStamps);
 
-void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro);
+void LoadIMU(const std::string &strAccPath, const std::string &strGyroPath, std::vector<double> &vTimeStamps, std::vector<cv::Point3f> &vAcc, std::vector<cv::Point3f> &vGyro);
 
 double ttrack_tot = 0;
 int main(int argc, char *argv[])
 {
 
-    if(argc < 5)
+    if(argc < 4)
     {
-        cerr << endl << "Usage: ./mono_inertial_euroc path_to_vocabulary path_to_settings path_to_sequence_folder_1 path_to_times_file_1 (path_to_image_folder_2 path_to_times_file_2 ... path_to_image_folder_N path_to_times_file_N) " << endl;
+        cerr << endl << "Usage: ./mono_inertial_subpipe path_to_vocabulary path_to_settings path_to_sequence_folder_1 " << endl;
         return 1;
     }
 
-    const int num_seq = (argc-3)/2;
+    const int num_seq = argc-3;
     cout << "num_seq = " << num_seq << endl;
     bool bFileName= (((argc-3) % 2) == 1);
     string file_name;
     if (bFileName)
     {
         file_name = string(argv[argc-1]);
-        cout << "file name: " << file_name << endl;
+        cout << "Path to files: " << file_name << endl;
     }
 
     // Load all sequences:
@@ -65,7 +65,6 @@ int main(int argc, char *argv[])
     vector<int> nImages;
     vector<int> nImu;
     vector<int> first_imu(num_seq,0);
-
     vstrImageFilenames.resize(num_seq);
     vTimestampsCam.resize(num_seq);
     vAcc.resize(num_seq);
@@ -73,28 +72,28 @@ int main(int argc, char *argv[])
     vTimestampsImu.resize(num_seq);
     nImages.resize(num_seq);
     nImu.resize(num_seq);
-
     int tot_images = 0;
     for (seq = 0; seq<num_seq; seq++)
     {
-        cout << "Loading images for sequence " << seq << "...";
+        cout << "Loading images for sequence " << seq << "..."<< endl;
 
-        string pathSeq(argv[(2*seq) + 3]);
-        string pathTimeStamps(argv[(2*seq) + 4]);
+        string pathSeq(argv[seq + 3]);
 
-        string pathcam2 = pathSeq + "/auv0/rgb/cam2/data";
-        string pathImu = pathSeq + "/auv0/imu0/data.csv";
+        string pathEstimatedState = pathSeq + "/EstimatedState.csv";
+        string pathAcc  = pathSeq + "/Acceleration.csv";
+        string pathGyro = pathSeq + "/AngularVelocity.csv";
 
-        LoadImages(pathcam2, pathTimeStamps, vstrImageFilenames[seq], vTimestampsCam[seq]);
+        LoadImages(pathEstimatedState, vstrImageFilenames[seq], vTimestampsCam[seq]);
         cout << "LOADED!" << endl;
-
         cout << "Loading IMU for sequence " << seq << "...";
-        LoadIMU(pathImu, vTimestampsImu[seq], vAcc[seq], vGyro[seq]);
+        LoadIMU(pathAcc, pathGyro, vTimestampsImu[seq], vAcc[seq], vGyro[seq]);
         cout << "LOADED!" << endl;
-
         nImages[seq] = vstrImageFilenames[seq].size();
+        cout << nImages[seq] << endl;
+
         tot_images += nImages[seq];
         nImu[seq] = vTimestampsImu[seq].size();
+        cout << nImu[seq] << endl;
 
         if((nImages[seq]<=0)||(nImu[seq]<=0))
         {
@@ -109,7 +108,6 @@ int main(int argc, char *argv[])
         first_imu[seq]--; // first imu measurement to be considered
 
     }
-
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
     vTimesTrack.resize(tot_images);
@@ -134,7 +132,7 @@ int main(int argc, char *argv[])
         for(int ni=0; ni<nImages[seq]; ni++, proccIm++)
         {
             // Read image from file
-            im = cv::imread(vstrImageFilenames[seq][ni],cv::IMREAD_UNCHANGED); //CV_LOAD_IMAGE_UNCHANGED);
+            im = cv::imread(string(argv[3])+"/Cam0_images/"+vstrImageFilenames[seq][ni],cv::IMREAD_UNCHANGED); //CV_LOAD_IMAGE_UNCHANGED);
 
             double tframe = vTimestampsCam[seq][ni];
 
@@ -249,62 +247,86 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void LoadImages(const string &strImagePath, const string &strPathTimes,
-                vector<string> &vstrImages, vector<double> &vTimeStamps)
-{
-    ifstream fTimes;
-    fTimes.open(strPathTimes.c_str());
-    vTimeStamps.reserve(5000);
-    vstrImages.reserve(5000);
-    while(!fTimes.eof())
-    {
-        string s;
-        getline(fTimes,s);
-        if(!s.empty())
-        {
-            stringstream ss;
-            ss << s;
-            vstrImages.push_back(strImagePath + "/" + ss.str() + ".png");
-            double t;
-            ss >> t;
-            vTimeStamps.push_back(t/1e9);
+void LoadImages(const std::string &strAccPath, std::vector<std::string> &vImagePaths, std::vector<double> &vTimeStamps) {
+    std::ifstream fAcc(strAccPath);
+    std::string line;
 
-        }
+    // Skip the header
+    std::getline(fAcc, line);
+
+    while (std::getline(fAcc, line)) {
+        std::istringstream ss(line);
+
+        std::string imagePath;
+        double timestamp;
+        std::string dummy;  // for skipping other data fields
+
+        // Parse image path and timestamp
+        std::getline(ss, imagePath, ',');
+        std::getline(ss, dummy, ','); timestamp = std::stod(dummy);
+
+        // Skip the rest of the data in the line
+        std::getline(ss, dummy);
+
+        // Extracting just the filename from the path using dirent.h
+        size_t lastSlashPos = imagePath.find_last_of('/');
+        std::string fileName = (lastSlashPos != std::string::npos) ? imagePath.substr(lastSlashPos + 1) : imagePath;
+
+        vImagePaths.push_back(fileName);
+        vTimeStamps.push_back(timestamp);
     }
+
+    fAcc.close();
 }
 
-void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro)
-{
-    ifstream fImu;
-    fImu.open(strImuPath.c_str());
-    vTimeStamps.reserve(5000);
-    vAcc.reserve(5000);
-    vGyro.reserve(5000);
+void LoadIMU(const std::string &strAccPath, const std::string &strGyroPath, std::vector<double> &vTimeStamps, std::vector<cv::Point3f> &vAcc, std::vector<cv::Point3f> &vGyro) {
+    std::ifstream fAcc, fGyro;
+    fAcc.open(strAccPath);
+    fGyro.open(strGyroPath);
 
-    while(!fImu.eof())
-    {
-        string s;
-        getline(fImu,s);
-        if (s[0] == '#')
+    std::string lineAcc, lineGyro;
+
+    // Skip headers
+    std::getline(fAcc, lineAcc);
+    std::getline(fGyro, lineGyro);
+
+    while (std::getline(fAcc, lineAcc) && std::getline(fGyro, lineGyro)) {
+        std::istringstream ssAcc(lineAcc), ssGyro(lineGyro);
+
+        std::string sImageAcc, sImageGyro;
+        double timestampAcc, timestampGyro;
+        float accX, accY, accZ, gyroX, gyroY, gyroZ;
+
+        std::string token;
+
+        // Parse acceleration data
+        std::getline(ssAcc, sImageAcc, ','); // Skip image path
+        std::getline(ssAcc, token, ','); timestampAcc = std::stod(token);
+        std::getline(ssAcc, token, ','); accX = std::stof(token);
+        std::getline(ssAcc, token, ','); accY = std::stof(token);
+        std::getline(ssAcc, token, ','); accZ = std::stof(token);
+
+        // Parse gyroscope data
+        std::getline(ssGyro, sImageGyro, ','); // Skip image path
+        std::getline(ssGyro, token, ','); timestampGyro = std::stod(token);
+        std::getline(ssGyro, token, ','); gyroX = std::stof(token);
+        std::getline(ssGyro, token, ','); gyroY = std::stof(token);
+        std::getline(ssGyro, token, ','); gyroZ = std::stof(token);
+
+        // Check if timestamps match
+        if (timestampAcc != timestampGyro) {
+            std::cerr << "Warning: Mismatched timestamps found:" << std::endl;
+            std::cout << "Image Acc: " << sImageAcc << ", Timestamp Acc: " << timestampAcc << std::endl;
+            std::cout << "Image Gyro: " << sImageGyro << ", Timestamp Gyro: " << timestampGyro << std::endl;
             continue;
-
-        if(!s.empty())
-        {
-            string item;
-            size_t pos = 0;
-            double data[7];
-            int count = 0;
-            while ((pos = s.find(',')) != string::npos) {
-                item = s.substr(0, pos);
-                data[count++] = stod(item);
-                s.erase(0, pos + 1);
-            }
-            item = s.substr(0, pos);
-            data[6] = stod(item);
-
-            vTimeStamps.push_back(data[0]/1e9);
-            vAcc.push_back(cv::Point3f(data[4],data[5],data[6]));
-            vGyro.push_back(cv::Point3f(data[1],data[2],data[3]));
         }
+
+        vTimeStamps.push_back(timestampAcc);
+        vAcc.emplace_back(accX, accY, accZ);
+        vGyro.emplace_back(gyroX, gyroY, gyroZ);
     }
+
+    fAcc.close();
+    fGyro.close();
 }
+
