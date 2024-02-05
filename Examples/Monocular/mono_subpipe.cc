@@ -66,7 +66,7 @@ int main(int argc, char **argv)
     {
         
         // Read image from file
-        im = cv::imread(string(argv[3])+"Cam0_images/"+vstrImageFilenames[ni],cv::IMREAD_UNCHANGED);
+        im = cv::imread(string(argv[3])+"/Cam0_images/"+vstrImageFilenames[ni],cv::IMREAD_UNCHANGED);
         
         double tframe = vTimestamps[ni];
 
