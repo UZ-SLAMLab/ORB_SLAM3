@@ -384,6 +384,9 @@ public:
     const std::vector<float> mvDepth; // negative value for monocular points
     const cv::Mat mDescriptors;
 
+    // Per-keypoint grayscale values sampled from input image
+    std::vector<unsigned char> mvGrayValues;
+
     //BoW
     DBoW2::BowVector mBowVec;
     DBoW2::FeatureVector mFeatVec;

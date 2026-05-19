@@ -139,6 +139,8 @@ protected:
     void SearchInNeighbors();
     void KeyFrameCulling();
 
+    void ComputeLocalWindowReprojErrors(double &mean_err, double &max_err);
+
     System *mpSystem;
 
     bool mbMonocular;
@@ -194,6 +196,18 @@ protected:
 
     //DEBUG
     ofstream f_lm;
+
+    // Per-iteration CSV log
+    ofstream f_lm_csv;
+    long     mLMIteration;
+    int      mCsvKFCulled;    // KFs culled in this iteration
+    double   mCsvMeanReprojErr;
+    double   mCsvMaxReprojErr;
+    double   mCsvOptimMs;
+    int      mCsvBADone;      // 1 if Local BA was executed this iteration
+    int      mCsvBAAborted;   // 1 if Local BA was aborted mid-iteration
+    int      mCsvBAIters;     // actual g2o iterations performed
+    double   mCsvFirstTimestamp; // first LocalMapping dataset timestamp for rel_time_s
 
     };
 

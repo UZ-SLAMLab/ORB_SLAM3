@@ -70,7 +70,8 @@ Frame::Frame(const Frame &frame)
      monoLeft(frame.monoLeft), monoRight(frame.monoRight), mvLeftToRightMatch(frame.mvLeftToRightMatch),
      mvRightToLeftMatch(frame.mvRightToLeftMatch), mvStereo3Dpoints(frame.mvStereo3Dpoints),
      mTlr(frame.mTlr), mRlr(frame.mRlr), mtlr(frame.mtlr), mTrl(frame.mTrl),
-     mTcw(frame.mTcw), mbHasPose(false), mbHasVelocity(false)
+     mTcw(frame.mTcw), mbHasPose(false), mbHasVelocity(false),
+     mvGrayValues(frame.mvGrayValues)
 {
     for(int i=0;i<FRAME_GRID_COLS;i++)
         for(int j=0; j<FRAME_GRID_ROWS; j++){
@@ -195,6 +196,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     monoRight = -1;
 
     AssignFeaturesToGrid();
+    SampleGrayValues(imLeft);
 }
 
 Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera* pCamera,Frame* pPrevF, const IMU::Calib &ImuCalib)
@@ -283,6 +285,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     monoRight = -1;
 
     AssignFeaturesToGrid();
+    SampleGrayValues(imGray);
 }
 
 
@@ -379,6 +382,8 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     }
 
     mpMutexImu = new std::mutex();
+
+    SampleGrayValues(imGray);
 }
 
 
@@ -412,6 +417,27 @@ void Frame::AssignFeaturesToGrid()
             else
                 mGridRight[nGridPosX][nGridPosY].push_back(i - Nleft);
         }
+    }
+}
+
+void Frame::SampleGrayValues(const cv::Mat &imGray)
+{
+    if(imGray.empty() || mvKeys.empty()){
+        mvGrayValues.assign(N > 0 ? N : 0, 128);
+        return;
+    }
+    mvGrayValues.resize(N);
+    for(int i = 0; i < N; i++){
+        const cv::KeyPoint &kp = (Nleft == -1) ? mvKeysUn[i]
+                                                : (i < Nleft) ? mvKeys[i]
+                                                               : mvKeysRight[i - Nleft];
+        int px = cvRound(kp.pt.x), py = cvRound(kp.pt.y);
+        // For right-side keypoints in fisheye, sample from right image
+        const cv::Mat &img = (Nleft != -1 && i >= Nleft && !imgRight.empty()) ? imgRight : imGray;
+        if(px >= 0 && px < img.cols && py >= 0 && py < img.rows)
+            mvGrayValues[i] = img.at<unsigned char>(py, px);
+        else
+            mvGrayValues[i] = 128;
     }
 }
 
@@ -1121,6 +1147,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
 
     UndistortKeyPoints();
 
+    SampleGrayValues(imLeft);
 }
 
 void Frame::ComputeStereoFishEyeMatches() {

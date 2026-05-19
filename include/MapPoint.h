@@ -197,6 +197,9 @@ public:
     Eigen::Vector3f mNormalVectorMerge;
 
 
+    // Grayscale intensity (0-255) sampled at the keypoint when MapPoint is created
+    unsigned char mGray = 128;
+
     // Fopr inverse depth optimization
     double mInvDepth;
     double mInitU;

@@ -316,6 +316,9 @@ private:
     // Assign keypoints to the grid for speed up feature matching (called in the constructor).
     void AssignFeaturesToGrid();
 
+    // Sample grayscale at each keypoint from the given image
+    void SampleGrayValues(const cv::Mat &imGray);
+
     bool mbIsSet;
 
     bool mbImuPreintegrated;
@@ -353,6 +356,9 @@ public:
     Eigen::Vector3f UnprojectStereoFishEye(const int &i);
 
     cv::Mat imgLeft, imgRight;
+
+    // Per-keypoint grayscale intensity sampled from the source image
+    std::vector<unsigned char> mvGrayValues;
 
     void PrintPointDistribution(){
         int left = 0, right = 0;

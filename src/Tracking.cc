@@ -30,6 +30,8 @@
 #include "GeometricTools.h"
 
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 
 #include <mutex>
 #include <chrono>
@@ -128,7 +130,213 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     vdNewKF_ms.clear();
     vdTrackTotal_ms.clear();
 #endif
+
+    // Initialize per-frame CSV log
+    InitFrameLog("tracking_log.csv");
 }
+
+// ── Tracking Monitor implementation ──────────────────────────────────────────
+
+void Tracking::InitFrameLog(const std::string &path)
+{
+    mFrameLogFile.open(path, std::ios::out | std::ios::trunc);
+    if(!mFrameLogFile.is_open())
+    {
+        std::cerr << "[TrackingMonitor] Cannot open log file: " << path << std::endl;
+        return;
+    }
+    mbFrameLogInit = true;
+    // Write CSV header
+    mFrameLogFile <<
+    //基本資訊
+        "frame_id,"
+        "timestamp,"
+        "rel_time_s,"
+    //系統狀態
+        "當前幀狀態,"
+        "上一幀狀態,"
+        "tracking_method,"
+        // "wider_window_used,"
+    //初始化匹配點數量
+        "init_matches,"
+    //匹配點數量
+        "initial_matches,"
+        "matches_before_tlm_opt,"
+        // "outliers_before_tlm_opt,"
+        "matches_after_tlm_opt,"
+        // "outliers_after_tlm_opt,"
+        "final_inliers,"
+    //優化與品質評估
+        // "outlier_ratio,"
+         "opt_type,"
+    //關鍵幀決策
+        "need_new_kf,"
+        "new_kf_created,"
+    //地圖統計
+        "total_kf_in_map,"
+        "total_mp_in_map,"
+        "local_map_mp_count,"
+        "local_kf_count,"
+        "map_updated,"
+        "total_maps,"
+    //重定位狀態
+        "reloc_attempted,"
+        "reloc_success,"
+        "reloc_candidates,"
+        "reloc_bow_pass,"
+        "reloc_pnp_inliers,"
+    //IMU狀態
+        "imu_initialized,"
+        // "imu_predicted,"
+        "bias_acc_norm,"
+        "bias_gyro_norm,"
+        "preintegration_ms,"
+    //時間統計
+        "pose_pred_ms,"
+        "track_local_map_ms,"
+        "need_new_kf_ms,"
+        "total_tracking_ms,"
+        "source,"
+        "event_type,"
+        "kf_id,"
+        "track_frame_id,"
+        "map_id,"
+        "tracking_state,"
+        "visual_chi2_mean,"
+        "visual_chi2_max,"
+        "imu_chi2_mean,"
+        "imu_chi2_max,"
+        "imu_rot_res_norm,"
+        "imu_vel_res_norm,"
+        "imu_pos_res_norm,"
+        "gyro_rw_chi2,"
+        "acc_rw_chi2,"
+        "pose_update_norm,"
+        "velocity_update_norm,"
+        "bias_update_norm\n";
+    mFrameLogFile.flush();
+}
+
+void Tracking::CloseFrameLog()
+{
+    if(mFrameLogFile.is_open())
+    {
+        mFrameLogFile.flush();
+        mFrameLogFile.close();
+    }
+}
+
+void Tracking::WriteFrameLog()
+{
+    if(!mbFrameLogInit) return;
+    const FrameLog &L = mCurLog;
+
+    // ── helper lambdas for readable labels ──────────────────────────────────
+    auto yn = [](bool v) -> const char* { return v ? "yes" : "no"; };
+
+    auto stateStr = [](int s) -> const char* {
+        switch(s) {
+            case -1: return "SYSTEM_NOT_READY";
+            case  0: return "NO_IMAGES_YET";
+            case  1: return "NOT_INITIALIZED";
+            case  2: return "OK";
+            case  3: return "RECENTLY_LOST";
+            case  4: return "LOST";
+            case  5: return "OK_KLT";
+            default: return "UNKNOWN";
+        }
+    };
+
+    auto methodStr = [](int m) -> const char* {
+        switch(m) {
+            case  0: return "RefKF";
+            case  1: return "MM";
+            case  2: return "IMU_MM";
+            case  3: return "Reloc";
+            default: return "none";
+        }
+    };
+
+    auto optStr = [](int o) -> const char* {
+        switch(o) {
+            case  0: return "PoseOpt";
+            case  1: return "InertialLastFrame";
+            case  2: return "InertialLastKF";
+            default: return "PoseOpt";
+        }
+    };
+    // ────────────────────────────────────────────────────────────────────────
+
+    if(mLogFirstTimestamp < 0.0) mLogFirstTimestamp = L.timestamp;
+    const double rel_time_s = L.timestamp - mLogFirstTimestamp;
+
+    mFrameLogFile
+        << L.frame_id                    << ","
+        << std::fixed << std::setprecision(6)
+        << L.timestamp                   << ","
+        << rel_time_s                    << ","
+        << stateStr(L.state)             << ","
+        << stateStr(L.last_state)        << ","
+        << methodStr(L.tracking_method)  << ","
+        //<< yn(L.wider_window_used)       << ","
+        << L.init_matches                << ","   // [Monitor] init search matches
+        << L.initial_matches             << ","
+        << L.matches_before_tlm_opt      << ","
+        // << L.outliers_before_tlm_opt     << ","
+        << L.matches_after_tlm_opt       << ","
+        // << L.outliers_after_tlm_opt      << ","
+        << L.final_inliers               << ","
+        << std::setprecision(4)
+        // << L.outlier_ratio               << ","
+        << optStr(L.opt_type)            << ","
+        << yn(L.need_new_kf)             << ","
+        << yn(L.new_kf_created)          << ","
+        << L.total_kf_in_map             << ","
+        << L.total_mp_in_map             << ","
+        << L.local_map_mp_count          << ","
+        << L.local_kf_count              << ","
+        << yn(L.map_updated)             << ","
+        << L.total_maps                  << ","
+        << yn(L.reloc_attempted)         << ","
+        << yn(L.reloc_success)           << ","
+        << L.reloc_candidates            << ","
+        << L.reloc_bow_pass              << ","
+        << L.reloc_pnp_inliers           << ","
+        << yn(L.imu_initialized)         << ","
+        // << yn(L.imu_predicted)           << ","
+        << std::setprecision(6)
+        << L.bias_acc_norm               << ","
+        << L.bias_gyro_norm              << ","
+        << std::setprecision(3)
+        << L.preintegration_ms           << ","
+        << L.pose_pred_ms                << ","
+        << L.track_local_map_ms          << ","
+        << L.need_new_kf_ms              << ","
+        << L.total_tracking_ms           << ","
+        << "Tracking"                    << ","
+        << "FRAME_PROCESSED"             << ","
+        << L.kf_id                       << ","
+        << L.frame_id                    << ","
+        << L.map_id                      << ","
+        << stateStr(L.state)             << ","
+        << std::setprecision(6)
+        << L.visual_chi2_mean            << ","
+        << L.visual_chi2_max             << ","
+        << L.imu_chi2_mean               << ","
+        << L.imu_chi2_max                << ","
+        << L.imu_rot_res_norm            << ","
+        << L.imu_vel_res_norm            << ","
+        << L.imu_pos_res_norm            << ","
+        << L.gyro_rw_chi2                << ","
+        << L.acc_rw_chi2                 << ","
+        << L.pose_update_norm            << ","
+        << L.velocity_update_norm        << ","
+        << L.bias_update_norm            << "\n";
+if(L.frame_id % 5 == 0)// flush every 5 frames
+    mFrameLogFile.flush();
+}
+
+// ── end Tracking Monitor ──────────────────────────────────────────────────────
 
 #ifdef REGISTER_TIMES
 double calcAverage(vector<double> v_times)
@@ -529,7 +737,7 @@ void Tracking::PrintTimeStats()
 Tracking::~Tracking()
 {
     //f_track_stats.close();
-
+    CloseFrameLog();
 }
 
 void Tracking::newParameterLoader(Settings *settings) {
@@ -581,8 +789,14 @@ void Tracking::newParameterLoader(Settings *settings) {
             mDepthMapFactor = 1.0f/mDepthMapFactor;
     }
 
-    mMinFrames = 0;
+    // mMinFrames = 0;
+    // mMaxFrames = settings->fps();//開關 限制速度
+
     mMaxFrames = settings->fps();
+    mMinFrames = mMaxFrames / 4;
+
+
+
     mbRGB = settings->rgb();
 
     //ORB parameters
@@ -1154,8 +1368,12 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         fps=30;
 
     // Max/Min Frames to insert keyframes and to check relocalisation
-    mMinFrames = 0;
+    // mMinFrames = 0;
+    // mMaxFrames = fps;//開關 限制速度
+
     mMaxFrames = fps;
+    mMinFrames = mMaxFrames / 4;
+
 
     cout << "- fps: " << fps << endl;
 
@@ -1793,6 +2011,9 @@ void Tracking::ResetFrameIMU()
 
 void Tracking::Track()
 {
+    // [Monitor] Reset per-frame log and start total timer
+    mCurLog = FrameLog{};
+    auto t_track_start = std::chrono::steady_clock::now();
 
     if (bStepByStep)
     {
@@ -1809,15 +2030,16 @@ void Tracking::Track()
         return;
     }
 
+    //假設正常情況一定有 active map，這裡只是做 sanity check
     Map* pCurrentMap = mpAtlas->GetCurrentMap();
     if(!pCurrentMap)
     {
         cout << "ERROR: There is not an active map in the atlas" << endl;
     }
 
-    if(mState!=NO_IMAGES_YET)
+    if(mState!=NO_IMAGES_YET)//如果當前狀態不是 NO_IMAGES_YET，說明之前已經處理過幾幀了，這裡需要檢查時間戳是否有問題
     {
-        if(mLastFrame.mTimeStamp>mCurrentFrame.mTimeStamp)
+        if(mLastFrame.mTimeStamp>mCurrentFrame.mTimeStamp)//如果當前幀的時間戳比上一幀的還小，說明時間戳出現了問題，這種情況下直接清空 IMU 數據隊列，重置地圖，並返回
         {
             cerr << "ERROR: Frame with a timestamp older than previous frame detected!" << endl;
             unique_lock<mutex> lock(mMutexImuQueue);
@@ -1825,11 +2047,11 @@ void Tracking::Track()
             CreateMapInAtlas();
             return;
         }
-        else if(mCurrentFrame.mTimeStamp>mLastFrame.mTimeStamp+1.0)
+        else if(mCurrentFrame.mTimeStamp>mLastFrame.mTimeStamp+1.0)//如果當前幀的時間戳比上一幀的還大超過1秒，說明時間戳出現了跳變，這種情況下需要重置 IMU 整合
         {
             // cout << mCurrentFrame.mTimeStamp << ", " << mLastFrame.mTimeStamp << endl;
             // cout << "id last: " << mLastFrame.mnId << "    id curr: " << mCurrentFrame.mnId << endl;
-            if(mpAtlas->isInertial())
+            if(mpAtlas->isInertial())//IMU對時間敏感
             {
 
                 if(mpAtlas->isImuInitialized())
@@ -1866,12 +2088,22 @@ void Tracking::Track()
 
     mLastProcessedState=mState;
 
+    // [Monitor] snapshot identity & state
+    mCurLog.frame_id   = mCurrentFrame.mnId;
+    mCurLog.timestamp  = mCurrentFrame.mTimeStamp;
+    mCurLog.last_state = (int)mLastProcessedState;
+    mCurLog.state      = (int)mState;  // 記錄這一幀開始時的狀態，避免被後續 mState=OK 覆蓋
+
     if ((mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) && !mbCreatedMap)
     {
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_StartPreIMU = std::chrono::steady_clock::now();
 #endif
+        // [Monitor] time PreintegrateIMU
+        auto t_preimu_start = std::chrono::steady_clock::now();
         PreintegrateIMU();
+        auto t_preimu_end = std::chrono::steady_clock::now();
+        mCurLog.preintegration_ms = std::chrono::duration<double,std::milli>(t_preimu_end - t_preimu_start).count();
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_EndPreIMU = std::chrono::steady_clock::now();
 
@@ -1884,9 +2116,9 @@ void Tracking::Track()
 
     // Get Map Mutex -> Map cannot be changed
     unique_lock<mutex> lock(pCurrentMap->mMutexMapUpdate);
-
+    //偵測地圖是否更新
     mbMapUpdated = false;
-
+    //偵測地圖是否更新
     int nCurMapChangeIndex = pCurrentMap->GetMapChangeIndex();
     int nMapChangeIndex = pCurrentMap->GetLastMapChange();
     if(nCurMapChangeIndex>nMapChangeIndex)
@@ -1912,6 +2144,8 @@ void Tracking::Track()
         if(mState!=OK) // If rightly initialized, mState=OK
         {
             mLastFrame = Frame(mCurrentFrame);
+            mCurLog.state = (int)mState;
+            WriteFrameLog();
             return;
         }
 
@@ -1928,6 +2162,8 @@ void Tracking::Track()
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_StartPosePred = std::chrono::steady_clock::now();
 #endif
+        // [Monitor] start pose prediction timer
+        auto t_pose_pred_start = std::chrono::steady_clock::now();
 
         // Initial camera pose estimation using motion model or relocalization (if tracking is lost)
         if(!mbOnlyTracking)
@@ -1945,14 +2181,19 @@ void Tracking::Track()
                 if((!mbVelocity && !pCurrentMap->isImuInitialized()) || mCurrentFrame.mnId<mnLastRelocFrameId+2)
                 {
                     Verbose::PrintMess("TRACK: Track with respect to the reference KF ", Verbose::VERBOSITY_DEBUG);
+                    mCurLog.tracking_method = 0;   // [Monitor] RefKF
                     bOK = TrackReferenceKeyFrame();
                 }
                 else
                 {
                     Verbose::PrintMess("TRACK: Track with motion model", Verbose::VERBOSITY_DEBUG);
+                    mCurLog.tracking_method = 1;   // [Monitor] MotionModel
                     bOK = TrackWithMotionModel();
                     if(!bOK)
+                    {
+                        mCurLog.tracking_method = 0;   // [Monitor] fallback to RefKF
                         bOK = TrackReferenceKeyFrame();
+                    }
                 }
 
 
@@ -1966,8 +2207,10 @@ void Tracking::Track()
                     else if(pCurrentMap->KeyFramesInMap()>10)
                     {
                         // cout << "KF in map: " << pCurrentMap->KeyFramesInMap() << endl;
-                        mState = RECENTLY_LOST;
-                        mTimeStampLost = mCurrentFrame.mTimeStamp;
+                        // mState = RECENTLY_LOST;
+                        // mTimeStampLost = mCurrentFrame.mTimeStamp;
+                        //開關LOST跟RECENTLY_LOST
+                        mState = LOST;
                     }
                     else
                     {
@@ -2000,7 +2243,10 @@ void Tracking::Track()
                     else
                     {
                         // Relocalization
+                        mCurLog.reloc_attempted = true;   // [Monitor]
                         bOK = Relocalization();
+                        mCurLog.reloc_success   = bOK;    // [Monitor]
+                        mCurLog.tracking_method = 3;      // [Monitor]
                         //std::cout << "mCurrentFrame.mTimeStamp:" << to_string(mCurrentFrame.mTimeStamp) << std::endl;
                         //std::cout << "mTimeStampLost:" << to_string(mTimeStampLost) << std::endl;
                         if(mCurrentFrame.mTimeStamp-mTimeStampLost>3.0f && !bOK)
@@ -2028,8 +2274,42 @@ void Tracking::Track()
 
                     Verbose::PrintMess("done", Verbose::VERBOSITY_NORMAL);
 
+                    mCurLog.state = (int)mState;
+                    WriteFrameLog();
                     return;
-                }
+                }//開關lost後還是在同一張圖進行重定位
+
+
+                // else if (mState == LOST)
+                // {
+                //  if (pCurrentMap->KeyFramesInMap()<10)
+                //     {
+                //     mpSystem->ResetActiveMap();
+                //     Verbose::PrintMess("Reseting current map...", Verbose::VERBOSITY_NORMAL);
+                //     if(mpLastKeyFrame)
+                //         mpLastKeyFrame = static_cast<KeyFrame*>(NULL);
+                //     mCurLog.state = (int)mState;
+                //      WriteFrameLog();
+                //     return;
+                //     }
+                //     else
+                //     {
+                //     // SLAM2-style: keep trying relocalization in the same map
+                //     bool bRelocOK = Relocalization();
+                //     if(bRelocOK)
+                //     {
+                //         mState = OK;
+                //         Verbose::PrintMess("Relocalized in existing map", Verbose::VERBOSITY_NORMAL);
+                //     }
+                //     else
+                //     {
+                //         mCurLog.state = (int)mState;
+                //         WriteFrameLog();
+                //         return;
+                //     }
+                //     }
+                // }
+                  
             }
 
         }
@@ -2114,11 +2394,19 @@ void Tracking::Track()
         double timePosePred = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndPosePred - time_StartPosePred).count();
         vdPosePred_ms.push_back(timePosePred);
 #endif
+        // [Monitor] end pose prediction timer
+        mCurLog.pose_pred_ms = std::chrono::duration<double,std::milli>(
+            std::chrono::steady_clock::now() - t_pose_pred_start).count();
 
+        // [Monitor] record IMU prediction flag
+        mCurLog.imu_initialized = (bool)mpAtlas->isImuInitialized();
 
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_StartLMTrack = std::chrono::steady_clock::now();
 #endif
+        // [Monitor] start TrackLocalMap timer
+        auto t_tlm_start = std::chrono::steady_clock::now();
+
         // If we have an initial estimation of the camera pose and matching. Track the local map.
         if(!mbOnlyTracking)
         {
@@ -2139,6 +2427,10 @@ void Tracking::Track()
                 bOK = TrackLocalMap();
         }
 
+        // [Monitor] end TrackLocalMap timer
+        mCurLog.track_local_map_ms = std::chrono::duration<double,std::milli>(
+            std::chrono::steady_clock::now() - t_tlm_start).count();
+
         if(bOK)
             mState = OK;
         else if (mState == OK)
@@ -2152,10 +2444,12 @@ void Tracking::Track()
                     mpSystem->ResetActiveMap();
                 }
 
-                mState=RECENTLY_LOST;
+                // mState=RECENTLY_LOST;//開關LOST跟RECENTLY_LOST
+                mState=LOST;
             }
             else
-                mState=RECENTLY_LOST; // visual to lost
+                // mState=RECENTLY_LOST; // visual to lost 開關LOST跟RECENTLY_LOST
+                mState=LOST;
 
             /*if(mCurrentFrame.mnId>mnLastRelocFrameId+mMaxFrames)
             {*/
@@ -2241,13 +2535,21 @@ void Tracking::Track()
 #ifdef REGISTER_TIMES
             std::chrono::steady_clock::time_point time_StartNewKF = std::chrono::steady_clock::now();
 #endif
+            // [Monitor] time NeedNewKeyFrame
+            auto t_nkf_start = std::chrono::steady_clock::now();
             bool bNeedKF = NeedNewKeyFrame();
+            mCurLog.need_new_kf_ms = std::chrono::duration<double,std::milli>(
+                std::chrono::steady_clock::now() - t_nkf_start).count();
+            mCurLog.need_new_kf = bNeedKF;   // [Monitor]
 
             // Check if we need to insert a new keyframe
             // if(bNeedKF && bOK)
             if(bNeedKF && (bOK || (mInsertKFsLost && mState==RECENTLY_LOST &&
                                    (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD))))
+            {
                 CreateNewKeyFrame();
+                mCurLog.new_kf_created = true;   // [Monitor]
+            }
 
 #ifdef REGISTER_TIMES
             std::chrono::steady_clock::time_point time_EndNewKF = std::chrono::steady_clock::now();
@@ -2292,6 +2594,43 @@ void Tracking::Track()
             mCurrentFrame.mpReferenceKF = mpReferenceKF;
 
         mLastFrame = Frame(mCurrentFrame);
+    }
+
+    // [Monitor] finalize and write log for this frame
+    {
+        mCurLog.final_inliers = mnMatchesInliers;
+
+        // outlier ratio (based on TLM post-opt counts)
+        if(mCurLog.matches_after_tlm_opt > 0)
+            mCurLog.outlier_ratio = (float)mCurLog.outliers_after_tlm_opt /
+                                    (float)mCurLog.matches_after_tlm_opt;
+
+        // map stats
+        Map* pLogMap = mpAtlas->GetCurrentMap();
+        if(pLogMap)
+        {
+            mCurLog.total_kf_in_map = (int)pLogMap->KeyFramesInMap();
+            mCurLog.total_mp_in_map = (int)mpAtlas->MapPointsInMap();
+            mCurLog.map_id = pLogMap->GetId();
+        }
+        if(mpLastKeyFrame)
+            mCurLog.kf_id = mpLastKeyFrame->mnId;
+        mCurLog.map_updated  = mbMapUpdated;
+        mCurLog.total_maps   = mpAtlas->CountMaps();
+
+        // IMU bias norms
+        if(mSensor==System::IMU_MONOCULAR || mSensor==System::IMU_STEREO || mSensor==System::IMU_RGBD)
+        {
+            const IMU::Bias &b = mCurrentFrame.mImuBias;
+            mCurLog.bias_acc_norm  = std::sqrt(b.bax*b.bax + b.bay*b.bay + b.baz*b.baz);
+            mCurLog.bias_gyro_norm = std::sqrt(b.bwx*b.bwx + b.bwy*b.bwy + b.bwz*b.bwz);
+        }
+
+        // total time
+        mCurLog.total_tracking_ms = std::chrono::duration<double,std::milli>(
+            std::chrono::steady_clock::now() - t_track_start).count();
+
+        WriteFrameLog();
     }
 
 
@@ -2389,6 +2728,8 @@ void Tracking::StereoInitialization()
                     pKFini->AddMapPoint(pNewMP,i);
                     pNewMP->ComputeDistinctiveDescriptors();
                     pNewMP->UpdateNormalAndDepth();
+                    if(i < (int)mCurrentFrame.mvGrayValues.size())
+                        pNewMP->mGray = mCurrentFrame.mvGrayValues[i];
                     mpAtlas->AddMapPoint(pNewMP);
 
                     mCurrentFrame.mvpMapPoints[i]=pNewMP;
@@ -2410,6 +2751,8 @@ void Tracking::StereoInitialization()
 
                     pNewMP->ComputeDistinctiveDescriptors();
                     pNewMP->UpdateNormalAndDepth();
+                    if(i < (int)mCurrentFrame.mvGrayValues.size())
+                        pNewMP->mGray = mCurrentFrame.mvGrayValues[i];
                     mpAtlas->AddMapPoint(pNewMP);
 
                     mCurrentFrame.mvpMapPoints[i]=pNewMP;
@@ -2490,6 +2833,7 @@ void Tracking::MonocularInitialization()
         // Find correspondences
         ORBmatcher matcher(0.9,true);
         int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
+        mCurLog.init_matches = nmatches;   // [Monitor] init search matches
 
         // Check if there are enough correspondences
         if(nmatches<100)
@@ -2559,6 +2903,9 @@ void Tracking::CreateInitialMapMonocular()
         pMP->ComputeDistinctiveDescriptors();
         pMP->UpdateNormalAndDepth();
 
+        if(mvIniMatches[i] >= 0 && mvIniMatches[i] < (int)mCurrentFrame.mvGrayValues.size())
+            pMP->mGray = mCurrentFrame.mvGrayValues[mvIniMatches[i]];
+
         //Fill Current Frame structure
         mCurrentFrame.mvpMapPoints[mvIniMatches[i]] = pMP;
         mCurrentFrame.mvbOutlier[mvIniMatches[i]] = false;
@@ -2586,7 +2933,7 @@ void Tracking::CreateInitialMapMonocular()
     else
         invMedianDepth = 1.0f/medianDepth;
 
-    if(medianDepth<0 || pKFcur->TrackedMapPoints(1)<50) // TODO Check, originally 100 tracks
+    if(medianDepth<0 || pKFcur->TrackedMapPoints(1)<100) // TODO Check, originally 100 tracks
     {
         Verbose::PrintMess("Wrong initialization, reseting...", Verbose::VERBOSITY_QUIET);
         mpSystem->ResetActiveMap();
@@ -2735,6 +3082,8 @@ bool Tracking::TrackReferenceKeyFrame()
         return false;
     }
 
+    mCurLog.initial_matches = nmatches;   // [Monitor] BoW matches before PoseOpt
+
     mCurrentFrame.mvpMapPoints = vpMapPointMatches;
     mCurrentFrame.SetPose(mLastFrame.GetPose());
 
@@ -2835,6 +3184,8 @@ void Tracking::UpdateLastFrame()
             }
 
             MapPoint* pNewMP = new MapPoint(x3D,mpAtlas->GetCurrentMap(),&mLastFrame,i);
+            if(i < (int)mLastFrame.mvGrayValues.size())
+                pNewMP->mGray = mLastFrame.mvGrayValues[i];
             mLastFrame.mvpMapPoints[i]=pNewMP;
 
             mlpTemporalPoints.push_back(pNewMP);
@@ -2863,6 +3214,8 @@ bool Tracking::TrackWithMotionModel()
     {
         // Predict state with IMU if it is initialized and it doesnt need reset
         PredictStateIMU();
+        mCurLog.imu_predicted   = true;    // [Monitor]
+        mCurLog.tracking_method = 2;       // [Monitor] IMU_MM
         return true;
     }
     else
@@ -2893,8 +3246,10 @@ bool Tracking::TrackWithMotionModel()
 
         nmatches = matcher.SearchByProjection(mCurrentFrame,mLastFrame,2*th,mSensor==System::MONOCULAR || mSensor==System::IMU_MONOCULAR);
         Verbose::PrintMess("Matches with wider search: " + to_string(nmatches), Verbose::VERBOSITY_NORMAL);
-
+        mCurLog.wider_window_used = true;   // [Monitor]
     }
+
+    mCurLog.initial_matches = nmatches;   // [Monitor] projection matches before PoseOpt
 
     if(nmatches<20)
     {
@@ -2953,10 +3308,11 @@ bool Tracking::TrackLocalMap()
     // We retrieve the local map and try to find matches to points in the local map.
     mTrackedFr++;
 
-    UpdateLocalMap();
-    SearchLocalPoints();
+    UpdateLocalMap();// 更新 mvpLocalKeyFrames 和 mvpLocalMapPoints
+    SearchLocalPoints();// 把 local map 中可見的點投影到當前幀，補充匹配
 
-    // TOO check outliers before PO
+    mCurLog.local_map_mp_count = (int)mvpLocalMapPoints.size();   // [Monitor]
+    mCurLog.local_kf_count     = (int)mvpLocalKeyFrames.size();   // [Monitor]
     int aux1 = 0, aux2=0;
     for(int i=0; i<mCurrentFrame.N; i++)
         if( mCurrentFrame.mvpMapPoints[i])
@@ -2966,15 +3322,26 @@ bool Tracking::TrackLocalMap()
                 aux2++;
         }
 
+    mCurLog.matches_before_tlm_opt  = aux1;   // [Monitor]
+    mCurLog.outliers_before_tlm_opt = aux2;    // [Monitor]
+
+    const Sophus::SE3f TcwBefore = mCurrentFrame.GetPose();
+    const Eigen::Vector3f velBefore = mCurrentFrame.GetVelocity();
+    const IMU::Bias biasBefore = mCurrentFrame.mImuBias;
+
     int inliers;
     if (!mpAtlas->isImuInitialized())
-        Optimizer::PoseOptimization(&mCurrentFrame);
+    {
+        Optimizer::PoseOptimization(&mCurrentFrame);//純視覺優化
+        mCurLog.opt_type = 0;   // [Monitor]
+    }
     else
     {
         if(mCurrentFrame.mnId<=mnLastRelocFrameId+mnFramesToResetIMU)
         {
             Verbose::PrintMess("TLM: PoseOptimization ", Verbose::VERBOSITY_DEBUG);
-            Optimizer::PoseOptimization(&mCurrentFrame);
+            Optimizer::PoseOptimization(&mCurrentFrame);//純視覺優化(不考慮IMU)，因為剛重定位完，IMU狀態不可靠)
+            mCurLog.opt_type = 0;   // [Monitor]
         }
         else
         {
@@ -2982,24 +3349,67 @@ bool Tracking::TrackLocalMap()
             if(!mbMapUpdated) //  && (mnMatchesInliers>30))
             {
                 Verbose::PrintMess("TLM: PoseInertialOptimizationLastFrame ", Verbose::VERBOSITY_DEBUG);
-                inliers = Optimizer::PoseInertialOptimizationLastFrame(&mCurrentFrame); // , !mpLastKeyFrame->GetMap()->GetIniertialBA1());
+                Optimizer::InertialResidualStats inertialStats;
+                inliers = Optimizer::PoseInertialOptimizationLastFrame(&mCurrentFrame, false, &inertialStats); // , !mpLastKeyFrame->GetMap()->GetIniertialBA1());
+                mCurLog.opt_type = 1;   // [Monitor]
+                mCurLog.visual_chi2_mean = inertialStats.visual_chi2_mean;
+                mCurLog.visual_chi2_max  = inertialStats.visual_chi2_max;
+                mCurLog.imu_chi2_mean    = inertialStats.chi2_mean;
+                mCurLog.imu_chi2_max     = inertialStats.chi2_max;
+                mCurLog.imu_rot_res_norm = inertialStats.rot_norm;
+                mCurLog.imu_vel_res_norm = inertialStats.vel_norm;
+                mCurLog.imu_pos_res_norm = inertialStats.pos_norm;
+                mCurLog.gyro_rw_chi2     = inertialStats.gyro_rw_chi2;
+                mCurLog.acc_rw_chi2      = inertialStats.acc_rw_chi2;
             }
             else
             {
                 Verbose::PrintMess("TLM: PoseInertialOptimizationLastKeyFrame ", Verbose::VERBOSITY_DEBUG);
-                inliers = Optimizer::PoseInertialOptimizationLastKeyFrame(&mCurrentFrame); // , !mpLastKeyFrame->GetMap()->GetIniertialBA1());
+                Optimizer::InertialResidualStats inertialStats;
+                inliers = Optimizer::PoseInertialOptimizationLastKeyFrame(&mCurrentFrame, false, &inertialStats); // , !mpLastKeyFrame->GetMap()->GetIniertialBA1());
+                mCurLog.opt_type = 2;   // [Monitor]
+                mCurLog.visual_chi2_mean = inertialStats.visual_chi2_mean;
+                mCurLog.visual_chi2_max  = inertialStats.visual_chi2_max;
+                mCurLog.imu_chi2_mean    = inertialStats.chi2_mean;
+                mCurLog.imu_chi2_max     = inertialStats.chi2_max;
+                mCurLog.imu_rot_res_norm = inertialStats.rot_norm;
+                mCurLog.imu_vel_res_norm = inertialStats.vel_norm;
+                mCurLog.imu_pos_res_norm = inertialStats.pos_norm;
+                mCurLog.gyro_rw_chi2     = inertialStats.gyro_rw_chi2;
+                mCurLog.acc_rw_chi2      = inertialStats.acc_rw_chi2;
             }
         }
     }
+
+    const Sophus::SE3f TcwAfter = mCurrentFrame.GetPose();
+    const Eigen::Vector3f velAfter = mCurrentFrame.GetVelocity();
+    const IMU::Bias &biasAfter = mCurrentFrame.mImuBias;
+    mCurLog.pose_update_norm = (TcwAfter.translation() - TcwBefore.translation()).norm();
+    mCurLog.velocity_update_norm = (velAfter - velBefore).norm();
+    const double dbax = biasAfter.bax - biasBefore.bax;
+    const double dbay = biasAfter.bay - biasBefore.bay;
+    const double dbaz = biasAfter.baz - biasBefore.baz;
+    const double dbwx = biasAfter.bwx - biasBefore.bwx;
+    const double dbwy = biasAfter.bwy - biasBefore.bwy;
+    const double dbwz = biasAfter.bwz - biasBefore.bwz;
+    mCurLog.bias_update_norm = std::sqrt(dbax*dbax + dbay*dbay + dbaz*dbaz +
+                                         dbwx*dbwx + dbwy*dbwy + dbwz*dbwz);
 
     aux1 = 0, aux2 = 0;
     for(int i=0; i<mCurrentFrame.N; i++)
         if( mCurrentFrame.mvpMapPoints[i])
         {
-            aux1++;
+            // aux1++;
+            // if(mCurrentFrame.mvbOutlier[i])
+            //     aux2++;
             if(mCurrentFrame.mvbOutlier[i])
                 aux2++;
+            else
+                aux1++;   // only count non-outliers
         }
+
+    mCurLog.matches_after_tlm_opt  = aux1;   // [Monitor]
+    mCurLog.outliers_after_tlm_opt = aux2;   // [Monitor]
 
     mnMatchesInliers = 0;
 
@@ -3251,8 +3661,10 @@ void Tracking::CreateNewKeyFrame()
         // We sort points by the measured depth by the stereo/RGBD sensor.
         // We create all those MapPoints whose depth < mThDepth.
         // If there are less than 100 close points we create the 100 closest.
+        // int maxPoint = 100;//開關maxPoint
         int maxPoint = 100;
         if(mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
+            // maxPoint = 100;//開關maxPoint
             maxPoint = 100;
 
         vector<pair<float,int> > vDepthIdx;
@@ -3312,6 +3724,8 @@ void Tracking::CreateNewKeyFrame()
                     pKF->AddMapPoint(pNewMP,i);
                     pNewMP->ComputeDistinctiveDescriptors();
                     pNewMP->UpdateNormalAndDepth();
+                    if(i < (int)mCurrentFrame.mvGrayValues.size())
+                        pNewMP->mGray = mCurrentFrame.mvGrayValues[i];
                     mpAtlas->AddMapPoint(pNewMP);
 
                     mCurrentFrame.mvpMapPoints[i]=pNewMP;
@@ -3622,6 +4036,7 @@ bool Tracking::Relocalization()
     }
 
     const int nKFs = vpCandidateKFs.size();
+    mCurLog.reloc_candidates = nKFs;   // [Monitor]
 
     // We perform first an ORB matching with each candidate
     // If enough matches are found we setup a PnP solver
@@ -3661,7 +4076,7 @@ bool Tracking::Relocalization()
         }
     }
 
-    // Alternatively perform some iterations of P4P RANSAC
+    mCurLog.reloc_bow_pass = nCandidates;   // [Monitor] candidates that passed BoW match
     // Until we found a camera pose supported by enough inliers
     bool bMatch = false;
     ORBmatcher matcher2(0.9,true);
@@ -3756,6 +4171,7 @@ bool Tracking::Relocalization()
                 // If the pose is supported by enough inliers stop ransacs and continue
                 if(nGood>=50)
                 {
+                    mCurLog.reloc_pnp_inliers = nGood;   // [Monitor]
                     bMatch = true;
                     break;
                 }
@@ -4064,6 +4480,7 @@ int Tracking::GetMatchesInliers()
 {
     return mnMatchesInliers;
 }
+
 
 void Tracking::SaveSubTrajectory(string strNameFile_frames, string strNameFile_kf, string strFolder)
 {

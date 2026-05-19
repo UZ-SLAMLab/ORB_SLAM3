@@ -45,8 +45,8 @@ Camera.width: 512
 Camera.height: 512
 
 # Lapping area between images
-Camera.overlappingBegin: 0
-Camera.overlappingEnd: 511
+Camera1.overlappingBegin: 0
+Camera1.overlappingEnd: 511
 
 Camera2.overlappingBegin: 0
 Camera2.overlappingEnd: 511

@@ -27,6 +27,10 @@
 
 #include<mutex>
 #include<thread>
+#include<chrono>
+#include<iomanip>
+#include<algorithm>
+#include<cmath>
 
 
 namespace ORB_SLAM3
@@ -74,6 +78,26 @@ LoopClosing::LoopClosing(Atlas *pAtlas, KeyFrameDatabase *pDB, ORBVocabulary *pV
     mstrFolderSubTraj = "SubTrajectories/";
     mnNumCorrection = 0;
     mnCorrectionGBA = 0;
+
+    // Open loop-closing CSV log
+    mLcCsv.open("loop_closing_log.csv");
+    if(mLcCsv.is_open())
+    {
+        mLcCsv << "event_type,status,timestamp,current_kf_id,matched_kf_id,"
+                  "bow_candidates,max_bow_matches,sim3_ransac_inliers,"
+                  "proj_matches_coarse,sim3_opt_inliers,proj_matches_fine,coincidences,"
+                  "sim3_scale,rot_x,rot_y,rot_z,rot_w,"
+                  "trans_x,trans_y,trans_z,"
+                  "inliers,reprojection_error,"
+                  "detection_ms,optimization_ms,scale_delta,"
+                  "source,rel_time_s,track_frame_id,map_id,loop_detected,merge_detected,"
+                  "gba_started,gba_finished,num_corrected_kfs,sim3_correction_trans_norm,"
+                  "sim3_correction_rot_deg,gba_time_ms,merge_time_ms,loop_time_ms\n";
+    }
+    else
+    {
+        std::cerr << "[LoopClosing] WARNING: cannot open loop_closing_log.csv\n";
+    }
 }
 
 void LoopClosing::SetTracker(Tracking *pTracker)
@@ -87,29 +111,141 @@ void LoopClosing::SetLocalMapper(LocalMapping *pLocalMapper)
 }
 
 
+// ── CSV helper ─────────────────────────────────────────────────────────────────
+void LoopClosing::WriteLoopLog(const std::string&     event_type,
+                               const std::string&     status,
+                               double                 timestamp,
+                               long unsigned int      current_kf_id,
+                               long long int          matched_kf_id,
+                               const LcPipelineStats& stats,
+                               const g2o::Sim3&       sim3,
+                               int                    inliers,
+                               double                 reprojection_error,
+                               double                 detection_ms,
+                               double                 optimization_ms)
+{
+    unique_lock<std::mutex> lock(mMutexLcCsv);
+    if(!mLcCsv.is_open()) return;
+
+    double scale       = sim3.scale();
+    Eigen::Quaterniond q = sim3.rotation();
+    Eigen::Vector3d    t = sim3.translation();
+    double scale_delta = scale - 1.0;
+    if(mLcFirstTimestamp < 0.0)
+        mLcFirstTimestamp = timestamp;
+    const double rel_time_s = timestamp - mLcFirstTimestamp;
+    const long unsigned int track_frame_id = mpCurrentKF ? mpCurrentKF->mnFrameId : 0;
+    Map* pCurrentMap = mpCurrentKF ? mpCurrentKF->GetMap() : static_cast<Map*>(NULL);
+    const long unsigned int map_id = pCurrentMap ? pCurrentMap->GetId() : 0;
+    const bool loop_event = (event_type == "LOOP_DETECTED" ||
+                             event_type == "LOOP_CLOSED" ||
+                             event_type == "LOOP_CLOSURE");
+    const bool merge_event = (event_type == "MAP_MERGE");
+    const bool gba_started = (event_type == "GBA_STARTED");
+    const bool gba_finished = (event_type == "GBA_FINISHED");
+    int num_corrected_kfs = -1;
+    if((event_type == "LOOP_CLOSED" || merge_event) && status == "SUCCESS")
+        num_corrected_kfs = mCsvLastCorrectedKFs;
+    else if(gba_started || gba_finished)
+        num_corrected_kfs = inliers;
+    const double qw_abs = std::min(1.0, std::max(-1.0, std::fabs(q.w())));
+    const double rot_deg = 2.0 * std::acos(qw_abs) * 180.0 / 3.14159265358979323846;
+    double merge_time_ms = -1.0;
+    double loop_time_ms = -1.0;
+    double gba_time_ms = -1.0;
+    if(merge_event)
+        merge_time_ms = optimization_ms;
+    else if(loop_event)
+        loop_time_ms = optimization_ms;
+    else if(gba_started || gba_finished)
+        gba_time_ms = optimization_ms;
+
+    mLcCsv << std::fixed << std::setprecision(6)
+           << event_type               << ","
+           << status                   << ","
+           << timestamp                << ","
+           << current_kf_id            << ",";
+    if(matched_kf_id >= 0)
+        mLcCsv << (long unsigned int)matched_kf_id;
+    mLcCsv << ","
+           << stats.bow_candidates      << ","
+           << stats.max_bow_matches     << ","
+           << stats.sim3_ransac_inliers << ","
+           << stats.proj_matches_coarse << ","
+           << stats.sim3_opt_inliers    << ","
+           << stats.proj_matches_fine   << ","
+           << stats.coincidences        << ","
+           << scale               << ","
+           << q.x()               << ","
+           << q.y()               << ","
+           << q.z()               << ","
+           << q.w()               << ","
+           << t.x()               << ","
+           << t.y()               << ","
+           << t.z()               << ","
+           << inliers             << ","
+           << reprojection_error  << ","
+           << std::setprecision(3)
+           << detection_ms        << ","
+           << optimization_ms     << ","
+           << std::setprecision(6)
+           << scale_delta         << ","
+           << "LoopClosing"       << ","
+           << rel_time_s          << ","
+           << track_frame_id      << ","
+           << map_id              << ","
+           << (loop_event ? "yes" : "no")     << ","
+           << (merge_event ? "yes" : "no")    << ","
+           << (gba_started ? "yes" : "no")    << ","
+           << (gba_finished ? "yes" : "no")   << ","
+           << num_corrected_kfs  << ","
+           << t.norm()           << ","
+           << rot_deg            << ","
+           << gba_time_ms        << ","
+           << merge_time_ms      << ","
+           << loop_time_ms       << "\n";
+    mLcCsv.flush();
+}
+// ─────────────────────────────────────────────────────────────────────────
+
 void LoopClosing::Run()
 {
-    mbFinished =false;
+    mbFinished =false;//讓其他人知道LoopClosing正在運行
 
-    while(1)
+    while(1)//常駐背景執行緒
     {
 
         //NEW LOOP AND MERGE DETECTION ALGORITHM
         //----------------------------
 
 
-        if(CheckNewKeyFrames())
+        if(CheckNewKeyFrames())//清理舊的關鍵幀（KeyFrame）所暫存的迴圈檢測候選名單
         {
-            if(mpLastCurrentKF)
+            if(mpLastCurrentKF)//當新的關鍵幀被加入地圖時，原本的 CurrentKF 會變成 LastCurrentKF。
             {
-                mpLastCurrentKF->mvpLoopCandKFs.clear();
-                mpLastCurrentKF->mvpMergeCandKFs.clear();
+                mpLastCurrentKF->mvpLoopCandKFs.clear();//清空該關鍵幀中儲存的「迴圈檢測候選關鍵幀（Loop Closure Candidate KeyFrames）」列表。 
+                mpLastCurrentKF->mvpMergeCandKFs.clear();//清空該關鍵幀中儲存的「合併候選關鍵幀（Merge Candidate KeyFrames）」列表。    
             }
 #ifdef REGISTER_TIMES
             std::chrono::steady_clock::time_point time_StartPR = std::chrono::steady_clock::now();
 #endif
+            // ── detection timing ──
+            auto csv_det_t0 = std::chrono::steady_clock::now();
 
-            bool bFindedRegion = NewDetectCommonRegions();
+            bool bFindedRegion = NewDetectCommonRegions();//呼叫 NewDetectCommonRegions() 做 place recognition + 幾何驗證，回傳 bFindedRegion
+            double csv_detection_ms = std::chrono::duration_cast<std::chrono::duration<double,std::milli>>(
+                std::chrono::steady_clock::now() - csv_det_t0).count();
+
+            // Log every KF that passes through LoopClosing
+            {
+                LcPipelineStats kfStats = mLastLoopDetStats;
+                kfStats.coincidences = mnLoopNumCoincidences;
+                g2o::Sim3 zeroSim3;
+                WriteLoopLog("KF_PROCESSED",
+                             bFindedRegion ? "DETECTED" : "NOT_DETECTED",
+                             mpCurrentKF->mTimeStamp, mpCurrentKF->mnId, -1LL,
+                             kfStats, zeroSim3, 0, -1.0, csv_detection_ms, 0.0);
+            }
 
 #ifdef REGISTER_TIMES
             std::chrono::steady_clock::time_point time_EndPR = std::chrono::steady_clock::now();
@@ -117,55 +253,63 @@ void LoopClosing::Run()
             double timePRTotal = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndPR - time_StartPR).count();
             vdPRTotal_ms.push_back(timePRTotal);
 #endif
-            if(bFindedRegion)
+            if(bFindedRegion)//Map Merging Phase
             {
                 if(mbMergeDetected)
                 {
                     if ((mpTracker->mSensor==System::IMU_MONOCULAR || mpTracker->mSensor==System::IMU_STEREO || mpTracker->mSensor==System::IMU_RGBD) &&
                         (!mpCurrentKF->GetMap()->isImuInitialized()))
                     {
-                        cout << "IMU is not initilized, merge is aborted" << endl;
+                        cout << "IMU is not initilized, merge is aborted" << endl;//IMU 模式但 map 尚未 IMU 初始化，直接中止 merge
                     }
                     else
                     {
-                        Sophus::SE3d mTmw = mpMergeMatchedKF->GetPose().cast<double>();
-                        g2o::Sim3 gSmw2(mTmw.unit_quaternion(), mTmw.translation(), 1.0);
-                        Sophus::SE3d mTcw = mpCurrentKF->GetPose().cast<double>();
-                        g2o::Sim3 gScw1(mTcw.unit_quaternion(), mTcw.translation(), 1.0);
-                        g2o::Sim3 gSw2c = mg2oMergeSlw.inverse();
+                        Sophus::SE3d mTmw = mpMergeMatchedKF->GetPose().cast<double>();//取得被匹配的關鍵幀（MatchedKF）的位姿，並將其轉換為 Sophus::SE3d 類型，存儲在 mTmw 變數中。
+                        g2o::Sim3 gSmw2(mTmw.unit_quaternion(), mTmw.translation(), 1.0);//把 SE3 轉成 Sim3，scale 先固定 1.0。
+                        Sophus::SE3d mTcw = mpCurrentKF->GetPose().cast<double>();//取得當前關鍵幀（CurrentKF）的位姿，並將其轉換為 Sophus::SE3d 類型，存儲在 mTcw 變數中。
+                        g2o::Sim3 gScw1(mTcw.unit_quaternion(), mTcw.translation(), 1.0);//把 SE3 轉成 Sim3，scale 先固定 1.0。
+                        g2o::Sim3 gSw2c = mg2oMergeSlw.inverse();//對 mg2oMergeSlw 進行 逆變換， mg2oMergeSlw 代表把來源地圖的點投影到世界地圖
                         g2o::Sim3 gSw1m = mg2oMergeSlw;
 
-                        mSold_new = (gSw2c * gScw1);
+                        mSold_new = (gSw2c * gScw1);//把 current KF 映到 merge 座標去
 
-
-                        if(mpCurrentKF->GetMap()->IsInertial() && mpMergeMatchedKF->GetMap()->IsInertial())
+                        //Map Merging）過程中最關鍵的「安全性檢查與約束」機制。
+                        if(mpCurrentKF->GetMap()->IsInertial() && mpMergeMatchedKF->GetMap()->IsInertial())//只有當「目前的關鍵幀地圖」與「被匹配到的來源地圖」**兩者都啟用了 IMU 模式（Inertial Mode）**時，才會執行後續的嚴格檢查。   
                         {
                             cout << "Merge check transformation with IMU" << endl;
-                            if(mSold_new.scale()<0.90||mSold_new.scale()>1.1){
+                            if(mSold_new.scale()<0.90||mSold_new.scale()>1.1){//尺度一致性檢查
                                 mpMergeLastCurrentKF->SetErase();
                                 mpMergeMatchedKF->SetErase();
-                                mnMergeNumCoincidences = 0;
+                                mnMergeNumCoincidences = 0;//BoW path
                                 mvpMergeMatchedMPs.clear();
                                 mvpMergeMPs.clear();
                                 mnMergeNumNotFound = 0;
                                 mbMergeDetected = false;
                                 Verbose::PrintMess("scale bad estimated. Abort merging", Verbose::VERBOSITY_NORMAL);
-                                continue;
+                                WriteLoopLog("MAP_MERGE", "FAILED",
+                                             mpCurrentKF->mTimeStamp,
+                                             mpCurrentKF->mnId,
+                                             (long long int)mpMergeMatchedKF->mnId,
+                                             mLastMergeDetStats,
+                                             mSold_new,
+                                             mnMergeNumCoincidences, -1.0,
+                                             csv_detection_ms, 0.0);
+                                continue;//使用 continue 直接放棄本次合併嘗試，回到迴圈開頭尋找下一個機會。
                             }
-                            // If inertial, force only yaw
+                            // If inertial, force only yaw 旋轉約束 —— 利用重力向量 強迫系統只允許「水平面內的旋轉」，這能極大地過濾掉那些雖然視覺相似但空間姿態（傾斜角度）完全錯誤的誤匹配。 
                             if ((mpTracker->mSensor==System::IMU_MONOCULAR || mpTracker->mSensor==System::IMU_STEREO || mpTracker->mSensor==System::IMU_RGBD) &&
                                    mpCurrentKF->GetMap()->GetIniertialBA1())
                             {
-                                Eigen::Vector3d phi = LogSO3(mSold_new.rotation().toRotationMatrix());
-                                phi(0)=0;
-                                phi(1)=0;
-                                mSold_new = g2o::Sim3(ExpSO3(phi),mSold_new.translation(),1.0);
+                                Eigen::Vector3d phi = LogSO3(mSold_new.rotation().toRotationMatrix());//把旋轉矩陣轉換成對應的李代數向量，存儲在 phi 變數中。這個向量包含了繞 x、y、z 軸的旋轉分量。
+                                phi(0)=0;//鎖死 Roll 
+                                phi(1)=0;//鎖死 Pitch
+                                mSold_new = g2o::Sim3(ExpSO3(phi),mSold_new.translation(),1.0);//根據修改後的 phi 向量重新構造一個新的 Sim3 物件，並將其賦值回 mSold_new。這樣就實現了只保留 Yaw 旋轉分量的約束。
                             }
                         }
 
-                        mg2oMergeSmw = gSmw2 * gSw2c * gScw1;
+                        mg2oMergeSmw = gSmw2 * gSw2c * gScw1;//把被匹配的 KF 映到 merge 座標去
 
-                        mg2oMergeScw = mg2oMergeSlw;
+                        mg2oMergeScw = mg2oMergeSlw;//把 current KF 映到 merge 座標去
 
                         //mpTracker->SetStepByStep(true);
 
@@ -176,11 +320,24 @@ void LoopClosing::Run()
 
                         nMerges += 1;
 #endif
+                        auto csv_merge_t0 = std::chrono::steady_clock::now();
+                        mCsvLastCorrectedKFs = -1;
                         // TODO UNCOMMENT
                         if (mpTracker->mSensor==System::IMU_MONOCULAR ||mpTracker->mSensor==System::IMU_STEREO || mpTracker->mSensor==System::IMU_RGBD)
-                            MergeLocal2();
+                            MergeLocal2();//針對「慣性模態 (Inertial Mode)」 地圖合併不僅要對齊旋轉（Rotation）和平移（Translation），還必須處理尺度因子 (Scale Factor)。
                         else
-                            MergeLocal();
+                            MergeLocal();//針對「純視覺模態 (Visual-Only Mode)」
+                        double csv_merge_ms = std::chrono::duration_cast<std::chrono::duration<double,std::milli>>(
+                            std::chrono::steady_clock::now() - csv_merge_t0).count();
+
+                        WriteLoopLog("MAP_MERGE", "SUCCESS",
+                                     mpCurrentKF->mTimeStamp,
+                                     mpCurrentKF->mnId,
+                                     (long long int)mpMergeMatchedKF->mnId,
+                                     mLastMergeDetStats,
+                                     mg2oMergeScw,
+                                     mnMergeNumCoincidences, -1.0,
+                                     csv_detection_ms, csv_merge_ms);
 
 #ifdef REGISTER_TIMES
                         std::chrono::steady_clock::time_point time_EndMerge = std::chrono::steady_clock::now();
@@ -192,9 +349,9 @@ void LoopClosing::Run()
                         Verbose::PrintMess("Merge finished!", Verbose::VERBOSITY_QUIET);
                     }
 
-                    vdPR_CurrentTime.push_back(mpCurrentKF->mTimeStamp);
-                    vdPR_MatchedTime.push_back(mpMergeMatchedKF->mTimeStamp);
-                    vnPR_TypeRecogn.push_back(1);
+                    vdPR_CurrentTime.push_back(mpCurrentKF->mTimeStamp);//將當前關鍵幀的時間戳記添加到 vdPR_CurrentTime 向量中，這個向量用於記錄所有通過 LoopClosing 處理的關鍵幀的時間戳。
+                    vdPR_MatchedTime.push_back(mpMergeMatchedKF->mTimeStamp);//將被匹配的關鍵幀（MatchedKF）的時間戳記添加到 vdPR_MatchedTime 向量中，這個向量用於記錄所有被匹配到的關鍵幀的時間戳。
+                    vnPR_TypeRecogn.push_back(1);//將整數 1 添加到 vnPR_TypeRecogn 向量中，這個向量用於記錄每次 place recognition 的類型，1 代表這是一個「地圖合併 (Map Merge)」的事件。
 
                     // Reset all variables
                     mpMergeLastCurrentKF->SetErase();
@@ -221,15 +378,15 @@ void LoopClosing::Run()
 
                 if(mbLoopDetected)
                 {
-                    bool bGoodLoop = true;
-                    vdPR_CurrentTime.push_back(mpCurrentKF->mTimeStamp);
-                    vdPR_MatchedTime.push_back(mpLoopMatchedKF->mTimeStamp);
-                    vnPR_TypeRecogn.push_back(0);
+                    bool bGoodLoop = true;//設定一個預設標記，假設檢測結果是好的，除非後續檢查失敗。
+                    vdPR_CurrentTime.push_back(mpCurrentKF->mTimeStamp);//將當前關鍵幀的時間戳記添加到 vdPR_CurrentTime 向量中，這個向量用於記錄所有通過 LoopClosing 處理的關鍵幀的時間戳。
+                    vdPR_MatchedTime.push_back(mpLoopMatchedKF->mTimeStamp);//將被匹配的關鍵幀（MatchedKF）的時間戳記添加到 vdPR_MatchedTime 向量中，這個向量用於記錄所有被匹配到的關鍵幀的時間戳。
+                    vnPR_TypeRecogn.push_back(0);//將整數 0 添加到 vnPR_TypeRecogn 向量中，這個向量用於記錄每次 place recognition 的類型，0 代表這是一個「迴圈檢測 (Loop Closure)」的事件。
 
                     Verbose::PrintMess("*Loop detected", Verbose::VERBOSITY_QUIET);
 
-                    mg2oLoopScw = mg2oLoopSlw; //*mvg2oSim3LoopTcw[nCurrentIndex];
-                    if(mpCurrentKF->GetMap()->IsInertial())
+                    mg2oLoopScw = mg2oLoopSlw; //*mvg2oSim3LoopTcw[nCurrentIndex]; 將迴圈檢測得到的變換矩陣（從 Source 到 World）賦值給優化器使用的變數。
+                    if(mpCurrentKF->GetMap()->IsInertial())//如果當前關鍵幀所在的地圖啟用了慣性模態（Inertial Mode），則進行額外的檢查和處理，以確保迴圈檢測的結果在慣性約束下是合理的。
                     {
                         Sophus::SE3d Twc = mpCurrentKF->GetPoseInverse().cast<double>();
                         g2o::Sim3 g2oTwc(Twc.unit_quaternion(),Twc.translation(),1.0);
@@ -237,7 +394,7 @@ void LoopClosing::Run()
 
                         Eigen::Vector3d phi = LogSO3(g2oSww_new.rotation().toRotationMatrix());
                         cout << "phi = " << phi.transpose() << endl; 
-                        if (fabs(phi(0))<0.008f && fabs(phi(1))<0.008f && fabs(phi(2))<0.349f)
+                        if (fabs(phi(0))<0.008f && fabs(phi(1))<0.008f && fabs(phi(2))<0.349f)//這是在檢查旋轉軸是否發生了不合理的翻轉。
                         {
                             if(mpCurrentKF->GetMap()->IsInertial())
                             {
@@ -257,13 +414,21 @@ void LoopClosing::Run()
                         {
                             cout << "BAD LOOP!!!" << endl;
                             bGoodLoop = false;
+                            WriteLoopLog("LOOP_DETECTED", "FAILED",
+                                         mpCurrentKF->mTimeStamp,
+                                         mpCurrentKF->mnId,
+                                         (long long int)mpLoopMatchedKF->mnId,
+                                         mLastLoopDetStats,
+                                         mg2oLoopScw,
+                                         mnLoopNumCoincidences, -1.0,
+                                         csv_detection_ms, 0.0);
                         }
 
                     }
 
-                    if (bGoodLoop) {
+                    if (bGoodLoop) {//如果通過了上述所有檢查（包括尺度檢查和旋轉檢查），則認為這是一個有效的迴圈檢測結果，可以進行後續的優化和地圖校正。
 
-                        mvpLoopMapPoints = mvpLoopMPs;
+                        mvpLoopMapPoints = mvpLoopMPs;//將迴圈檢測中找到的匹配地圖點（Matched MapPoints）列表賦值給 mvpLoopMapPoints，這個列表將在後續的優化過程中使用。
 
 #ifdef REGISTER_TIMES
                         std::chrono::steady_clock::time_point time_StartLoop = std::chrono::steady_clock::now();
@@ -271,7 +436,25 @@ void LoopClosing::Run()
                         nLoop += 1;
 
 #endif
-                        CorrectLoop();
+                        auto csv_loop_t0 = std::chrono::steady_clock::now();
+                        mCsvLastCorrectedKFs = -1;
+                        CorrectLoop();//執行迴圈校正（Loop Correction），這個函數會根據檢測到的迴圈變換對地圖進行全局優化，修正整個地圖的結構以消除累積誤差。
+                        double csv_loop_ms = std::chrono::duration_cast<std::chrono::duration<double,std::milli>>(
+                            std::chrono::steady_clock::now() - csv_loop_t0).count();
+
+                        double loop_scale = mg2oLoopScw.scale();
+                        double scale_error = fabs(1.0 - loop_scale);
+                        cout << "[LoopClosing] Scale error: " << scale_error
+                             << " (scale factor: " << loop_scale << ")" << endl;
+
+                        WriteLoopLog("LOOP_CLOSED", "SUCCESS",
+                                     mpCurrentKF->mTimeStamp,
+                                     mpCurrentKF->mnId,
+                                     (long long int)mpLoopMatchedKF->mnId,
+                                     mLastLoopDetStats,
+                                     mg2oLoopScw,
+                                     mnLoopNumCoincidences, -1.0,
+                                     csv_detection_ms, csv_loop_ms);
 #ifdef REGISTER_TIMES
                         std::chrono::steady_clock::time_point time_EndLoop = std::chrono::steady_clock::now();
 
@@ -305,7 +488,7 @@ void LoopClosing::Run()
         usleep(5000);
     }
 
-    SetFinish();
+    SetFinish();//讓其他人知道 LoopClosing 已經結束運行
 }
 
 void LoopClosing::InsertKeyFrame(KeyFrame *pKF)
@@ -345,6 +528,10 @@ bool LoopClosing::NewDetectCommonRegions()
         return false;
     }
 
+    // Reset per-KF detection stats
+    mLastLoopDetStats  = LcPipelineStats{};
+    mLastMergeDetStats = LcPipelineStats{};
+    //如果關鍵幀數量太少（例如 Stereo 模式下小於 5 幀，或一般情況小於 12 幀）
     if(mpTracker->mSensor == System::STEREO && mpLastMap->GetAllKeyFrames().size() < 5) //12
     {
         // cout << "LoopClousure: Stereo KF inserted without check: " << mpCurrentKF->mnId << endl;
@@ -371,7 +558,8 @@ bool LoopClosing::NewDetectCommonRegions()
 #ifdef REGISTER_TIMES
     std::chrono::steady_clock::time_point time_StartEstSim3_1 = std::chrono::steady_clock::now();
 #endif
-    if(mnLoopNumCoincidences > 0)
+    //第一階段：基於「幾何連續性」的精細檢測 (Geometric Continuity Check)
+    if(mnLoopNumCoincidences > 0)//上一幀已經發現了一些潛在的匹配點 Loop Refine Path
     {
         bCheckSpatial = true;
         // Find from the last KF candidates
@@ -380,7 +568,7 @@ bool LoopClosing::NewDetectCommonRegions()
         g2o::Sim3 gScw = gScl * mg2oLoopSlw;
         int numProjMatches = 0;
         vector<MapPoint*> vpMatchedMPs;
-        bool bCommonRegion = DetectAndReffineSim3FromLastKF(mpCurrentKF, mpLoopMatchedKF, gScw, numProjMatches, mvpLoopMPs, vpMatchedMPs);
+        bool bCommonRegion = DetectAndReffineSim3FromLastKF(mpCurrentKF, mpLoopMatchedKF, gScw, numProjMatches, mvpLoopMPs, vpMatchedMPs);//利用前一幀的匹配點作為種子，在當前幀進行幾何驗證與精細化
         if(bCommonRegion)
         {
 
@@ -402,11 +590,11 @@ bool LoopClosing::NewDetectCommonRegions()
             }
         }
         else
-        {
+        {//第二階段：基於「Bag-of-Words (BoW)」的全局檢索 (Global Retrieval)
             bLoopDetectedInKF = false;
 
             mnLoopNumNotFound++;
-            if(mnLoopNumNotFound >= 2)
+            if(mnLoopNumNotFound >= 2)//如果連續兩幀都無法在幾何上驗證出匹配點，則認為之前的匹配結果可能是誤匹配，重置相關變數以重新開始檢測。
             {
                 mpLoopLastCurrentKF->SetErase();
                 mpLoopMatchedKF->SetErase();
@@ -419,9 +607,9 @@ bool LoopClosing::NewDetectCommonRegions()
         }
     }
 
-    //Merge candidates
+    //Merge candidates 檢查是否可以進行地圖合併
     bool bMergeDetectedInKF = false;
-    if(mnMergeNumCoincidences > 0)
+    if(mnMergeNumCoincidences > 0)//Refine Path 入口
     {
         // Find from the last KF candidates
         Sophus::SE3d mTcl = (mpCurrentKF->GetPose() * mpMergeLastCurrentKF->GetPoseInverse()).cast<double>();
@@ -441,7 +629,7 @@ bool LoopClosing::NewDetectCommonRegions()
             mg2oMergeSlw = gScw;
             mvpMergeMatchedMPs = vpMatchedMPs;
 
-            mbMergeDetected = mnMergeNumCoincidences >= 3;
+            mbMergeDetected = mnMergeNumCoincidences >= 3;//如果連續三幀都能在幾何上驗證出匹配點，則認為這是一個可靠的匹配，可以進行地圖合併。
         }
         else
         {
@@ -449,7 +637,7 @@ bool LoopClosing::NewDetectCommonRegions()
             bMergeDetectedInKF = false;
 
             mnMergeNumNotFound++;
-            if(mnMergeNumNotFound >= 2)
+            if(mnMergeNumNotFound >= 2)//如果連續兩幀都無法在幾何上驗證出匹配點，則認為之前的匹配結果可能是誤匹配，重置相關變數以重新開始檢測。
             {
                 mpMergeLastCurrentKF->SetErase();
                 mpMergeMatchedKF->SetErase();
@@ -473,6 +661,9 @@ bool LoopClosing::NewDetectCommonRegions()
 #ifdef REGISTER_TIMES
         vdEstSim3_ms.push_back(timeEstSim3);
 #endif
+        // Keep coincidences in sync even on the refine-path early return
+        mLastLoopDetStats.coincidences  = mnLoopNumCoincidences;
+        mLastMergeDetStats.coincidences = mnMergeNumCoincidences;
         mpKeyFrameDB->add(mpCurrentKF);
         return true;
     }
@@ -502,14 +693,16 @@ bool LoopClosing::NewDetectCommonRegions()
 #endif
     // Check the BoW candidates if the geometric candidate list is empty
     //Loop candidates
-    if(!bLoopDetectedInKF && !vpLoopBowCand.empty())
+    if(!bLoopDetectedInKF && !vpLoopBowCand.empty())//Loop BoW Path
     {
-        mbLoopDetected = DetectCommonRegionsFromBoW(vpLoopBowCand, mpLoopMatchedKF, mpLoopLastCurrentKF, mg2oLoopSlw, mnLoopNumCoincidences, mvpLoopMPs, mvpLoopMatchedMPs);
+        mbLoopDetected = DetectCommonRegionsFromBoW(vpLoopBowCand, mpLoopMatchedKF, mpLoopLastCurrentKF, mg2oLoopSlw, mnLoopNumCoincidences, mvpLoopMPs, mvpLoopMatchedMPs, mLastLoopDetStats);
+        mLastLoopDetStats.coincidences = mnLoopNumCoincidences;
     }
     // Merge candidates
-    if(!bMergeDetectedInKF && !vpMergeBowCand.empty())
+    if(!bMergeDetectedInKF && !vpMergeBowCand.empty())//BoW Path 入口
     {
-        mbMergeDetected = DetectCommonRegionsFromBoW(vpMergeBowCand, mpMergeMatchedKF, mpMergeLastCurrentKF, mg2oMergeSlw, mnMergeNumCoincidences, mvpMergeMPs, mvpMergeMatchedMPs);
+        mbMergeDetected = DetectCommonRegionsFromBoW(vpMergeBowCand, mpMergeMatchedKF, mpMergeLastCurrentKF, mg2oMergeSlw, mnMergeNumCoincidences, mvpMergeMPs, mvpMergeMatchedMPs, mLastMergeDetStats);
+        mLastMergeDetStats.coincidences = mnMergeNumCoincidences;
     }
 
 #ifdef REGISTER_TIMES
@@ -523,6 +716,8 @@ bool LoopClosing::NewDetectCommonRegions()
 
     if(mbMergeDetected || mbLoopDetected)
     {
+        mLastLoopDetStats.coincidences  = mnLoopNumCoincidences;
+        mLastMergeDetStats.coincidences = mnMergeNumCoincidences;
         return true;
     }
 
@@ -576,13 +771,18 @@ bool LoopClosing::DetectAndReffineSim3FromLastKF(KeyFrame* pCurrentKF, KeyFrame*
 }
 
 bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, KeyFrame* &pMatchedKF2, KeyFrame* &pLastCurrentKF, g2o::Sim3 &g2oScw,
-                                             int &nNumCoincidences, std::vector<MapPoint*> &vpMPs, std::vector<MapPoint*> &vpMatchedMPs)
+                                             int &nNumCoincidences, std::vector<MapPoint*> &vpMPs, std::vector<MapPoint*> &vpMatchedMPs,
+                                             LcPipelineStats &outStats)
 {
+    outStats = LcPipelineStats{};
     int nBoWMatches = 20;
     int nBoWInliers = 15;
     int nSim3Inliers = 20;
     int nProjMatches = 50;
     int nProjOptMatches = 80;
+
+    // Tracking best pipeline performance across all candidates
+    int st_bestBoW = 0, st_bestRansac = 0, st_bestProjC = 0, st_bestOpt = 0, st_bestProjF = 0;
 
     set<KeyFrame*> spConnectedKeyFrames = mpCurrentKF->GetConnectedKeyFrames();
 
@@ -688,6 +888,8 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
 
         //pMostBoWMatchesKF = vpCovKFi[pMostBoWMatchesKF];
 
+        if(nMostBoWNumMatches > st_bestBoW) st_bestBoW = nMostBoWNumMatches;
+
         if(numBoWMatches >= nBoWMatches) // TODO pick a good threshold
         {
             // Geometric validation
@@ -711,6 +913,7 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
 
             if(bConverge)
             {
+                if(nInliers > st_bestRansac) st_bestRansac = nInliers;
                 //std::cout << "Check BoW: SolverSim3 converged" << std::endl;
 
                 //Verbose::PrintMess("BoW guess: Convergende with " + to_string(nInliers) + " geometrical inliers among " + to_string(nBoWInliers) + " BoW matches", Verbose::VERBOSITY_DEBUG);
@@ -755,6 +958,8 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
                 int numProjMatches = matcher.SearchByProjection(mpCurrentKF, mScw, vpMapPoints, vpKeyFrames, vpMatchedMP, vpMatchedKF, 8, 1.5);
                 //cout <<"BoW: " << numProjMatches << " matches between " << vpMapPoints.size() << " points with coarse Sim3" << endl;
 
+                if(numProjMatches > st_bestProjC) st_bestProjC = numProjMatches;
+
                 if(numProjMatches >= nProjMatches)
                 {
                     // Optimize Sim3 transformation with every matches
@@ -766,6 +971,8 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
 
                     int numOptMatches = Optimizer::OptimizeSim3(mpCurrentKF, pKFi, vpMatchedMP, gScm, 10, mbFixScale, mHessian7x7, true);
 
+                    if(numOptMatches > st_bestOpt) st_bestOpt = numOptMatches;
+
                     if(numOptMatches >= nSim3Inliers)
                     {
                         g2o::Sim3 gSmw(pMostBoWMatchesKF->GetRotation().cast<double>(),pMostBoWMatchesKF->GetTranslation().cast<double>(),1.0);
@@ -775,6 +982,8 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
                         vector<MapPoint*> vpMatchedMP;
                         vpMatchedMP.resize(mpCurrentKF->GetMapPointMatches().size(), static_cast<MapPoint*>(NULL));
                         int numProjOptMatches = matcher.SearchByProjection(mpCurrentKF, mScw, vpMapPoints, vpMatchedMP, 5, 1.0);
+
+                        if(numProjOptMatches > st_bestProjF) st_bestProjF = numProjOptMatches;
 
                         if(numProjOptMatches >= nProjOptMatches)
                         {
@@ -866,6 +1075,14 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
         }
         index++;
     }
+
+    // Fill pipeline stats output
+    outStats.bow_candidates      = numCandidates;
+    outStats.max_bow_matches     = st_bestBoW;
+    outStats.sim3_ransac_inliers = st_bestRansac;
+    outStats.proj_matches_coarse = st_bestProjC;
+    outStats.sim3_opt_inliers    = st_bestOpt;
+    outStats.proj_matches_fine   = st_bestProjF;
 
     if(nBestMatchesReproj > 0)
     {
@@ -1133,6 +1350,8 @@ void LoopClosing::CorrectLoop()
         }
         //cout << "LC: end replacing duplicated" << endl;
     }
+
+    mCsvLastCorrectedKFs = static_cast<int>(CorrectedSim3.size());
 
     // Project MapPoints observed in the neighborhood of the loop keyframe
     // into the current keyframe and neighbors using corrected poses.
@@ -1464,6 +1683,8 @@ void LoopClosing::MergeLocal()
         //TODO DEBUG to know which are the KFs that had been moved to the other map
     }
 
+    mCsvLastCorrectedKFs = static_cast<int>(vCorrectedSim3.size());
+
     int numPointsWithCorrection = 0;
 
     //for(MapPoint* pMPi : spLocalWindowMPs)
@@ -1766,7 +1987,7 @@ void LoopClosing::MergeLocal()
         mbRunningGBA = true;
         mbFinishedGBA = false;
         mbStopGBA = false;
-        mpThreadGBA = new thread(&LoopClosing::RunGlobalBundleAdjustment,this, pMergeMap, mpCurrentKF->mnId);
+        mpThreadGBA = new thread(&LoopClosing::RunGlobalBundleAdjustment,this, pMergeMap, mpCurrentKF->mnId);//
     }
 
     mpMergeMatchedKF->AddMergeEdge(mpCurrentKF);
@@ -2050,6 +2271,7 @@ void LoopClosing::MergeLocal2()
     //cout << "start MergeInertialBA" << endl;
     Optimizer::MergeInertialBA(pCurrKF, mpMergeMatchedKF, &bStopFlag, pCurrentMap,CorrectedSim3);
     //cout << "end MergeInertialBA" << endl;
+    mCsvLastCorrectedKFs = static_cast<int>(CorrectedSim3.size());
 
     /*good = pCurrentMap->CheckEssentialGraph();
     if(!good)
@@ -2279,11 +2501,45 @@ void LoopClosing::RunGlobalBundleAdjustment(Map* pActiveMap, unsigned long nLoop
 #endif
 
     const bool bImuInit = pActiveMap->isImuInitialized();
+    auto csv_gba_t0 = std::chrono::steady_clock::now();
+    LcPipelineStats csvGBAStats;
+    g2o::Sim3 csvZeroSim3;
+    double csvGBATimestamp = 0.0;
+    long unsigned int csvGBAKfId = nLoopKF;
+    {
+        const vector<KeyFrame*> vpKFs = pActiveMap->GetAllKeyFrames();
+        for(size_t i=0; i<vpKFs.size(); ++i)
+        {
+            if(vpKFs[i] && vpKFs[i]->mnId == nLoopKF)
+            {
+                csvGBATimestamp = vpKFs[i]->mTimeStamp;
+                csvGBAKfId = vpKFs[i]->mnId;
+                break;
+            }
+        }
+    }
+    if(csvGBATimestamp <= 0.0 && mpCurrentKF)
+        csvGBATimestamp = mpCurrentKF->mTimeStamp;
+
+    WriteLoopLog("GBA_STARTED", "STARTED",
+                 csvGBATimestamp, csvGBAKfId, -1LL,
+                 csvGBAStats, csvZeroSim3,
+                 (int)pActiveMap->KeyFramesInMap(), -1.0,
+                 0.0, 0.0);
 
     if(!bImuInit)
         Optimizer::GlobalBundleAdjustemnt(pActiveMap,10,&mbStopGBA,nLoopKF,false);
     else
         Optimizer::FullInertialBA(pActiveMap,7,false,nLoopKF,&mbStopGBA);
+
+    double csv_gba_ms = std::chrono::duration_cast<std::chrono::duration<double,std::milli>>(
+        std::chrono::steady_clock::now() - csv_gba_t0).count();
+
+    WriteLoopLog("GBA_FINISHED", mbStopGBA ? "ABORTED" : "OPTIMIZED",
+                 csvGBATimestamp, csvGBAKfId, -1LL,
+                 csvGBAStats, csvZeroSim3,
+                 (int)pActiveMap->KeyFramesInMap(), -1.0,
+                 0.0, csv_gba_ms);
 
 #ifdef REGISTER_TIMES
     std::chrono::steady_clock::time_point time_EndGBA = std::chrono::steady_clock::now();
@@ -2525,6 +2781,11 @@ bool LoopClosing::CheckFinish()
 
 void LoopClosing::SetFinish()
 {
+    if(mLcCsv.is_open())
+    {
+        mLcCsv.flush();
+        mLcCsv.close();
+    }
     unique_lock<mutex> lock(mMutexFinish);
     mbFinished = true;
 }

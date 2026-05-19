@@ -1,5 +1,5 @@
 %YAML:1.0
-
+#loopClosing: 0
 #--------------------------------------------------------------------------------------------
 # System config
 #--------------------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ Camera.fps: 20
 Camera.RGB: 1
 
 # Close/Far threshold. Baseline times.
-Stereo.ThDepth: 60.0
+Stereo.ThDepth: 40.0
 Stereo.T_c1_c2: !!opencv-matrix
   rows: 4
   cols: 4

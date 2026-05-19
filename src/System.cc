@@ -23,6 +23,7 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
+#include <sys/stat.h>
 #include <openssl/md5.h>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/string.hpp>
@@ -211,7 +212,16 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     //Initialize the Loop Closing thread and launch
     // mSensor!=MONOCULAR && mSensor!=IMU_MONOCULAR
     mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR, activeLC); // mSensor!=MONOCULAR);
-    mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
+    //mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
+
+
+    // 切換到單線程模式，關閉回環檢測215行
+    if(activeLC)
+        mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
+    else
+        mptLoopClosing = nullptr;
+
+
 
     //Set pointers between threads
     mpTracker->SetLocalMapper(mpLocalMapper);
@@ -530,10 +540,10 @@ void System::Shutdown()
             usleep(5000);
     }*/
 
-    // Wait until all thread have effectively stopped
-    /*while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
+    // Wait until all threads have effectively stopped
+    while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
     {
-        if(!mpLocalMapper->isFinished())
+        /*if(!mpLocalMapper->isFinished())
             cout << "mpLocalMapper is not finished" << endl;*/
         /*if(!mpLoopCloser->isFinished())
             cout << "mpLoopCloser is not finished" << endl;
@@ -542,8 +552,8 @@ void System::Shutdown()
             cout << "break anyway..." << endl;
             break;
         }*/
-        /*usleep(5000);
-    }*/
+        usleep(5000);
+    }
 
     if(!mStrSaveAtlasToFile.empty())
     {
@@ -558,6 +568,9 @@ void System::Shutdown()
     mpTracker->PrintTimeStats();
 #endif
 
+    // Flush and close per-frame CSV log
+    if(mpTracker)
+        mpTracker->CloseFrameLog();
 
 }
 
@@ -1503,6 +1516,98 @@ bool System::LoadAtlas(int type)
         return true;
     }
     return false;
+}
+
+void System::SaveMapPoints(const std::string& filename)
+{
+    // 確保 voxel/ 目錄存在
+    const std::string outDir = "voxel";
+    struct stat st{};
+    if (stat(outDir.c_str(), &st) != 0)
+        mkdir(outDir.c_str(), 0755);
+
+    const std::string outPath = outDir + "/" + filename;
+
+    std::ofstream f(outPath);
+    if (!f.is_open())
+    {
+        std::cerr << "[SaveMapPoints] Cannot open file: " << outPath << std::endl;
+        return;
+    }
+    f << std::fixed;
+
+    int totalPts = 0;
+
+    // ── 第一遍：收集所有有效點，計算 centroid ──
+    struct PtEntry { Eigen::Vector3f pos; unsigned char gray; };
+    std::vector<PtEntry> allPts;
+    for (Map* pMap : mpAtlas->GetAllMaps())
+    {
+        if (!pMap) continue;
+        for (MapPoint* pMP : pMap->GetAllMapPoints())
+        {
+            if (!pMP || pMP->isBad()) continue;
+            allPts.push_back({pMP->GetWorldPos(), pMP->mGray});
+        }
+    }
+
+    if (allPts.empty())
+    {
+        f.close();
+        std::cout << "[SaveMapPoints] No valid points." << std::endl;
+        return;
+    }
+
+    // 計算中位數作為 robust center
+    std::vector<float> xs, ys, zs;
+    xs.reserve(allPts.size()); ys.reserve(allPts.size()); zs.reserve(allPts.size());
+    for (auto& p : allPts) { xs.push_back(p.pos(0)); ys.push_back(p.pos(1)); zs.push_back(p.pos(2)); }
+    auto median = [](std::vector<float>& v) { std::nth_element(v.begin(), v.begin()+v.size()/2, v.end()); return v[v.size()/2]; };
+    float mx = median(xs), my = median(ys), mz = median(zs);
+
+    // 計算到中位數的距離，取 90th percentile 作為閾值
+    std::vector<float> dists;
+    dists.reserve(allPts.size());
+    for (auto& p : allPts)
+    {
+        float dx = p.pos(0)-mx, dy = p.pos(1)-my, dz = p.pos(2)-mz;
+        dists.push_back(dx*dx + dy*dy + dz*dz);
+    }
+    std::vector<float> sortedDists(dists);
+    size_t idx90 = (size_t)(sortedDists.size() * 0.95);
+    std::nth_element(sortedDists.begin(), sortedDists.begin()+idx90, sortedDists.end());
+    float threshold = sortedDists[idx90] * 4.0f;  // 95th percentile 的 4 倍，只濾極端離群點
+
+    // ── 第二遍：過濾離群點並寫入 ──
+    int outliers = 0;
+    for (size_t i = 0; i < allPts.size(); ++i)
+    {
+        if (dists[i] > threshold) { ++outliers; continue; }
+        auto& pos = allPts[i].pos;
+        f << std::setprecision(9)
+          << pos(0) << "," << pos(1) << "," << pos(2) << "," << (int)allPts[i].gray << "\n";
+        ++totalPts;
+    }
+    f.close();
+    std::cout << "[SaveMapPoints] Saved " << totalPts
+              << " points (" << outliers << " outliers removed) to " << outPath << std::endl;
+}
+
+void System::PrintMapPointCount() const
+{
+    int totalPts = 0;
+    for (Map* pMap : mpAtlas->GetAllMaps())
+    {
+        if (!pMap)
+            continue;
+        for (MapPoint* pMP : pMap->GetAllMapPoints())
+        {
+            if (!pMP || pMP->isBad())
+                continue;
+            ++totalPts;
+        }
+    }
+    std::cout << "[MapPoints] Total surviving map points: " << totalPts << std::endl;
 }
 
 string System::CalculateCheckSum(string filename, int type)

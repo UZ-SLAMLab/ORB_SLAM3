@@ -167,6 +167,14 @@ public:
     // See format details at: http://www.cvlibs.net/datasets/kitti/eval_odometry.php
     void SaveTrajectoryKITTI(const string &filename);
 
+    // Export all surviving MapPoints (x,y,z per line) to voxel/<filename>
+    // Call after Shutdown() to ensure thread safety.
+    void SaveMapPoints(const std::string& filename);
+
+    // Print the total number of surviving MapPoints in all maps to stdout.
+    // Call after Shutdown() to ensure thread safety.
+    void PrintMapPointCount() const;
+
     // TODO: Save/Load functions
     // SaveMap(const string &filename);
     // LoadMap(const string &filename);

@@ -20,6 +20,7 @@
 #include "Optimizer.h"
 
 
+#include <algorithm>
 #include <complex>
 
 #include <Eigen/StdVector>
@@ -44,6 +45,154 @@
 
 namespace ORB_SLAM3
 {
+namespace
+{
+void ResetResidualStats(Optimizer::InertialResidualStats* pStats)
+{
+    if(pStats)
+        *pStats = Optimizer::InertialResidualStats();
+}
+
+void FinalizeResidualStats(Optimizer::InertialResidualStats* pStats,
+                           double rot_sum, double vel_sum, double pos_sum,
+                           double gyro_rw_sum, int gyro_rw_count,
+                           double acc_rw_sum, int acc_rw_count)
+{
+    if(!pStats)
+        return;
+
+    if(pStats->count > 0)
+    {
+        pStats->chi2_mean = pStats->chi2_sum / static_cast<double>(pStats->count);
+        pStats->rot_norm = rot_sum / static_cast<double>(pStats->count);
+        pStats->vel_norm = vel_sum / static_cast<double>(pStats->count);
+        pStats->pos_norm = pos_sum / static_cast<double>(pStats->count);
+    }
+
+    if(pStats->visual_count > 0)
+        pStats->visual_chi2_mean = pStats->visual_chi2_sum / static_cast<double>(pStats->visual_count);
+
+    if(gyro_rw_count > 0)
+        pStats->gyro_rw_chi2 = gyro_rw_sum / static_cast<double>(gyro_rw_count);
+    if(acc_rw_count > 0)
+        pStats->acc_rw_chi2 = acc_rw_sum / static_cast<double>(acc_rw_count);
+}
+
+void AccumulateInertialEdge(EdgeInertial* pEdge, Optimizer::InertialResidualStats* pStats,
+                            double &rot_sum, double &vel_sum, double &pos_sum)
+{
+    if(!pStats || !pEdge)
+        return;
+
+    Vector9d err = pEdge->GetErrorVector();
+    const double chi2 = pEdge->chi2();
+    pStats->count++;
+    pStats->chi2_sum += chi2;
+    pStats->chi2_max = (pStats->chi2_max < 0.0) ? chi2 : std::max(pStats->chi2_max, chi2);
+    rot_sum += err.segment<3>(0).norm();
+    vel_sum += err.segment<3>(3).norm();
+    pos_sum += err.segment<3>(6).norm();
+}
+
+template <typename EdgeT>
+void AccumulateVisualEdge(EdgeT* pEdge, Optimizer::InertialResidualStats* pStats)
+{
+    if(!pStats || !pEdge)
+        return;
+
+    pEdge->computeError();
+    const double chi2 = pEdge->chi2();
+    pStats->visual_count++;
+    pStats->visual_chi2_sum += chi2;
+    pStats->visual_chi2_max = (pStats->visual_chi2_max < 0.0) ? chi2 : std::max(pStats->visual_chi2_max, chi2);
+}
+
+void AccumulateGyroRW(EdgeGyroRW* pEdge, double &sum, int &count)
+{
+    if(!pEdge)
+        return;
+    pEdge->computeError();
+    sum += pEdge->chi2();
+    count++;
+}
+
+void AccumulateAccRW(EdgeAccRW* pEdge, double &sum, int &count)
+{
+    if(!pEdge)
+        return;
+    pEdge->computeError();
+    sum += pEdge->chi2();
+    count++;
+}
+
+template <typename EdgeT>
+void AccumulateVisualEdges(const vector<EdgeT*> &edges,
+                           Optimizer::InertialResidualStats* pStats)
+{
+    if(!pStats)
+        return;
+
+    for(size_t i=0, iend=edges.size(); i<iend; ++i)
+        AccumulateVisualEdge(edges[i], pStats);
+}
+
+template <typename EdgeMonoT, typename EdgeStereoT>
+void CollectVisualResidualStats(const vector<EdgeMonoT*> &vpEdgesMono,
+                                const vector<EdgeStereoT*> &vpEdgesStereo,
+                                Optimizer::InertialResidualStats* pStats)
+{
+    if(!pStats)
+        return;
+
+    ResetResidualStats(pStats);
+    AccumulateVisualEdges(vpEdgesMono, pStats);
+    AccumulateVisualEdges(vpEdgesStereo, pStats);
+    FinalizeResidualStats(pStats, 0.0, 0.0, 0.0, 0.0, 0, 0.0, 0);
+}
+
+template <typename EdgeMonoT, typename EdgeBodyT, typename EdgeStereoT>
+void CollectVisualResidualStats(const vector<EdgeMonoT*> &vpEdgesMono,
+                                const vector<EdgeBodyT*> &vpEdgesBody,
+                                const vector<EdgeStereoT*> &vpEdgesStereo,
+                                Optimizer::InertialResidualStats* pStats)
+{
+    if(!pStats)
+        return;
+
+    ResetResidualStats(pStats);
+    AccumulateVisualEdges(vpEdgesMono, pStats);
+    AccumulateVisualEdges(vpEdgesBody, pStats);
+    AccumulateVisualEdges(vpEdgesStereo, pStats);
+    FinalizeResidualStats(pStats, 0.0, 0.0, 0.0, 0.0, 0, 0.0, 0);
+}
+
+void CollectInertialBAResidualStats(const vector<EdgeInertial*> &vei,
+                                    const vector<EdgeGyroRW*> &vegr,
+                                    const vector<EdgeAccRW*> &vear,
+                                    const vector<EdgeMono*> &vpEdgesMono,
+                                    const vector<EdgeStereo*> &vpEdgesStereo,
+                                    Optimizer::InertialResidualStats* pStats)
+{
+    if(!pStats)
+        return;
+
+    ResetResidualStats(pStats);
+    double imu_rot_sum = 0.0, imu_vel_sum = 0.0, imu_pos_sum = 0.0;
+    double gyro_rw_sum = 0.0, acc_rw_sum = 0.0;
+    int gyro_rw_count = 0, acc_rw_count = 0;
+    for(size_t i=0; i<vei.size(); ++i)
+    {
+        AccumulateInertialEdge(vei[i], pStats, imu_rot_sum, imu_vel_sum, imu_pos_sum);
+        AccumulateGyroRW(vegr[i], gyro_rw_sum, gyro_rw_count);
+        AccumulateAccRW(vear[i], acc_rw_sum, acc_rw_count);
+    }
+    AccumulateVisualEdges(vpEdgesMono, pStats);
+    AccumulateVisualEdges(vpEdgesStereo, pStats);
+    FinalizeResidualStats(pStats, imu_rot_sum, imu_vel_sum, imu_pos_sum,
+                          gyro_rw_sum, gyro_rw_count, acc_rw_sum, acc_rw_count);
+}
+}
+
 bool sortByVal(const pair<MapPoint*, int> &a, const pair<MapPoint*, int> &b)
 {
     return (a.second < b.second);
@@ -1113,8 +1262,11 @@ int Optimizer::PoseOptimization(Frame *pFrame)
     return nInitialCorrespondences-nBad;
 }
 
-void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges)
+void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges, int& num_iters, InertialResidualStats* pStats, InertialResidualStats* pStatsBefore)
 {
+    ResetResidualStats(pStats);
+    ResetResidualStats(pStatsBefore);
+
     // Local KeyFrames: First Breath Search from Current Keyframe
     list<KeyFrame*> lLocalKeyFrames;
 
@@ -1122,7 +1274,8 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
     pKF->mnBALocalForKF = pKF->mnId;
     Map* pCurrentMap = pKF->GetMap();
 
-    const vector<KeyFrame*> vNeighKFs = pKF->GetVectorCovisibleKeyFrames();
+    const vector<KeyFrame*> vNeighKFs = pKF->GetVectorCovisibleKeyFrames();//開關鄰居幀的數量，讓過渡幀進入局部地圖，拉入舊的固定關鍵幀原版
+    // const vector<KeyFrame*> vNeighKFs = pKF->GetBestCovisibilityKeyFrames(20);
     for(int i=0, iend=vNeighKFs.size(); i<iend; i++)
     {
         KeyFrame* pKFi = vNeighKFs[i];
@@ -1130,6 +1283,8 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
         if(!pKFi->isBad() && pKFi->GetMap() == pCurrentMap)
             lLocalKeyFrames.push_back(pKFi);
     }
+
+
 
     // Local MapPoints seen in Local KeyFrames
     num_fixedKF = 0;
@@ -1158,6 +1313,9 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
                 }
         }
     }
+
+
+
 
     // Fixed Keyframes. Keyframes that see Local MapPoints but that are not Local Keyframes
     list<KeyFrame*> lFixedCameras;
@@ -1402,13 +1560,71 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
         }
     }
     num_edges = nEdges;
+    num_MPs = nPoints;
 
     if(pbStopFlag)
         if(*pbStopFlag)
             return;
-
+    //開關，原版設定
     optimizer.initializeOptimization();
-    optimizer.optimize(10);
+    CollectVisualResidualStats(vpEdgesMono, vpEdgesBody, vpEdgesStereo, pStatsBefore);
+    num_iters = optimizer.optimize(10);
+    CollectVisualResidualStats(vpEdgesMono, vpEdgesBody, vpEdgesStereo, pStats);
+
+
+    //=====================2的=============================
+
+
+    // ── 第一階段：5次，含 robust kernel ──
+    // optimizer.initializeOptimization();
+    // CollectVisualResidualStats(vpEdgesMono, vpEdgesBody, vpEdgesStereo, pStatsBefore);
+    // optimizer.optimize(5);
+
+    // bool bDoMore = true;
+    // if(pbStopFlag)
+    //     if(*pbStopFlag)
+    //         bDoMore = false;
+
+    // if(bDoMore)
+    // {
+    // // 把 outlier 設 level(1)，移除 robust kernel
+    // for(size_t i=0, iend=vpEdgesMono.size(); i<iend; i++)
+    // {
+    //     ORB_SLAM3::EdgeSE3ProjectXYZ* e = vpEdgesMono[i];
+    //     MapPoint* pMP = vpMapPointEdgeMono[i];
+    //     if(pMP->isBad()) continue;
+    //     if(e->chi2()>5.991 || !e->isDepthPositive())
+    //         e->setLevel(1);
+    //     e->setRobustKernel(0);
+    // }
+    // for(size_t i=0, iend=vpEdgesBody.size(); i<iend; i++)
+    // {
+    //     ORB_SLAM3::EdgeSE3ProjectXYZToBody* e = vpEdgesBody[i];
+    //     MapPoint* pMP = vpMapPointEdgeBody[i];
+    //     if(pMP->isBad()) continue;
+    //     if(e->chi2()>5.991 || !e->isDepthPositive())
+    //         e->setLevel(1);
+    //     e->setRobustKernel(0);
+    // }
+    // for(size_t i=0, iend=vpEdgesStereo.size(); i<iend; i++)
+    // {
+    //     g2o::EdgeStereoSE3ProjectXYZ* e = vpEdgesStereo[i];
+    //     MapPoint* pMP = vpMapPointEdgeStereo[i];
+    //     if(pMP->isBad()) continue;
+    //     if(e->chi2()>7.815 || !e->isDepthPositive())
+    //         e->setLevel(1);
+    //     e->setRobustKernel(0);
+    // }
+
+    // // ── 第二階段：10次，不含 outlier 也不含 robust kernel ──
+    // optimizer.initializeOptimization(0);
+    // num_iters = optimizer.optimize(10);
+    // CollectVisualResidualStats(vpEdgesMono, vpEdgesBody, vpEdgesStereo, pStats);
+    // }
+
+
+    //=====================2的=============================
+
 
     vector<pair<KeyFrame*,MapPoint*> > vToErase;
     vToErase.reserve(vpEdgesMono.size()+vpEdgesBody.size()+vpEdgesStereo.size());
@@ -2380,8 +2596,11 @@ int Optimizer::OptimizeSim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &
     return nIn;
 }
 
-void Optimizer::LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges, bool bLarge, bool bRecInit)
+void Optimizer::LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges, int& num_iters, bool bLarge, bool bRecInit, InertialResidualStats* pStats, InertialResidualStats* pStatsBefore)
 {
+    ResetResidualStats(pStats);
+    ResetResidualStats(pStatsBefore);
+
     Map* pCurrentMap = pKF->GetMap();
 
     int maxOpt=10;
@@ -2837,11 +3056,19 @@ void Optimizer::LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int&
         assert(mit->second>=3);
     }
 
+    num_MPs     = (int)lLocalMapPoints.size();
+    num_edges   = (int)(vpEdgesMono.size() + vpEdgesStereo.size());
+    num_OptKF   = (int)(vpOptimizableKFs.size() + lpOptVisKFs.size());
+    num_fixedKF = (int)lFixedKeyFrames.size();
+
     optimizer.initializeOptimization();
     optimizer.computeActiveErrors();
     float err = optimizer.activeRobustChi2();
-    optimizer.optimize(opt_it); // Originally to 2
+    CollectInertialBAResidualStats(vei, vegr, vear, vpEdgesMono, vpEdgesStereo, pStatsBefore);
+    num_iters = optimizer.optimize(opt_it); // Originally to 2
     float err_end = optimizer.activeRobustChi2();
+    CollectInertialBAResidualStats(vei, vegr, vear, vpEdgesMono, vpEdgesStereo, pStats);
+
     if(pbStopFlag)
         optimizer.setForceStopFlag(pbStopFlag);
 
@@ -4488,8 +4715,10 @@ void Optimizer::MergeInertialBA(KeyFrame* pCurrKF, KeyFrame* pMergeKF, bool *pbS
     pMap->IncreaseChangeIndex();
 }
 
-int Optimizer::PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit)
+int Optimizer::PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit, InertialResidualStats* pStats)
 {
+    ResetResidualStats(pStats);
+
     g2o::SparseOptimizer optimizer;
     g2o::BlockSolverX::LinearSolverType * linearSolver;
 
@@ -4569,12 +4798,12 @@ int Optimizer::PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit
                     e->setVertex(0,VP);
                     e->setMeasurement(obs);
 
-                    // Add here uncerteinty
-                    const float unc2 = pFrame->mpCamera->uncertainty2(obs);
+                    // Add here uncerteinty 視覺觀測的不確定性（如圖像邊緣的特徵點不穩定）。
+                    const float unc2 = pFrame->mpCamera->uncertainty2(obs);//相機模型本身的不確定性（如魚眼鏡頭邊緣畸變更大）。
 
                     const float invSigma2 = pFrame->mvInvLevelSigma2[kpUn.octave]/unc2;
                     e->setInformation(Eigen::Matrix2d::Identity()*invSigma2);
-
+                    
                     g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
                     e->setRobustKernel(rk);
                     rk->setDelta(thHuberMono);
@@ -4682,14 +4911,14 @@ int Optimizer::PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit
     EdgeGyroRW* egr = new EdgeGyroRW();
     egr->setVertex(0,VGk);
     egr->setVertex(1,VG);
-    Eigen::Matrix3d InfoG = pFrame->mpImuPreintegrated->C.block<3,3>(9,9).cast<double>().inverse();
+    Eigen::Matrix3d InfoG = pFrame->mpImuPreintegrated->C.block<3,3>(9,9).cast<double>().inverse();//陀螺儀隨機游走的資訊矩陣（反映了陀螺儀偏置隨時間變化的不確定性）。
     egr->setInformation(InfoG);
     optimizer.addEdge(egr);
 
     EdgeAccRW* ear = new EdgeAccRW();
     ear->setVertex(0,VAk);
     ear->setVertex(1,VA);
-    Eigen::Matrix3d InfoA = pFrame->mpImuPreintegrated->C.block<3,3>(12,12).cast<double>().inverse();
+    Eigen::Matrix3d InfoA = pFrame->mpImuPreintegrated->C.block<3,3>(12,12).cast<double>().inverse();//加速度計隨機游走的資訊矩陣（反映了加速度計偏置隨時間變化的不確定性）。
     ear->setInformation(InfoA);
     optimizer.addEdge(ear);
 
@@ -4822,6 +5051,30 @@ int Optimizer::PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit
         }
     }
 
+    double imu_rot_sum = 0.0, imu_vel_sum = 0.0, imu_pos_sum = 0.0;
+    double gyro_rw_sum = 0.0, acc_rw_sum = 0.0;
+    int gyro_rw_count = 0, acc_rw_count = 0;
+    if(pStats)
+    {
+        AccumulateInertialEdge(ei, pStats, imu_rot_sum, imu_vel_sum, imu_pos_sum);
+        AccumulateGyroRW(egr, gyro_rw_sum, gyro_rw_count);
+        AccumulateAccRW(ear, acc_rw_sum, acc_rw_count);
+        for(size_t i=0, iend=vpEdgesMono.size(); i<iend; ++i)
+        {
+            const size_t idx = vnIndexEdgeMono[i];
+            if(!pFrame->mvbOutlier[idx])
+                AccumulateVisualEdge(vpEdgesMono[i], pStats);
+        }
+        for(size_t i=0, iend=vpEdgesStereo.size(); i<iend; ++i)
+        {
+            const size_t idx = vnIndexEdgeStereo[i];
+            if(!pFrame->mvbOutlier[idx])
+                AccumulateVisualEdge(vpEdgesStereo[i], pStats);
+        }
+        FinalizeResidualStats(pStats, imu_rot_sum, imu_vel_sum, imu_pos_sum,
+                              gyro_rw_sum, gyro_rw_count, acc_rw_sum, acc_rw_count);
+    }
+
     // Recover optimized pose, velocity and biases
     pFrame->SetImuPoseVelocity(VP->estimate().Rwb.cast<float>(), VP->estimate().twb.cast<float>(), VV->estimate().cast<float>());
     Vector6d b;
@@ -4872,8 +5125,10 @@ int Optimizer::PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit
     return nInitialCorrespondences-nBad;
 }
 
-int Optimizer::PoseInertialOptimizationLastFrame(Frame *pFrame, bool bRecInit)
+int Optimizer::PoseInertialOptimizationLastFrame(Frame *pFrame, bool bRecInit, InertialResidualStats* pStats)
 {
+    ResetResidualStats(pStats);
+
     g2o::SparseOptimizer optimizer;
     g2o::BlockSolverX::LinearSolverType * linearSolver;
 
@@ -5222,6 +5477,29 @@ int Optimizer::PoseInertialOptimizationLastFrame(Frame *pFrame, bool bRecInit)
 
     nInliers = nInliersMono + nInliersStereo;
 
+    double imu_rot_sum = 0.0, imu_vel_sum = 0.0, imu_pos_sum = 0.0;
+    double gyro_rw_sum = 0.0, acc_rw_sum = 0.0;
+    int gyro_rw_count = 0, acc_rw_count = 0;
+    if(pStats)
+    {
+        AccumulateInertialEdge(ei, pStats, imu_rot_sum, imu_vel_sum, imu_pos_sum);
+        AccumulateGyroRW(egr, gyro_rw_sum, gyro_rw_count);
+        AccumulateAccRW(ear, acc_rw_sum, acc_rw_count);
+        for(size_t i=0, iend=vpEdgesMono.size(); i<iend; ++i)
+        {
+            const size_t idx = vnIndexEdgeMono[i];
+            if(!pFrame->mvbOutlier[idx])
+                AccumulateVisualEdge(vpEdgesMono[i], pStats);
+        }
+        for(size_t i=0, iend=vpEdgesStereo.size(); i<iend; ++i)
+        {
+            const size_t idx = vnIndexEdgeStereo[i];
+            if(!pFrame->mvbOutlier[idx])
+                AccumulateVisualEdge(vpEdgesStereo[i], pStats);
+        }
+        FinalizeResidualStats(pStats, imu_rot_sum, imu_vel_sum, imu_pos_sum,
+                              gyro_rw_sum, gyro_rw_count, acc_rw_sum, acc_rw_count);
+    }
 
     // Recover optimized pose, velocity and biases
     pFrame->SetImuPoseVelocity(VP->estimate().Rwb.cast<float>(), VP->estimate().twb.cast<float>(), VV->estimate().cast<float>());

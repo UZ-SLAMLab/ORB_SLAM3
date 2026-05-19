@@ -505,6 +505,11 @@ public:
     void computeError();
     virtual void linearizeOplus();
 
+    Vector9d GetErrorVector(){
+        computeError();
+        return _error;
+    }
+
     Eigen::Matrix<double,24,24> GetHessian(){
         linearizeOplus();
         Eigen::Matrix<double,9,24> J;
