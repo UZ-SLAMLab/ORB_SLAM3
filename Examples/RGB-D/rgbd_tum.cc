@@ -59,7 +59,7 @@ int main(int argc, char **argv)
     }
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD,true);
+    bool bViewer=(argc>=6); ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD,bViewer);
     float imageScale = SLAM.GetImageScale();
 
     // Vector for tracking time statistics
@@ -126,6 +126,20 @@ int main(int argc, char **argv)
 
     // Stop all threads
     SLAM.Shutdown();
+
+    // Save sparse map points
+    {
+        std::ofstream f("MapPoints.txt");
+        f << std::fixed;
+        size_t n = 0;
+        for (const auto& pt : SLAM.GetAllMapPoints3D())
+        {
+            f << pt.x() << " " << pt.y() << " " << pt.z() << "\n";
+            ++n;
+        }
+        std::cout << "Saved " << n << " map points to MapPoints.txt" << std::endl;
+    }
+
 
     // Tracking time statistics
     sort(vTimesTrack.begin(),vTimesTrack.end());

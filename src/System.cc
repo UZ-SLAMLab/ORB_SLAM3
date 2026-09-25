@@ -569,18 +569,13 @@ bool System::isShutDown() {
 void System::SaveTrajectoryTUM(const string &filename)
 {
     cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
-    if(mSensor==MONOCULAR)
-    {
-        cerr << "ERROR: SaveTrajectoryTUM cannot be used for monocular." << endl;
-        return;
-    }
+    // mono support: relative-frame poses are stored per frame in the tracker
+    (void)0; // no mono rejection
 
     vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
-    // Transform all keyframes so that the first keyframe is at the origin.
-    // After a loop closure the first keyframe might not be at the origin.
-    Sophus::SE3f Two = vpKFs[0]->GetPoseInverse();
+    Sophus::SE3f Two = (vpKFs.empty()) ? Sophus::SE3f() : vpKFs[0]->GetPoseInverse();
 
     ofstream f;
     f.open(filename.c_str());
@@ -626,15 +621,37 @@ void System::SaveTrajectoryTUM(const string &filename)
     // cout << endl << "trajectory saved!" << endl;
 }
 
+
+std::vector<Eigen::Vector3f> System::GetAllMapPoints3D()
+{
+    std::vector<Eigen::Vector3f> pts;
+    Map* pMap = mpAtlas->GetCurrentMap();
+    if(!pMap) return pts;
+    const std::vector<MapPoint*>& mps = pMap->GetAllMapPoints();
+    for(MapPoint* mp : mps)
+    {
+        if(!mp || mp->isBad()) continue;
+        Eigen::Vector3f w = mp->GetWorldPos();
+        pts.emplace_back(w(0), w(1), w(2));
+    }
+    return pts;
+}
+
 void System::SaveKeyFrameTrajectoryTUM(const string &filename)
 {
     cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
 
-    vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
+    // Traverse ALL maps (monocular relocalization creates many maps)
+    vector<Map*> vpMaps = mpAtlas->GetAllMaps();
+    vector<KeyFrame*> vpKFs;
+    for(Map* pMap : vpMaps)
+    {
+        if(!pMap) continue;
+        vector<KeyFrame*> vpKFsMap = pMap->GetAllKeyFrames();
+        vpKFs.insert(vpKFs.end(), vpKFsMap.begin(), vpKFsMap.end());
+    }
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
-    // Transform all keyframes so that the first keyframe is at the origin.
-    // After a loop closure the first keyframe might not be at the origin.
     ofstream f;
     f.open(filename.c_str());
     f << fixed;

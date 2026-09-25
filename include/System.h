@@ -152,6 +152,9 @@ public:
     // See format details at: http://vision.in.tum.de/data/datasets/rgbd-dataset
     void SaveKeyFrameTrajectoryTUM(const string &filename);
 
+    // Export all 3D map points (x y z per line)
+    std::vector<Eigen::Vector3f> GetAllMapPoints3D();
+
     void SaveTrajectoryEuRoC(const string &filename);
     void SaveKeyFrameTrajectoryEuRoC(const string &filename);
 
