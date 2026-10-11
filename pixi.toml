@@ -18,7 +18,7 @@ preview = ["pixi-build"]
 # ORBvoc.txt is not packaged: VSLAM-LAB downloads it (huggingface.co/vslamlab/orbslam2_vocabulary).
 [package]
 name = "orbslam3"
-version = "1.0"
+version = "1.1"
 description = "ORB-SLAM3: visual, visual-inertial and multi-map SLAM"
 authors = ["Carlos Campos", "Richard Elvira", "Juan J. Gomez Rodriguez", "J. M. M. Montiel", "Juan D. Tardos"]
 license = "GPL-3.0-only"
