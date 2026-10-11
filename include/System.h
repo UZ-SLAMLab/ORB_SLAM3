@@ -25,6 +25,7 @@
 #include<stdlib.h>
 #include<string>
 #include<thread>
+#include<functional>
 #include<opencv2/core/core.hpp>
 
 #include "Tracking.h"
@@ -140,11 +141,9 @@ public:
     void Shutdown();
     bool isShutDown();
 
-    // On macOS the Pangolin/Cocoa viewer must run on the main thread.
-    void RunViewer();
-
-    // Returns true when the caller should run RunViewer() on the main thread.
-    bool ViewerRunsOnMainThread() const;
+    // Runs work (the sequence processing loop) to completion. On macOS with the viewer on, the Pangolin/Cocoa viewer
+    // must own the main thread, so work runs in a thread with an 8 MB stack meanwhile; otherwise work runs inline.
+    void Run(const std::function<void()>& work);
 
     // Save camera trajectory in the TUM RGB-D dataset format.
     // Only for stereo and RGB-D. This method does not work for monocular.
