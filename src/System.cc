@@ -22,6 +22,9 @@
 
 #include <chrono>
 #include <thread>
+#ifdef __APPLE__
+#include <pthread.h>
+#endif
 
 #include "Converter.h"
 #include <thread>
@@ -238,7 +241,7 @@ System::System(const string &strVocFile, const string &strCalibrationFile, const
     {
         mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strCalibrationFile, strSettingsFile, settings_);
 #ifdef __APPLE__
-        // Cocoa/AppKit requires Pangolin's event loop to run on the process main thread (RunViewer)
+        // Cocoa/AppKit requires Pangolin's event loop to run on the process main thread (see Run)
 #else
         mptViewer = new thread(&Viewer::Run, mpViewer);
 #endif
@@ -534,7 +537,7 @@ void System::Shutdown()
 
     mpLocalMapper->RequestFinish();
     mpLoopCloser->RequestFinish();
-    if(mpViewer && !mptViewer)  // viewer on the main thread (macOS): let RunViewer() return
+    if(mpViewer && !mptViewer)  // viewer on the main thread (macOS): let Run() return
         mpViewer->RequestFinish();
     /*if(mpViewer)
     {
@@ -543,20 +546,10 @@ void System::Shutdown()
             std::this_thread::sleep_for(std::chrono::microseconds(5000));
     }*/
 
-    // Wait until all thread have effectively stopped
-    /*while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
-    {
-        if(!mpLocalMapper->isFinished())
-            cout << "mpLocalMapper is not finished" << endl;*/
-        /*if(!mpLoopCloser->isFinished())
-            cout << "mpLoopCloser is not finished" << endl;
-        if(mpLoopCloser->isRunningGBA()){
-            cout << "mpLoopCloser is running GBA" << endl;
-            cout << "break anyway..." << endl;
-            break;
-        }*/
-        /*usleep(5000);
-    }*/
+    // Wait until all threads have effectively stopped: returning while they still run lets static destructors
+    // (MapPoint::mGlobalMutex) tear down mutexes they lock ("mutex lock failed: Invalid argument" at exit)
+    while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
+        std::this_thread::sleep_for(std::chrono::microseconds(5000));
 
     if(!mStrSaveAtlasToFile.empty())
     {
@@ -579,21 +572,27 @@ bool System::isShutDown() {
     return mbShutDown;
 }
 
-void System::RunViewer()
+void System::Run(const std::function<void()>& work)
 {
 #ifdef __APPLE__
     if(mpViewer)
-        mpViewer->Run();
+    {
+        // The viewer takes the main thread and work runs in a thread. Secondary threads get a 512 KB stack on macOS,
+        // which map initialization overflows (SIGBUS), so give it the 8 MB a main thread has.
+        pthread_attr_t attr;
+        pthread_attr_init(&attr);
+        pthread_attr_setstacksize(&attr, 8 * 1024 * 1024);
+        pthread_t thread;
+        pthread_create(&thread, &attr,
+                       [](void* pWork) -> void* { (*static_cast<const std::function<void()>*>(pWork))(); return nullptr; },
+                       const_cast<std::function<void()>*>(&work));
+        pthread_attr_destroy(&attr);
+        mpViewer->Run();  // returns once Shutdown() requests the viewer to finish
+        pthread_join(thread, nullptr);
+        return;
+    }
 #endif
-}
-
-bool System::ViewerRunsOnMainThread() const
-{
-#ifdef __APPLE__
-    return mpViewer != NULL;
-#else
-    return false;
-#endif
+    work();
 }
 
 void System::SaveKeyFrameTrajectoryVSLAMLAB(const string &filename)

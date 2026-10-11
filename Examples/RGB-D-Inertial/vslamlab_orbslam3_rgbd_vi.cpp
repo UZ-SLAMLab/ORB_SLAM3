@@ -203,17 +203,8 @@ int main(int argc, char *argv[])
         SLAM.SaveKeyFrameTrajectoryVSLAMLAB(resultsPath_expId + "_" + "KeyFrameTrajectory.csv");
     };
 
-    // macOS: the Pangolin viewer must run on the main thread, tracking then runs in a thread
-    if(SLAM.ViewerRunsOnMainThread())
-    {
-        std::thread trackingThread(processSequence);
-        SLAM.RunViewer();
-        trackingThread.join();
-    }
-    else
-    {
-        processSequence();
-    }
+    // On macOS with the viewer on, the viewer takes the main thread and processSequence runs in a thread
+    SLAM.Run(processSequence);
 
     return 0;
 }
