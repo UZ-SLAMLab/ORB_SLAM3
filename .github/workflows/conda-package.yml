@@ -57,8 +57,9 @@ jobs:
       - name: Test
         run: |
           for exe in vslamlab_orbslam3_mono vslamlab_orbslam3_rgbd vslamlab_orbslam3_stereo \
-                     vslamlab_orbslam3_mono_vi vslamlab_orbslam3_rgbd_vi vslamlab_orbslam3_stereo_vi; do
-            pixi exec -c "${{ github.workspace }}/channel" -c https://prefix.dev/conda-forge -s orbslam3 -- "$exe" --help
+                     vslamlab_orbslam3_mono_vi vslamlab_orbslam3_rgbd_vi vslamlab_orbslam3_stereo_vi \
+                     vslamlab_orbslam3_mono_stream; do
+            pixi exec -c "${{ github.workspace }}/channel" -c https://prefix.dev/conda-forge -c https://prefix.dev/vslamlab/vslamlab -s orbslam3 -- "$exe" --help
           done
 
       - uses: actions/upload-artifact@v7

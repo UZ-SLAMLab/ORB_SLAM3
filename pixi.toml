@@ -3,7 +3,7 @@
 # Releases are published by CI on vX.Y tags (linux-64, osx-arm64, win-64).
 [workspace]
 authors = ["vslamlab <vslamlab@gmail.com>"]
-channels = ["https://prefix.dev/conda-forge"]
+channels = ["https://prefix.dev/conda-forge", "https://prefix.dev/vslamlab/vslamlab"]  # vslamlab: libarstream
 name = "orbslam3"
 platforms = ["linux-64", "osx-arm64", "win-64"]
 version = "0.1.0"
@@ -14,11 +14,11 @@ preview = ["pixi-build"]
 #   pixi publish --clean --target-dir output
 #   pixi upload prefix --channel vslamlab/vslamlab output/*.conda
 # Builds libORB_SLAM3 (DBoW2 and g2o linked in statically, Sophus header-only) and the
-# vslamlab_orbslam3_{mono,rgbd,stereo,mono_vi,rgbd_vi,stereo_vi} executables.
+# vslamlab_orbslam3_{mono,rgbd,stereo,mono_vi,rgbd_vi,stereo_vi,mono_stream} executables.
 # ORBvoc.txt is not packaged: VSLAM-LAB downloads it (huggingface.co/vslamlab/orbslam2_vocabulary).
 [package]
 name = "orbslam3"
-version = "1.1"
+version = "1.2"
 description = "ORB-SLAM3: visual, visual-inertial and multi-map SLAM"
 authors = ["Carlos Campos", "Richard Elvira", "Juan J. Gomez Rodriguez", "J. M. M. Montiel", "Juan D. Tardos"]
 license = "GPL-3.0-only"
@@ -40,6 +40,9 @@ yaml-cpp = "*"
 pangolin-opengl = "*"
 libboost-devel = "*"    # boost::serialization (Atlas save/load)
 openssl = "*"           # MD5 of the vocabulary in saved atlases
+# ARStream C++ subscriber (header-only, github.com/VSLAM-LAB/arstream) for vslamlab_orbslam3_mono_stream, the online
+# entry point on an ARStream relay (VSLAM-LAB: `pixi run stream-iphone --run orbslam3`)
+libarstream = { version = "*", channel = "https://prefix.dev/vslamlab/vslamlab" }
 
 [package.host-dependencies."if(host_platform == 'linux-64')"]
 libgl-devel = "*"       # Pangolin's CMake config: find_package(OpenGL)
@@ -47,6 +50,7 @@ libopengl-devel = "*"
 
 [package.run-dependencies]
 pangolin-opengl = "*"
+libarstream = { version = "*", channel = "https://prefix.dev/vslamlab/vslamlab" }  # its run dependencies: zeromq
 
 ########################################################################################################################
 # Workspace: development environment. `pixi run install` compiles this repo in place (bin/, lib/) for the local CPU
@@ -72,7 +76,3 @@ orbslam3 = { path = "." }  # installs the [package] build/host/run dependencies,
 [dependencies]
 cmake = "*"
 ninja = "*"
-# ARStream C++ subscriber (header-only) for vslamlab_orbslam3_mono_stream, built by pixi-build from the arstream
-# repository's cpp/ package (not yet on the vslamlab channel; once published, `libarstream = "*"` from
-# https://prefix.dev/vslamlab/vslamlab also belongs in [package.host-dependencies])
-libarstream = { git = "https://github.com/VSLAM-LAB/arstream.git", subdirectory = "cpp" }
