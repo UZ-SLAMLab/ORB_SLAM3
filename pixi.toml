@@ -62,7 +62,9 @@ execute-stereo = "./bin/vslamlab_orbslam3_stereo"
 execute-mono-vi = "./bin/vslamlab_orbslam3_mono_vi"
 execute-rgbd-vi = "./bin/vslamlab_orbslam3_rgbd_vi"
 execute-stereo-vi = "./bin/vslamlab_orbslam3_stereo_vi"
-test = "./bin/vslamlab_orbslam3_mono --help && ./bin/vslamlab_orbslam3_rgbd --help && ./bin/vslamlab_orbslam3_stereo --help && ./bin/vslamlab_orbslam3_mono_vi --help && ./bin/vslamlab_orbslam3_rgbd_vi --help && ./bin/vslamlab_orbslam3_stereo_vi --help && echo OK"
+# Online on an ARStream relay (VSLAM-LAB: `pixi run stream-iphone`), see Examples/Monocular/vslamlab_orbslam3_mono_stream.cpp
+execute-mono-stream = "./bin/vslamlab_orbslam3_mono_stream"
+test ="./bin/vslamlab_orbslam3_mono --help && ./bin/vslamlab_orbslam3_rgbd --help && ./bin/vslamlab_orbslam3_stereo --help && ./bin/vslamlab_orbslam3_mono_vi --help && ./bin/vslamlab_orbslam3_rgbd_vi --help && ./bin/vslamlab_orbslam3_stereo_vi --help && echo OK"
 
 [dev]
 orbslam3 = { path = "." }  # installs the [package] build/host/run dependencies, not orbslam3 itself
@@ -70,3 +72,7 @@ orbslam3 = { path = "." }  # installs the [package] build/host/run dependencies,
 [dependencies]
 cmake = "*"
 ninja = "*"
+# ARStream C++ subscriber (header-only) for vslamlab_orbslam3_mono_stream, built by pixi-build from the arstream
+# repository's cpp/ package (not yet on the vslamlab channel; once published, `libarstream = "*"` from
+# https://prefix.dev/vslamlab/vslamlab also belongs in [package.host-dependencies])
+libarstream = { git = "https://github.com/VSLAM-LAB/arstream.git", subdirectory = "cpp" }

@@ -130,6 +130,16 @@ target_link_libraries(vslamlab_orbslam3_stereo_vi PRIVATE ${PROJECT_NAME})
 add_executable(vslamlab_orbslam3_rgbd_vi Examples/RGB-D-Inertial/vslamlab_orbslam3_rgbd_vi.cpp)
 target_link_libraries(vslamlab_orbslam3_rgbd_vi PRIVATE ${PROJECT_NAME})
 
+# Online entry point on an ARStream relay (github.com/VSLAM-LAB/arstream, conda package libarstream): built only
+# when the header-only subscriber is available, so the package builds without it
+find_package(arstream QUIET)
+if(arstream_FOUND)
+    message(STATUS "arstream found: building vslamlab_orbslam3_mono_stream")
+    add_executable(vslamlab_orbslam3_mono_stream Examples/Monocular/vslamlab_orbslam3_mono_stream.cpp)
+    target_link_libraries(vslamlab_orbslam3_mono_stream PRIVATE ${PROJECT_NAME} arstream::arstream)
+    install(TARGETS vslamlab_orbslam3_mono_stream RUNTIME DESTINATION bin)
+endif()
+
 # Install the library and the executables (no headers: the conda package only provides the executables, and the
 # generic header names would clash with other packages in the environment)
 install(TARGETS
