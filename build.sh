@@ -38,3 +38,8 @@ mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j3
+cd ..
+
+echo "Converting vocabulary to binary (loads ~10x faster) ..."
+
+./tools/convert_vocabulary_to_binary Vocabulary/ORBvoc.txt Vocabulary/ORBvoc.bin

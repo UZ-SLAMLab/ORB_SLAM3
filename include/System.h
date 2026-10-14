@@ -212,6 +212,15 @@ private:
 
     string CalculateCheckSum(string filename, int type);
 
+    // Loads mpVocabulary from strVocFile: binary (saveToBinaryFile()) if it
+    // ends in ".bin", text otherwise. Exits on failure.
+    void LoadVocabulary(const string &strVocFile);
+    // Checksum identifying the vocabulary, stored in and checked against
+    // saved atlases: the text file's MD5, also for a binary vocabulary
+    // converted from it (which stores it), so atlases stay loadable with
+    // either. Computed on first use.
+    string VocabularyChecksum();
+
     // Input sensor
     eSensor mSensor;
 
@@ -273,6 +282,7 @@ private:
     string mStrSaveAtlasToFile;
 
     string mStrVocabularyFilePath;
+    string mStrVocabularyChecksum;
 
     Settings* settings_;
 };

@@ -23,6 +23,11 @@
 #include<chrono>
 #include <ctime>
 #include <sstream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <deque>
+#include <memory>
 
 #include <opencv2/core/core.hpp>
 
@@ -38,9 +43,96 @@ void LoadImages(const string &strPathLeft, const string &strPathRight, const str
 
 void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro);
 
+// Phase-0 instrumentation (see flexiv_gdk's PARALLEL_VIO_PLAN.md): prints
+// "[timing] stage=<stage> seconds=<s>" with the time since t0, one
+// machine-readable line per stage, parsed by 01_run_orbslam3_vio.py.
+static void PrintStageTime(const string &stage, const std::chrono::steady_clock::time_point &t0)
+{
+    const double s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+    cout << "[timing] stage=" << stage << " seconds=" << fixed << setprecision(3) << s << defaultfloat << endl;
+}
+
+
+// Decodes a sequence's stereo pairs on a background thread, up to maxQueued
+// frames ahead of tracking, so cv::imread's PNG decoding (~8.5ms/frame at our
+// resolution) overlaps with tracking instead of adding to every frame period.
+class StereoImagePrefetcher
+{
+public:
+    StereoImagePrefetcher(const vector<string> &vstrLeft, const vector<string> &vstrRight, size_t maxQueued)
+        : mvstrLeft(vstrLeft), mvstrRight(vstrRight), mMaxQueued(maxQueued),
+          mThread(&StereoImagePrefetcher::Run, this)
+    {
+    }
+
+    ~StereoImagePrefetcher()
+    {
+        {
+            lock_guard<mutex> lock(mMutex);
+            mbStop = true;
+        }
+        mCond.notify_all();
+        mThread.join();
+    }
+
+    // Returns the next frame's pair, in order, blocking until it's decoded.
+    // An image is empty if it failed to load.
+    void Pop(cv::Mat &imLeft, cv::Mat &imRight)
+    {
+        unique_lock<mutex> lock(mMutex);
+        mCond.wait(lock, [this]{ return !mQueue.empty(); });
+        imLeft = mQueue.front().first;
+        imRight = mQueue.front().second;
+        mQueue.pop_front();
+        mCond.notify_all();
+    }
+
+    // Total time the background thread spent decoding images so far.
+    double DecodeSeconds()
+    {
+        lock_guard<mutex> lock(mMutex);
+        return mDecodeS;
+    }
+
+private:
+    void Run()
+    {
+        for (size_t i = 0; i < mvstrLeft.size(); i++)
+        {
+            {
+                unique_lock<mutex> lock(mMutex);
+                mCond.wait(lock, [this]{ return mbStop || mQueue.size() < mMaxQueued; });
+                if (mbStop)
+                    return;
+            }
+            const auto t0 = std::chrono::steady_clock::now();
+            cv::Mat imLeft = cv::imread(mvstrLeft[i], cv::IMREAD_UNCHANGED);
+            cv::Mat imRight = cv::imread(mvstrRight[i], cv::IMREAD_UNCHANGED);
+            const double decodeS = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+            {
+                lock_guard<mutex> lock(mMutex);
+                mQueue.emplace_back(imLeft, imRight);
+                mDecodeS += decodeS;
+            }
+            mCond.notify_all();
+        }
+    }
+
+    const vector<string> &mvstrLeft;
+    const vector<string> &mvstrRight;
+    const size_t mMaxQueued;
+    mutex mMutex;
+    condition_variable mCond;
+    deque<pair<cv::Mat, cv::Mat>> mQueue;
+    bool mbStop = false;
+    double mDecodeS = 0;
+    // Last, so every member above is initialized before Run() starts.
+    thread mThread;
+};
 
 int main(int argc, char **argv)
 {
+    const auto tMain = std::chrono::steady_clock::now();
     // Look for optional "--no-viewer"/"--viewer-auto-exit" flags anywhere in
     // the arguments and strip them out before the positional parsing below,
     // so argc/argv indexing for vocabulary/settings/sequence/times/session
@@ -60,7 +152,13 @@ int main(int argc, char **argv)
     // - --load-atlas <file> loads the atlas <file>.osa at startup (overrides
     //   System.LoadAtlasFromFile). SLAM relocalizes in the loaded map, then
     //   keeps tracking and mapping in it (full SLAM, not localization mode).
+    // - --prefetch-images decodes images on a background thread ahead of
+    //   tracking (see StereoImagePrefetcher). Off by default: it makes a run
+    //   alone ~15% faster, but with several runs at once on the same machine
+    //   it slowed tracking down and delayed relocalization into a loaded
+    //   atlas (see flexiv_gdk's PARALLEL_VIO_PLAN.md).
     bool bUseViewer = true;
+    bool bPrefetchImages = false;
     bool bAutoExitViewer = false;
     string strSaveAtlasFile;
     string strLoadAtlasFile;
@@ -76,6 +174,11 @@ int main(int argc, char **argv)
         else if (arg == "--viewer-auto-exit")
         {
             bAutoExitViewer = true;
+            nConsumed = 1;
+        }
+        else if (arg == "--prefetch-images")
+        {
+            bPrefetchImages = true;
             nConsumed = 1;
         }
         else if (arg == "--save-atlas" || arg == "--load-atlas")
@@ -102,7 +205,7 @@ int main(int argc, char **argv)
 
     if(argc < 5)
     {
-        cerr << endl << "Usage: ./stereo_inertial_euroc path_to_vocabulary path_to_settings path_to_sequence_folder_1 path_to_times_file_1 (path_to_image_folder_2 path_to_times_file_2 ... path_to_image_folder_N path_to_times_file_N) [session_name] [--no-viewer] [--viewer-auto-exit] [--save-atlas atlas_file] [--load-atlas atlas_file]" << endl;
+        cerr << endl << "Usage: ./stereo_inertial_euroc path_to_vocabulary path_to_settings path_to_sequence_folder_1 path_to_times_file_1 (path_to_image_folder_2 path_to_times_file_2 ... path_to_image_folder_N path_to_times_file_N) [session_name] [--no-viewer] [--viewer-auto-exit] [--prefetch-images] [--save-atlas atlas_file] [--load-atlas atlas_file]" << endl;
         return 1;
     }
 
@@ -117,6 +220,7 @@ int main(int argc, char **argv)
     }
 
     // Load all sequences:
+    const auto tLoadSeq = std::chrono::steady_clock::now();
     int seq;
     vector< vector<string> > vstrImageLeft;
     vector< vector<string> > vstrImageRight;
@@ -174,6 +278,8 @@ int main(int argc, char **argv)
         first_imu[seq] = max(0, first_imu[seq] - 1);
     }
 
+    PrintStageTime("load_sequence", tLoadSeq);
+
     // Read rectification parameters
     cv::FileStorage fsSettings(argv[2], cv::FileStorage::READ);
     if(!fsSettings.isOpened())
@@ -190,9 +296,11 @@ int main(int argc, char **argv)
     cout.precision(17);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
+    const auto tInit = std::chrono::steady_clock::now();
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_STEREO, bUseViewer, 0, string(), strLoadAtlasFile);
     if (!strSaveAtlasFile.empty())
         SLAM.SetSaveAtlasFile(strSaveAtlasFile);
+    PrintStageTime("system_init", tInit);
 
     cv::Mat imLeft, imRight;
     for (seq = 0; seq<num_seq; seq++)
@@ -204,11 +312,30 @@ int main(int argc, char **argv)
         double t_track = 0.f;
         int num_rect = 0;
         int proccIm = 0;
+        // Real-time pacing stats: a frame "overruns" when tracking it took
+        // longer than the gap to the next frame, so this run fell further
+        // behind real time; max_overrun_ms is the worst single such frame.
+        const auto tTracking = std::chrono::steady_clock::now();
+        vector<double> vTrackS;
+        vTrackS.reserve(nImages[seq]);
+        int nOverruns = 0;
+        double maxOverrunS = 0;
+        double imageWaitS = 0;
+        unique_ptr<StereoImagePrefetcher> prefetcher;
+        if (bPrefetchImages)
+            prefetcher.reset(new StereoImagePrefetcher(vstrImageLeft[seq], vstrImageRight[seq], 8));
         for(int ni=0; ni<nImages[seq]; ni++, proccIm++)
         {
-            // Read left and right images from file
-            imLeft = cv::imread(vstrImageLeft[seq][ni],cv::IMREAD_UNCHANGED);
-            imRight = cv::imread(vstrImageRight[seq][ni],cv::IMREAD_UNCHANGED);
+            // Read left and right images, from file or already decoded in the
+            // background
+            const auto tRead = std::chrono::steady_clock::now();
+            if (prefetcher)
+                prefetcher->Pop(imLeft, imRight);
+            else
+            {
+                imLeft = cv::imread(vstrImageLeft[seq][ni],cv::IMREAD_UNCHANGED);
+                imRight = cv::imread(vstrImageRight[seq][ni],cv::IMREAD_UNCHANGED);
+            }
 
             if(imLeft.empty())
             {
@@ -223,6 +350,8 @@ int main(int argc, char **argv)
                      << string(vstrImageRight[seq][ni]) << endl;
                 return 1;
             }
+
+            imageWaitS += std::chrono::duration<double>(std::chrono::steady_clock::now() - tRead).count();
 
             double tframe = vTimestampsCam[seq][ni];
 
@@ -262,15 +391,43 @@ int main(int argc, char **argv)
 
             vTimesTrack[ni]=ttrack;
 
-            // Wait to load the next frame
-            double T=0;
-            if(ni<nImages[seq]-1)
-                T = vTimestampsCam[seq][ni+1]-tframe;
-            else if(ni>0)
-                T = tframe-vTimestampsCam[seq][ni-1];
+            vTrackS.push_back(ttrack);
 
-            if(ttrack<T)
-                usleep((T-ttrack)*1e6); // 1e6
+            // Wait until the next frame is due: its timestamp gap after the
+            // moment this frame was handed to tracking (t1), same as the
+            // upstream usleep(T - ttrack). Frames are never fed closer
+            // together than they were recorded, even after falling behind.
+            // With --prefetch-images, image loading no longer adds to the
+            // frame period.
+            if(ni<nImages[seq]-1)
+            {
+                const auto tNext = t1 + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                    std::chrono::duration<double>(vTimestampsCam[seq][ni+1]-tframe));
+                const auto tNow = std::chrono::steady_clock::now();
+                if(tNow < tNext)
+                    std::this_thread::sleep_until(tNext);
+                else
+                {
+                    nOverruns++;
+                    maxOverrunS = max(maxOverrunS, std::chrono::duration<double>(tNow - tNext).count());
+                }
+            }
+        }
+
+        PrintStageTime("tracking", tTracking);
+        if(!vTrackS.empty())
+        {
+            const double sequenceS = vTimestampsCam[seq].back() - vTimestampsCam[seq].front();
+            sort(vTrackS.begin(), vTrackS.end());
+            cout << "[timing] stats seq=" << seq << " frames=" << vTrackS.size() << " overruns=" << nOverruns
+                 << fixed << setprecision(3)
+                 << " max_overrun_ms=" << 1e3*maxOverrunS
+                 << " median_track_ms=" << 1e3*vTrackS[vTrackS.size()/2]
+                 << " max_track_ms=" << 1e3*vTrackS.back()
+                 << " imread_s=" << (prefetcher ? prefetcher->DecodeSeconds() : imageWaitS)
+                 << " image_wait_s=" << imageWaitS
+                 << " sequence_s=" << sequenceS
+                 << defaultfloat << endl;
         }
 
         if(seq < num_seq - 1)
@@ -287,7 +444,9 @@ int main(int argc, char **argv)
     // stop, and reading that data concurrently with an in-flight loop closure
     // or bundle adjustment corrupts the heap. Also saves the atlas if
     // --save-atlas (or System.SaveAtlasToFile) was given.
+    const auto tShutdown = std::chrono::steady_clock::now();
     SLAM.Shutdown();
+    PrintStageTime("shutdown", tShutdown);
 
     // Save camera trajectory. We skip SaveKeyFrameTrajectoryEuRoC here: it's
     // unused by the caller (00_run_offline_slam.py only reads f_<session>.txt)
@@ -295,6 +454,7 @@ int main(int argc, char **argv)
     // requests LocalMapping/LoopClosing finish, it does not wait for them --
     // that wait loop is commented out upstream -- so this call can race a
     // virtual call against one of those threads still tearing down).
+    const auto tSaveTraj = std::chrono::steady_clock::now();
     if (bFileName)
     {
         const string f_file =  "f_" + string(argv[argc-1]) + ".txt";
@@ -304,6 +464,8 @@ int main(int argc, char **argv)
     {
         SLAM.SaveTrajectoryEuRoC("CameraTrajectory.txt");
     }
+    PrintStageTime("trajectory_save", tSaveTraj);
+    PrintStageTime("total", tMain);
 
     // Keep the process (and its viewer -- Shutdown() above does not close it)
     // alive so the operator can keep inspecting the reconstructed

@@ -21,6 +21,7 @@
 #include "System.h"
 #include "Converter.h"
 #include <thread>
+#include <chrono>
 #include <pangolin/pangolin.h>
 #include <iomanip>
 #include <openssl/md5.h>
@@ -46,6 +47,15 @@ static string StripAtlasExtension(const string &strFile)
     if(strFile.size() > ext.size() && strFile.compare(strFile.size() - ext.size(), ext.size(), ext) == 0)
         return strFile.substr(0, strFile.size() - ext.size());
     return strFile;
+}
+
+// Prints "[timing] stage=<stage> seconds=<s>" with the time since t0, one
+// machine-readable line per stage, so batch scripts can tell where each run's
+// startup/shutdown time goes.
+static void PrintStageTime(const string &stage, const std::chrono::steady_clock::time_point &t0)
+{
+    const double s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+    cout << "[timing] stage=" << stage << " seconds=" << fixed << setprecision(3) << s << defaultfloat << endl;
 }
 
 System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
@@ -125,18 +135,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     if(mStrLoadAtlasFromFile.empty())
     {
-        //Load ORB Vocabulary
-        cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
-
-        mpVocabulary = new ORBVocabulary();
-        bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
-        if(!bVocLoad)
-        {
-            cerr << "Wrong path to vocabulary. " << endl;
-            cerr << "Falied to open at: " << strVocFile << endl;
-            exit(-1);
-        }
-        cout << "Vocabulary loaded!" << endl << endl;
+        LoadVocabulary(strVocFile);
 
         //Create KeyFrame Database
         mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
@@ -147,18 +146,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     }
     else
     {
-        //Load ORB Vocabulary
-        cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
-
-        mpVocabulary = new ORBVocabulary();
-        bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
-        if(!bVocLoad)
-        {
-            cerr << "Wrong path to vocabulary. " << endl;
-            cerr << "Falied to open at: " << strVocFile << endl;
-            exit(-1);
-        }
-        cout << "Vocabulary loaded!" << endl << endl;
+        LoadVocabulary(strVocFile);
 
         //Create KeyFrame Database
         mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
@@ -168,7 +156,9 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         // Load the file with an earlier session
         //clock_t start = clock();
         cout << "Initialization of Atlas from file: " << mStrLoadAtlasFromFile << endl;
+        const auto tAtlas = std::chrono::steady_clock::now();
         bool isRead = LoadAtlas(FileType::BINARY_FILE);
+        PrintStageTime("atlas_load", tAtlas);
 
         if(!isRead)
         {
@@ -585,6 +575,7 @@ void System::Shutdown()
         // BA) are still mutating it corrupts the saved file, so wait for them
         // here -- bounded, since the general wait above is disabled because
         // it can hang.
+        const auto tDrain = std::chrono::steady_clock::now();
         const int maxWaitMs = 60000;
         int waitedMs = 0;
         while((!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
@@ -596,9 +587,12 @@ void System::Shutdown()
         if(waitedMs >= maxWaitMs)
             cerr << "WARNING: mapping threads did not stop within " << maxWaitMs / 1000
                  << " s, saving atlas anyway" << endl;
+        PrintStageTime("mapping_drain", tDrain);
 
         Verbose::PrintMess("Atlas saving to file " + mStrSaveAtlasToFile, Verbose::VERBOSITY_NORMAL);
+        const auto tSave = std::chrono::steady_clock::now();
         SaveAtlas(FileType::BINARY_FILE);
+        PrintStageTime("atlas_save", tSave);
     }
 
     /*if(mpViewer)
@@ -1471,7 +1465,7 @@ void System::SaveAtlas(int type){
         // resolved against the cwd either way)
         string pathSaveFileName = mStrSaveAtlasToFile + ".osa";
 
-        string strVocabularyChecksum = CalculateCheckSum(mStrVocabularyFilePath,TEXT_FILE);
+        string strVocabularyChecksum = VocabularyChecksum();
         std::size_t found = mStrVocabularyFilePath.find_last_of("/\\");
         string strVocabularyName = mStrVocabularyFilePath.substr(found+1);
 
@@ -1545,7 +1539,7 @@ bool System::LoadAtlas(int type)
     if(isRead)
     {
         //Check if the vocabulary is the same
-        string strInputVocabularyChecksum = CalculateCheckSum(mStrVocabularyFilePath,TEXT_FILE);
+        string strInputVocabularyChecksum = VocabularyChecksum();
 
         if(strInputVocabularyChecksum.compare(strVocChecksum) != 0)
         {
@@ -1561,6 +1555,37 @@ bool System::LoadAtlas(int type)
         return true;
     }
     return false;
+}
+
+void System::LoadVocabulary(const string &strVocFile)
+{
+    const string binExt = ".bin";
+    const bool bBinary = strVocFile.size() > binExt.size() &&
+        strVocFile.compare(strVocFile.size() - binExt.size(), binExt.size(), binExt) == 0;
+
+    cout << endl << "Loading ORB Vocabulary" << (bBinary ? "" : ". This could take a while...") << endl;
+    const auto tVoc = std::chrono::steady_clock::now();
+    mpVocabulary = new ORBVocabulary();
+    bool bVocLoad;
+    if(bBinary)
+        bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile, &mStrVocabularyChecksum);
+    else
+        bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+    if(!bVocLoad)
+    {
+        cerr << "Wrong path to vocabulary. " << endl;
+        cerr << "Falied to open at: " << strVocFile << endl;
+        exit(-1);
+    }
+    cout << "Vocabulary loaded!" << endl << endl;
+    PrintStageTime("vocabulary_load", tVoc);
+}
+
+string System::VocabularyChecksum()
+{
+    if(mStrVocabularyChecksum.empty())
+        mStrVocabularyChecksum = CalculateCheckSum(mStrVocabularyFilePath,TEXT_FILE);
+    return mStrVocabularyChecksum;
 }
 
 string System::CalculateCheckSum(string filename, int type)
