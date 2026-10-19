@@ -249,14 +249,39 @@ namespace ORB_SLAM3 {
             }
             else if (type == BINARY_FILE) // File binary
             {
-                cout << "Starting to write the save binary file" << endl;
+                cout << "Writing into binary file ..." << endl;
                 std::remove(pathSaveFileName.c_str());
-                std::ofstream ofs(pathSaveFileName, std::ios::binary);
-                boost::archive::binary_oarchive oa(ofs);
-                oa << strVocabularyName;
-                oa << strVocabularyChecksum;
-                oa << mpAtlas;
-                cout << "End to write save binary file" << endl;
+
+                {
+                    std::ofstream ofs(pathSaveFileName, std::ios::binary);
+                    if (!ofs.is_open()) {
+                        cerr << "\n[ERROR] File couldn't be written. Please check permissions!\n" << endl;
+                        return;
+                    }
+
+                    boost::archive::binary_oarchive oa(ofs);
+                    oa << strVocabularyName;
+                    oa << strVocabularyChecksum;
+                    oa << mpAtlas;
+                }
+
+                // compatibility fix:
+                // On tested devices (for example Meta Quest 3): there was a lower version of boost installed.
+                // On the Quest 3, Boost 1.83 (or lower) was installed. In the binary, this was called version 19.
+                // When we edit the file on another system however, it writes the boost version installed on said
+                // system into the file. When the two versions differ, this may lead to an error.
+                // The boost version is written to Byte number 30 of the binary file.
+                // So we manually rewrite Byte 30 to say that the file was written with boost version 19.
+                std::fstream fs(pathSaveFileName, std::ios::in | std::ios::out | std::ios::binary);
+
+                if (fs.is_open()) {
+                    fs.seekp(30);   // byte 30
+                    char v = 19;    // version 19
+                    fs.write(&v, 1);
+                    fs.close();
+                }
+
+                cout << "File saved!" << endl;
             }
         }
     }
