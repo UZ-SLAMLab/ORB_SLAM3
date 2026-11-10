@@ -21,6 +21,7 @@
 #include<fstream>
 #include<iomanip>
 #include<chrono>
+#include <cmath>
 #include <ctime>
 #include <sstream>
 #include <thread>
@@ -50,6 +51,76 @@ static void PrintStageTime(const string &stage, const std::chrono::steady_clock:
 {
     const double s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
     cout << "[timing] stage=" << stage << " seconds=" << fixed << setprecision(3) << s << defaultfloat << endl;
+}
+
+// Tracking quality of one frame, recorded right after TrackStereo(): its
+// Tracking::eTrackingState and how many map points it matched. Summarized
+// into a "[quality] stats ..." line and written per frame to a CSV, both
+// read by 01_run_orbslam3_vio.py.
+struct FrameQuality
+{
+    long long timestampNs;
+    int state;
+    int trackedPoints;
+};
+
+static int CountTrackedPoints(ORB_SLAM3::System &SLAM)
+{
+    const vector<ORB_SLAM3::MapPoint*> vpMPs = SLAM.GetTrackedMapPoints();
+    return static_cast<int>(count_if(vpMPs.begin(), vpMPs.end(), [](ORB_SLAM3::MapPoint* pMP) { return pMP != nullptr; }));
+}
+
+static void PrintQualityStats(int seq, const vector<FrameQuality> &vFrames, double seqStartS)
+{
+    if (vFrames.empty())
+        return;
+    int nOk = 0, nRecentlyLost = 0, nLost = 0, nNotInit = 0, nRelocWait = 0, nLostEpisodes = 0;
+    double firstOkS = -1;
+    bool bWasOk = false;
+    vector<int> vPoints;
+    vPoints.reserve(vFrames.size());
+    for (const FrameQuality &f : vFrames)
+    {
+        const bool bOk = f.state == ORB_SLAM3::Tracking::OK || f.state == ORB_SLAM3::Tracking::OK_KLT;
+        if (bOk)
+        {
+            nOk++;
+            if (firstOkS < 0)
+                firstOkS = f.timestampNs / 1e9 - seqStartS;
+            vPoints.push_back(f.trackedPoints);
+        }
+        else if (f.state == ORB_SLAM3::Tracking::RECENTLY_LOST)
+            nRecentlyLost++;
+        else if (f.state == ORB_SLAM3::Tracking::LOST)
+            nLost++;
+        else if (f.state == ORB_SLAM3::Tracking::INIT_RELOCALIZE)
+            nRelocWait++;
+        else
+            nNotInit++;
+        if (bWasOk && !bOk)
+            nLostEpisodes++;
+        bWasOk = bOk;
+    }
+    // Tracked-point percentiles only over frames tracked OK: lost frames
+    // match ~0 points by definition and are already counted above.
+    sort(vPoints.begin(), vPoints.end());
+    cout << "[quality] stats seq=" << seq << " frames=" << vFrames.size() << " ok=" << nOk
+         << " recently_lost=" << nRecentlyLost << " lost=" << nLost << " not_init=" << nNotInit
+         << " reloc_wait=" << nRelocWait << " lost_episodes=" << nLostEpisodes;
+    if (firstOkS >= 0)
+        cout << fixed << setprecision(3) << " first_ok_s=" << firstOkS << defaultfloat;
+    if (!vPoints.empty())
+        cout << " median_pts=" << vPoints[vPoints.size()/2] << " p05_pts=" << vPoints[vPoints.size()/20]
+             << " min_pts=" << vPoints.front();
+    cout << endl;
+}
+
+static void SaveQualityCsv(const string &filename, const vector<FrameQuality> &vFrames)
+{
+    ofstream f(filename);
+    f << "timestamp_ns,state,tracked_pts\n";
+    for (const FrameQuality &fq : vFrames)
+        f << fq.timestampNs << "," << fq.state << "," << fq.trackedPoints << "\n";
 }
 
 
@@ -303,6 +374,7 @@ int main(int argc, char **argv)
     PrintStageTime("system_init", tInit);
 
     cv::Mat imLeft, imRight;
+    vector<FrameQuality> vAllFrameQuality;
     for (seq = 0; seq<num_seq; seq++)
     {
         // Seq loop
@@ -321,6 +393,8 @@ int main(int argc, char **argv)
         int nOverruns = 0;
         double maxOverrunS = 0;
         double imageWaitS = 0;
+        vector<FrameQuality> vFrameQuality;
+        vFrameQuality.reserve(nImages[seq]);
         unique_ptr<StereoImagePrefetcher> prefetcher;
         if (bPrefetchImages)
             prefetcher.reset(new StereoImagePrefetcher(vstrImageLeft[seq], vstrImageRight[seq], 8));
@@ -382,6 +456,9 @@ int main(int argc, char **argv)
             std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
     #endif
 
+            // After t2, so it doesn't count towards the tracking time.
+            vFrameQuality.push_back({llround(tframe*1e9), SLAM.GetTrackingState(), CountTrackedPoints(SLAM)});
+
 #ifdef REGISTER_TIMES
             t_track = t_rect + t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t2 - t1).count();
             SLAM.InsertTrackTime(t_track);
@@ -429,6 +506,8 @@ int main(int argc, char **argv)
                  << " sequence_s=" << sequenceS
                  << defaultfloat << endl;
         }
+        PrintQualityStats(seq, vFrameQuality, vTimestampsCam[seq].front());
+        vAllFrameQuality.insert(vAllFrameQuality.end(), vFrameQuality.begin(), vFrameQuality.end());
 
         if(seq < num_seq - 1)
         {
@@ -465,6 +544,7 @@ int main(int argc, char **argv)
         SLAM.SaveTrajectoryEuRoC("CameraTrajectory.txt");
     }
     PrintStageTime("trajectory_save", tSaveTraj);
+    SaveQualityCsv(bFileName ? "quality_" + string(argv[argc-1]) + ".csv" : "TrackingQuality.csv", vAllFrameQuality);
     PrintStageTime("total", tMain);
 
     // Keep the process (and its viewer -- Shutdown() above does not close it)
